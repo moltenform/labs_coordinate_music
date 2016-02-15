@@ -1,5 +1,4 @@
 from coordmusicutil import *
-import unittest
 
 dirtestmedia = getTestMediaLocation()+files.sep+'media'+files.sep
 tmpdir = getTestTempLocation()+files.sep+'test'
@@ -230,141 +229,133 @@ def testsOrganize():
     assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['artist']), AssertionError, 'required field artist')
     assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['discnumber']), AssertionError, 'required field discnumber')
     
-
-class EasyPythonMutagenComponentTests(unittest.TestCase):
-    def setUp(self):
-        import os
-        import shutil
-        import tempfile
-        
-        # create an empty directory
-        self.tmpdir = tempfile.gettempdir()+'/testeasypythonmutagen'
-        if os.path.exists(self.tmpdir):
-            shutil.rmtree(self.tmpdir)
-        os.makedirs(self.tmpdir)
-        
-        # copy test media to the directory
-        if not os.path.exists('./test/media/flac.flac'):
-            raise RuntimeError('could not find test media.')
-            
-        testfiles = ['flac.flac', 'm4a128.m4a', 'm4a16.m4a', 'm4a224.m4a', 'mp3_avgb128.mp3', 
-            'mp3_avgb16.mp3', 'mp3_avgb224.mp3', 'mp3_cnsb128.mp3', 'mp3_cnsb16.mp3', 'mp3_cnsb224.mp3',
-            'ogg_01.ogg', 'ogg_10.ogg']
-        for file in testfiles:
-            shutil.copy('./test/media/'+file, self.tmpdir+'/'+file)
-
-    def tearDown(self):
-        import os
-        import shutil
-        if 'testeasypythonmutagen' in self.tmpdir and os.path.exists(self.tmpdir):
-            shutil.rmtree(self.tmpdir)
+def setupEasyPythonMutagenTest():
+    import shutil
+    import tempfile
     
-    def test_lengthAndBitrate(self):
-        # get duration; no tag object provided
-        tmpdirsl = self.tmpdir+'/'
-        self.assertEqual(1023, int(1000*get_audio_duration(tmpdirsl+'flac.flac')))
-        self.assertEqual(1160, int(1000*get_audio_duration(tmpdirsl+'m4a16.m4a')))
-        self.assertEqual(1091, int(1000*get_audio_duration(tmpdirsl+'m4a128.m4a')))
-        self.assertEqual(1091, int(1000*get_audio_duration(tmpdirsl+'m4a224.m4a')))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb16.mp3')))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb128.mp3')))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb224.mp3')))
-        self.assertEqual(2873, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3')))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3')))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3')))
-        self.assertEqual(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_01.ogg')))
-        self.assertEqual(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_10.ogg')))
-        
-        # get duration; tag object provided
-        self.assertEqual(1023, int(1000*get_audio_duration(tmpdirsl+'flac.flac', EasyPythonMutagen(tmpdirsl+'flac.flac'))))
-        self.assertEqual(1160, int(1000*get_audio_duration(tmpdirsl+'m4a16.m4a', EasyPythonMutagen(tmpdirsl+'m4a16.m4a'))))
-        self.assertEqual(1091, int(1000*get_audio_duration(tmpdirsl+'m4a128.m4a', EasyPythonMutagen(tmpdirsl+'m4a128.m4a'))))
-        self.assertEqual(1091, int(1000*get_audio_duration(tmpdirsl+'m4a224.m4a', EasyPythonMutagen(tmpdirsl+'m4a224.m4a'))))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb16.mp3'))))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb128.mp3'))))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb224.mp3'))))
-        self.assertEqual(2873, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb16.mp3'))))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb128.mp3'))))
-        self.assertEqual(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb224.mp3'))))
-        self.assertEqual(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_01.ogg', EasyPythonMutagen(tmpdirsl+'ogg_01.ogg'))))
-        self.assertEqual(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_10.ogg', EasyPythonMutagen(tmpdirsl+'ogg_10.ogg'))))
-        
-        # get empirical bitrate
-        self.assertEqual(29, int(get_empirical_bitrate(tmpdirsl+'m4a16.m4a')))
-        self.assertEqual(136, int(get_empirical_bitrate(tmpdirsl+'mp3_avgb128.mp3')))
-        self.assertEqual(233, int(get_empirical_bitrate(tmpdirsl+'mp3_cnsb224.mp3')))
-        
-        # unsupported extensions
-        self.assertRaisesRegexp(ValueError, 'unsupported', lambda:get_audio_duration('missing_extension'))
-        self.assertRaisesRegexp(ValueError, 'unsupported', lambda:get_audio_duration('unsupported.mp3.extension.mp5'))
-        self.assertRaisesRegexp(ValueError, 'unsupported', lambda:get_empirical_bitrate('missing_extension'))
-        self.assertRaisesRegexp(ValueError, 'unsupported', lambda:get_empirical_bitrate('unsupported.mp3.extension.mp5'))
+    if files.exists(tmpdir):
+        shutil.rmtree(tmpdir)
+    files.makedirs(tmpdir)
     
-    def test_metadataTags(self):
-        # saving in id3_23 should be different than saving in id3_24
-        from easypythonmutagen import EasyPythonMutagen, get_audio_duration, get_empirical_bitrate
-        import filecmp
-        import os
-        import shutil
-        tmpdirsl = self.tmpdir+'/'
-        shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_23.mp3')
-        shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_24.mp3')
-        self.assertTrue(filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
-        o23 = EasyPythonMutagen(tmpdirsl+'mp3_id3_23.mp3', True)
-        o23.set('title', 'test')
-        o23.save()
-        o24 = EasyPythonMutagen(tmpdirsl+'mp3_id3_24.mp3', False)
-        o24.set('title', 'test')
-        o24.save()
-        self.assertFalse(filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
+    # copy test media to the directory
+    if not files.exists(dirtestmedia+'flac.flac'):
+        raise RuntimeError('could not find test media.')
         
-        # unsupported extensions
-        self.assertRaisesRegexp(ValueError, 'unsupported', lambda:EasyPythonMutagen('missing_extension'))
-        self.assertRaisesRegexp(ValueError, 'unsupported', lambda:EasyPythonMutagen('unsupported.mp3.extension.mp5'))
+    testfiles = ['flac.flac', 'm4a128.m4a', 'm4a16.m4a', 'm4a224.m4a', 'mp3_avgb128.mp3', 
+        'mp3_avgb16.mp3', 'mp3_avgb224.mp3', 'mp3_cnsb128.mp3', 'mp3_cnsb16.mp3', 'mp3_cnsb224.mp3',
+        'ogg_01.ogg', 'ogg_10.ogg']
+    for file in testfiles:
+        shutil.copy(dirtestmedia+file, tmpdir+'/'+file)
         
-        # test reading and writing
-        for file in os.listdir(self.tmpdir):
-            if 'id3' in file:
-                continue
-                
-            fields = dict(album=1, comment=1, artist=1, title=1, 
-                composer=1, discnumber=1, tracknumber=1, albumartist=1, website=1)
-            obj = EasyPythonMutagen(tmpdirsl+file)
-            self.assertRaises(KeyError, lambda: obj.get('composer'))
-            if not file.endswith('.mp3'):
-                fields['description'] = 1
+def testsEasyPythonMutagenLengthAndBitrate():
+    setupEasyPythonMutagenTest()
+    
+    # get duration; no tag object provided
+    assertEq(1023, int(1000*get_audio_duration(tmpdirsl+'flac.flac')))
+    assertEq(1160, int(1000*get_audio_duration(tmpdirsl+'m4a16.m4a')))
+    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a128.m4a')))
+    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a224.m4a')))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb16.mp3')))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb128.mp3')))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb224.mp3')))
+    assertEq(2873, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3')))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3')))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3')))
+    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_01.ogg')))
+    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_10.ogg')))
+    
+    # get duration; tag object provided
+    assertEq(1023, int(1000*get_audio_duration(tmpdirsl+'flac.flac', EasyPythonMutagen(tmpdirsl+'flac.flac'))))
+    assertEq(1160, int(1000*get_audio_duration(tmpdirsl+'m4a16.m4a', EasyPythonMutagen(tmpdirsl+'m4a16.m4a'))))
+    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a128.m4a', EasyPythonMutagen(tmpdirsl+'m4a128.m4a'))))
+    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a224.m4a', EasyPythonMutagen(tmpdirsl+'m4a224.m4a'))))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb16.mp3'))))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb128.mp3'))))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb224.mp3'))))
+    assertEq(2873, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb16.mp3'))))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb128.mp3'))))
+    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb224.mp3'))))
+    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_01.ogg', EasyPythonMutagen(tmpdirsl+'ogg_01.ogg'))))
+    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_10.ogg', EasyPythonMutagen(tmpdirsl+'ogg_10.ogg'))))
+    
+    # get empirical bitrate
+    assertEq(29, int(get_empirical_bitrate(tmpdirsl+'m4a16.m4a')))
+    assertEq(136, int(get_empirical_bitrate(tmpdirsl+'mp3_avgb128.mp3')))
+    assertEq(233, int(get_empirical_bitrate(tmpdirsl+'mp3_cnsb224.mp3')))
+    
+    # unsupported extensions
+    assertException(lambda:get_audio_duration('missing_extension'), ValueError, 'unsupported')
+    assertException(lambda:get_audio_duration('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
+    assertException(lambda:get_empirical_bitrate('missing_extension'), ValueError, 'unsupported')
+    assertException(lambda:get_empirical_bitrate('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
+
+def testsEasyPythonMutagenMetadataTags():
+    setupEasyPythonMutagenTest()
+    
+    # saving in id3_23 should be different than saving in id3_24
+    from easypythonmutagen import EasyPythonMutagen, get_audio_duration, get_empirical_bitrate
+    import filecmp
+    import os
+    import shutil
+    tmpdirsl = tmpdir+'/'
+    shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_23.mp3')
+    shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_24.mp3')
+    assertTrue(filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
+    o23 = EasyPythonMutagen(tmpdirsl+'mp3_id3_23.mp3', True)
+    o23.set('title', 'test')
+    o23.save()
+    o24 = EasyPythonMutagen(tmpdirsl+'mp3_id3_24.mp3', False)
+    o24.set('title', 'test')
+    o24.save()
+    assertTrue(not filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
+    
+    # unsupported extensions
+    assertException(lambda:EasyPythonMutagen('missing_extension'), ValueError, 'unsupported')
+    assertException(lambda:EasyPythonMutagen('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
+    
+    # test reading and writing
+    for file in os.listdir(tmpdir):
+        if 'id3' in file:
+            continue
             
-            # we shouldn't be able to set invalid fields
-            if '.m4a' in file:
-                # workaround for mutagen bug easymp4.py, line 183,  __getitem__ when it fails to raise EasyMP4KeyError("%r is not a valid key" % key)
-                self.assertRaisesRegexp(Exception, '(not a valid key)|(object is not callable)', lambda: obj.set('aartist', 'test'))
-                self.assertRaisesRegexp(Exception, '(not a valid key)|(object is not callable)', lambda: obj.get('aartist'))
+        fields = dict(album=1, comment=1, artist=1, title=1, 
+            composer=1, discnumber=1, tracknumber=1, albumartist=1, website=1)
+        obj = EasyPythonMutagen(tmpdirsl+file)
+        assertException(lambda: obj.get('composer'), KeyError)
+        if not file.endswith('.mp3'):
+            fields['description'] = 1
+        
+        # we shouldn't be able to set invalid fields
+        if '.m4a' in file:
+            # workaround for mutagen bug easymp4.py, line 183,  __getitem__ when it fails to raise EasyMP4KeyError("%r is not a valid key" % key)
+            assertException(lambda: obj.set('aartist', 'test'), Exception, '(not a valid key)|(object is not callable)', '', True)
+            assertException(lambda: obj.get('aartist'), Exception, '(not a valid key)|(object is not callable)', '', True)
+        else:
+            assertException(lambda: obj.set('aartist', 'test'), KeyError)
+            assertException(lambda: obj.get('aartist'), KeyError)
+        
+        for field in fields:
+            # first, all fields should be empty
+            assertEq(None, obj.get_or_default(field, None))
+            
+            # then, put data into the field
+            if field=='tracknumber':
+                val = 14
+            elif field=='discnumber':
+                val = 7
+            elif field=='website':
+                val = 'http://website'+field
             else:
-                self.assertRaises(KeyError, lambda: obj.set('aartist', 'test'))
-                self.assertRaises(KeyError, lambda: obj.get('aartist'))
-            
-            for field in fields:
-                # first, all fields should be empty
-                self.assertEqual(None, obj.get_or_default(field, None))
-                
-                # then, put data into the field
-                if field=='tracknumber':
-                    val = 14
-                elif field=='discnumber':
-                    val = 7
-                elif field=='website':
-                    val = 'http://website'+field
-                else:
-                    val = u'test\u0107test\u1101'+field
-                fields[field] = val
-                obj.set(field, val)
-                self.assertEqual(unicode(fields[field]), obj.get(field))
-            
-            # verify data was saved
-            obj.save()
-            obj = EasyPythonMutagen(tmpdirsl+file)
-            for field in fields:
-                self.assertEqual(unicode(fields[field]), obj.get(field))
+                val = u'test\u0107test\u1101'+field
+            fields[field] = val
+            obj.set(field, val)
+            assertEq(unicode(fields[field]), obj.get(field))
+        
+        # verify data was saved
+        obj.save()
+        obj = EasyPythonMutagen(tmpdirsl+file)
+        for field in fields:
+            assertEq(unicode(fields[field]), obj.get(field))
  
 def testsCoordMusicUtil():
     # test m4aToUrl
@@ -518,7 +509,8 @@ def testsLinkSpotifyInteractive():
         launchSpotifyUri(tags[1].getLink())
 
 if __name__=='__main__':
-    unittest.main()
+    testsEasyPythonMutagenLengthAndBitrate()
+    testsEasyPythonMutagenMetadataTags()
     testsOrganize()
     testsCoordMusicUtil()
     testsLinkSpotify()
