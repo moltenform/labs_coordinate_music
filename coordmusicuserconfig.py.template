@@ -3,6 +3,7 @@ def getSpotifyUsername():
     return 'getSpotifyUsername'
     
 def getSpotifyClientID():
+    # return None to disable spotify connection
     return 'getSpotifyClientID'
     
 def getSpotifyClientSecret():
@@ -18,10 +19,6 @@ def getMusicRoot():
 
 def getTestMediaLocation():
     return './test'
-    
-def getTestTempLocation():
-    import tempfile
-    return tempfile.gettempdir()+'/test_music_coordination'
 
 def getSpotifyLocation():
     import os

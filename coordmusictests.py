@@ -4,9 +4,11 @@ dirtestmedia = getTestMediaLocation()+files.sep+'media'+files.sep
 tmpdir = getTestTempLocation()+files.sep+'test'
 tmpdirsl = tmpdir+files.sep
 
-def cleardirectoryfiles(d):
-    files.rmtree(d)
-    files.makedirs(d)
+
+def createOrClearDirectory(d):
+    if files.exists(d):
+        files.rmtree(d)
+        files.makedirs(d)
     assertTrue(files.isemptydir(d))
 
 def testsOrganize():
@@ -131,7 +133,7 @@ def testsOrganize():
         return sorted([file[1] for file in files.listfiles(tmpdir)])
         
     # test checkDeleteUrlsInTheWayOfM4as
-    cleardirectoryfiles(tmpdir)
+    createOrClearDirectory(tmpdir)
     files.writeall(tmpdirsl + 'test ok.url', '')
     files.writeall(tmpdirsl + 'test conflict.url', '')
     files.writeall(tmpdirsl + 'test conflict.m4a', '')
@@ -161,7 +163,7 @@ def testsOrganize():
     assertException(lambda: checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a'*300+'m4a']), AssertionError, 'dangerously long')
     
     # test checkUrlContents
-    cleardirectoryfiles(tmpdir)
+    createOrClearDirectory(tmpdir)
     writeUrlFile(tmpdirsl+'test1.url', 'https://www.youtube.com/watch?v=0OSF')
     writeUrlFile(tmpdirsl+'test2.url', 'spotify:track:0Svkvt5I79wficMFgaqEQJ')
     checkUrlContents(tmpdir, getShorts())
@@ -229,13 +231,8 @@ def testsOrganize():
     assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['artist']), AssertionError, 'required field artist')
     assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['discnumber']), AssertionError, 'required field discnumber')
     
-def setupEasyPythonMutagenTest():
-    import shutil
-    import tempfile
-    
-    if files.exists(tmpdir):
-        shutil.rmtree(tmpdir)
-    files.makedirs(tmpdir)
+def setupEasyPythonMutagenTest(copyFiles = True):
+    createOrClearDirectory(tmpdir)
     
     # copy test media to the directory
     if not files.exists(dirtestmedia+'flac.flac'):
@@ -244,8 +241,10 @@ def setupEasyPythonMutagenTest():
     testfiles = ['flac.flac', 'm4a128.m4a', 'm4a16.m4a', 'm4a224.m4a', 'mp3_avgb128.mp3', 
         'mp3_avgb16.mp3', 'mp3_avgb224.mp3', 'mp3_cnsb128.mp3', 'mp3_cnsb16.mp3', 'mp3_cnsb224.mp3',
         'ogg_01.ogg', 'ogg_10.ogg']
-    for file in testfiles:
-        shutil.copy(dirtestmedia+file, tmpdir+'/'+file)
+        
+    if copyFiles:
+        for file in testfiles:
+            files.copy(dirtestmedia+file, tmpdir+'/'+file, False)
         
 def testsEasyPythonMutagenLengthAndBitrate():
     setupEasyPythonMutagenTest()
@@ -297,7 +296,6 @@ def testsEasyPythonMutagenMetadataTags():
     import filecmp
     import os
     import shutil
-    tmpdirsl = tmpdir+'/'
     shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_23.mp3')
     shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_24.mp3')
     assertTrue(filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
@@ -359,7 +357,7 @@ def testsEasyPythonMutagenMetadataTags():
  
 def testsCoordMusicUtil():
     # test m4aToUrl
-    cleardirectoryfiles(tmpdir)
+    createOrClearDirectory(tmpdir)
     newname = tmpdirsl+'m4a24.m4a'
     files.copy(dirtestmedia+'m4a24.m4a', newname, False)
     stampM4a(newname, 'spotify:test')
@@ -450,7 +448,7 @@ def testsLinkSpotifyInteractive():
     
     # testing files outside of an album
     trace('testing files outside of an album')
-    cleardirectoryfiles(tmpdir)
+    createOrClearDirectory(tmpdir)
     files.makedirs(tmpdir+'/classic rock/collection')
     files.copy(dirtestmedia+'/test_02_52.m4a', tmpdir+'/classic rock/collection/Queen - You\'re My Best Friend.m4a', False)
     parsedNames = [Bucket(short='Queen - You\'re My Best Friend.m4a', artist='Queen', title='You\'re My Best Friend', discnumber=1,tracknumber=None)]
@@ -466,7 +464,7 @@ def testsLinkSpotifyInteractive():
     
     # testing files inside of an album with one disc
     trace('testing files inside of an album with one disc')
-    cleardirectoryfiles(tmpdir)
+    createOrClearDirectory(tmpdir)
     files.makedirs(tmpdir+'/classic rock/Queen/1975, A Night At The Opera')
     parsedNames = []
     files.copy(dirtestmedia+'/test_02_52.m4a', tmpdir+'/classic rock/Queen/1975, A Night At The Opera/04 You\'re My Best Friend.m4a', False)
@@ -488,7 +486,7 @@ def testsLinkSpotifyInteractive():
     trace('testing files inside of an album with several discs')
     trace('"I Want to Break Free" is intentionally 04_09 instead of 02_05, to test misnumbering')
     trace('"Barcelona" is intentionally too short, to test checking mismatched duration')
-    cleardirectoryfiles(tmpdir)
+    createOrClearDirectory(tmpdir)
     files.makedirs(tmpdir+'/classic rock/Queen/2002, The Platinum Collection')
     parsedNames = []
     files.copy(dirtestmedia+'/test_02_52.m4a', tmpdir+'/classic rock/Queen/2002, The Platinum Collection/01 06 You\'re My Best Friend.m4a', False)
@@ -508,6 +506,29 @@ def testsLinkSpotifyInteractive():
     if getInputBool('second spotifylink was set to '+str(tags[1].getLink())+' open?'):
         launchSpotifyUri(tags[1].getLink())
 
+def testsMusicToUrlInteractive():
+    from recurring_music_to_url import getStringTrackAndPopularity, SaveDiskSpaceMusicToUrl
+    createOrClearDirectory(tmpdir)
+    files.copy(dirtestmedia+'/m4a128.m4a', tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a', False)
+    files.copy(dirtestmedia+'/mp3_avgb128.mp3', tmpdirsl+'Qua - Ritmo Giallo.mp3', False)
+    files.copy(dirtestmedia+'/mp3_avgb128.mp3', tmpdirsl+'Masato Nakamura - Green Hill Zone.mp3', False)
+    
+    assertEq('p01p Carly Rae Jepsen - Run Away With Me.m4a 0.0Mb 134k 00:01', getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a'), 1))
+    assertEq('p12p Qua - Ritmo Giallo.mp3 0.0Mb 136k 00:02', getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Qua - Ritmo Giallo.mp3'), 12))
+    assertEq('p00p Masato Nakamura - Green Hill Zone.mp3 0.0Mb 136k 00:02', getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Masato Nakamura - Green Hill Zone.mp3'), 0))
+    
+    stampM4a(tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a', 'spotify:track:5e0vgBWfwToyphURwynSXa')
+    stampM4a(tmpdirsl+'Qua - Ritmo Giallo.mp3', 'spotify:track:5fAV6bhApK00urMyz4ceit')
+    stampM4a(tmpdirsl+'Masato Nakamura - Green Hill Zone.mp3', 'spotify:notfound')
+    
+    obj = SaveDiskSpaceMusicToUrl()
+    try:
+        obj.go(tmpdir, [CoordMusicAudioMetadata(fullfile) for fullfile, short in files.listfiles(tmpdir)], None)
+    except StopBecauseWeRenamedFile:
+        pass
+        
+    trace('Resulting filenames:\n'+'\n'.join(short for fullfile, short in files.listfiles(tmpdir)))
+
 if __name__=='__main__':
     testsEasyPythonMutagenLengthAndBitrate()
     testsEasyPythonMutagenMetadataTags()
@@ -516,5 +537,7 @@ if __name__=='__main__':
     testsLinkSpotify()
     if getInputBool('Run interactive tests?'):
         testsLinkSpotifyInteractive()
+        testsMusicToUrlInteractive()
+        
         
 

@@ -2,7 +2,6 @@
 from coordmusicutil import *
 import re
 
-
 class RemoveRemasteredString(object):
     def __init__(self):
         self.regexp = re.compile(r' - [0-9][0-9][0-9][0-9] (- )?(Digital )?Remaster(ed)?')
@@ -35,7 +34,7 @@ class RemoveRemasteredString(object):
                     
                 if newshort!=short:
                     files.move(parentName+'/'+short, parentName+'/'+newshort, False)
-                    stopBecauseWeRenamedFile()
+                    stopIfFileRenamed(True)
 
 
 def lookupAlbumForFile(path, tag, parsed, spotlink):
@@ -74,6 +73,10 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
 
 def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, market):
     if not seenWithoutSpotify:
+        return
+        
+    if not getSpotifyClientID():
+        trace('Connecting to Spotify has been disabled, provide a clientID in coordmusicuserconfig.py to enable.'
         return
         
     trace('\n\n\n\nAssociate with Spotify, for directory\n'+fullpathdir+'\n\n')
@@ -137,7 +140,6 @@ def getStrRemoteAlbum(tracks, albumartists):
     
 def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
     fullpathdir, search_str, tag, results, market = otherCommandsContext
-    path = fullpathdir+'/'+tag.short
     done = False
     if inp=='ns':
         tag.setLink('spotify:notfound')
@@ -147,14 +149,14 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
         for fullpath, short in files.listfiles(fullpathdir):
             if getFieldForFile(fullpath, False):
                 trace('setting to spotify:notfound,', short)
-                stampM4a(path, 'spotify:notfound', onlyIfNotAlreadySet=True)
+                stampM4a(fullpath, 'spotify:notfound', onlyIfNotAlreadySet=True)
         
         done = True
         raise StopBecauseWeRenamedFile # because tags are now invalidated
     elif inp == 'explorer':
         askExplorer(fullpathdir)
     elif inp == 'hear0':
-        launchMediaPlayer(path)
+        launchMediaPlayer(files.join(fullpathdir, tag.short))
     elif inp == 'hear#':
         trace('type a number, e.g. hear1 to hear first track')
     elif inp.startswith('hear'):
@@ -162,7 +164,7 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
         if inp.isdigit():
             n = int(inp)-1
             if n>=0 and n<len(results):
-                print results[n]['uri']
+                trace('starting in Spotify to hear.')
                 launchSpotifyUri(results[n]['uri'])
     elif inp == 'type':
         typeIntoSpotifySearch(search_str)

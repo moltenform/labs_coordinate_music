@@ -113,41 +113,6 @@ def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
         files.delete(directory+'/'+short)
     return newname
 
-def m4aToUrlWithBitrate(directory, short, obj):
-    field = getFieldForFile(short)
-    locbitrate = int(getFileBitrate(directory+'/'+short, obj))
-    locbitrateOut = 1
-    if locbitrate<=120: locbitrateOut = 10
-    elif locbitrate<=128+15: locbitrateOut = 12
-    elif locbitrate<=144+8: locbitrateOut = 14
-    elif locbitrate<=160+8: locbitrateOut = 16
-    elif locbitrate<=176+8: locbitrateOut = 17
-    elif locbitrate<=192+8: locbitrateOut = 19
-    elif locbitrate<=224+8: locbitrateOut = 22
-    elif locbitrate<=256+8: locbitrateOut = 25
-    elif locbitrate<=288+8: locbitrateOut = 28
-    else: locbitrateOut = 30
-    while True:
-        inp = getInputString('quality marker of "%d" look good, or enter another or bad for none.'%locbitrateOut, False)
-        if inp=='y':
-            break
-        elif all(c in '0123456789' for c in inp):
-            locbitrateOut = int(inp)
-            break
-        elif inp=='bad':
-            locbitrateOut = 'bad'
-            break
-        elif inp=='no' or inp=='n':
-            return
-    newname = directory+'/'+files.splitext(short)[0]
-    newname += (' (%d).url'%locbitrateOut) if locbitrateOut!='bad' else '.url'
-    writeUrlFile(newname, obj[field][0])
-    try:
-        softDeleteFile(directory+'/'+short)
-    except WindowsError:
-        alert('you need to close the file first!')
-        softDeleteFile(directory+'/'+short)
-
 def removeCharsFlavor1(s):
     return s.replace(u'?', u'').replace(u'\\', u'').replace(u'/', u'').replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
 
@@ -235,11 +200,14 @@ def typeIntoSpotifySearch(s):
     except pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected:
         trace('exception thrown, ',sys.exc_info()[1])
     
-def launchSpotifyUri(suri):
+def launchSpotifyUri(uri):
     import subprocess
-    assert suri.startswith('spotify:track:')
-    assert all(c=='#' or c==':' or c.isalnum() for c in suri)
-    args = ['start', suri]
+    if not uri or uri=='spotify:notfound':
+        trace('cannot start uri', str(uri))
+        return
+    assert uri.startswith('spotify:track:')
+    assert all(c=='#' or c==':' or c.isalnum() for c in uri)
+    args = ['start', uri]
     subprocess.Popen(args, shell=True)
 
 def launchMediaPlayer(path):
@@ -247,6 +215,7 @@ def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
     subprocess.Popen([mplayer, path], shell=False)
 
+def getTestTempLocation():
+    import tempfile
+    return tempfile.gettempdir()+'/test_music_coordination'
 
-    
-    

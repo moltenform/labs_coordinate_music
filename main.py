@@ -1,6 +1,7 @@
 import re
 import spotipy
 import recurring_linkspotify
+import recurring_music_to_url
 import copy
 from coordmusicutil import *
     
@@ -387,7 +388,7 @@ def checkFilenamesMain(fullpathdir, dirsplit, tags, helpers):
     checkDuplicatedTrackNumbers(fullpathdir, parsedNames)
     seenTracknumber, seenWithoutSpotify = checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames)
     recurring_linkspotify.linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, helpers.market)
-    
+    helpers.music_to_url.go(fullpathdir, tags, parsedNames)
 
 def goPerDirectory(fullpathdir, dirsplit, helpers):
     allshorts = files.listchildren(fullpathdir, filenamesOnly=True)
@@ -411,10 +412,11 @@ def goPerDirectory(fullpathdir, dirsplit, helpers):
 
     checkFilenamesMain(fullpathdir, dirsplit, tags, helpers)
 
-def getHelpers(root, market):
+def getHelpers(root, market, enableSaveSpace):
     helpers = Bucket()
     helpers.checkFileExtensions = CheckFileExtensions()
     helpers.removeRemasteredString = recurring_linkspotify.RemoveRemasteredString()
+    helpers.music_to_url = recurring_music_to_url.SaveDiskSpaceMusicToUrl(enableSaveSpace)
     helpers.extsCheckFilenames = dict(mp3=1,m4a=1,flac=1,url=1)
     helpers.splroot = root.replace('\\','/').split('/')
     helpers.market = market
@@ -422,7 +424,7 @@ def getHelpers(root, market):
         
 # example: if root is c:/music, scope is c:/music/classic rock, and startingpoint is c:/music/classic rock/hendrix
 # we'll go through c:/music/classic rock and process all directories that sort lower than c:/music/classic rock/hendrix
-def mainOrganize(root, scope=None, startingpoint=None, isTopDown = True, spotifyEnabled=True, market='US'):
+def mainOrganize(root, scope=None, startingpoint=None, isTopDown = True, spotifyEnabled=True, market='US', enableSaveSpace=False):
     if not scope:
         scope = root
     if spotifyEnabled:
@@ -433,7 +435,7 @@ def mainOrganize(root, scope=None, startingpoint=None, isTopDown = True, spotify
     
     reachedstartingpoint = False
     startingpointlower = startingpoint.lower() if startingpoint else None
-    helpers = getHelpers(root, market)
+    helpers = getHelpers(root, market, enableSaveSpace)
     for fullpathdir, pathshort in files.recursedirs(scope, topdown=isTopDown):
         # don't start until we've reached startingpoint
         fullpathdirlower = fullpathdir.lower()
@@ -468,7 +470,7 @@ def mainOrganize(root, scope=None, startingpoint=None, isTopDown = True, spotify
 
 def main(root, scope=None, startingpoint=None):
     choices = ['organize music', 'record filenames+tags to text file',
-        'save disk space with Spotify shortcuts', 'view Spotify link']
+        'save disk space (replace music with Spotify shortcuts)', 'view Spotify link']
     choice = getInputFromChoices('', choices)
     getInout('scope?')
     getInout('startingpoint?')
