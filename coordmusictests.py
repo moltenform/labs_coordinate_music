@@ -11,8 +11,8 @@ def createOrClearDirectory(d):
         files.makedirs(d)
     assertTrue(files.isemptydir(d))
 
-def testsOrganize():
-    from main import parseAFilename, getNewnameFromTag, bnsplitext, renderAFilename, doStringsMatchForField, \
+def testsCoordinate():
+    from recurring_coordinate import parseAFilename, getNewnameFromTag, bnsplitext, renderAFilename, doStringsMatchForField, \
     fillFieldsFromContext, checkDeleteUrlsInTheWayOfM4as, checkForLowBitratesFile, checkFilenameIrregularitiesLookForInconsistency,\
     checkUrlContents, CheckFileExtensions, checkDuplicatedTrackNumbers, Namestyle, checkStyleConsistency, checkRequiredFieldsSet
     def resToString(obj):
@@ -393,7 +393,7 @@ def testsCoordMusicUtil():
         assertEq(1, obj.get('disc_number'))
         assertEq('abc', obj.get_or_default('track_number', 'abc'))
         assertEq('abc', obj.get_or_default('album', 'abc'))
-        assertEq(None, obj.getLink())
+        assertEq('', obj.getLink())
         assertException(lambda: obj.get('track_number'), KeyError)
         assertException(lambda: obj.get('album'), KeyError)
        
@@ -425,20 +425,20 @@ def testsLinkSpotify():
     assertEq('test test', rem.getProposedName('test - 2111 - Digital Remastered test'))
     
     # test getChoiceString 
-    assertEq('(02:00)  title1 (a1;; a2) same lngth',
+    assertEq('(02:00)  (a1;; a2) title1 same lngth',
         getChoiceString(dict(duration_ms=120000,name='title1', artists=[dict(name='a1'),dict(name='a2')], track_number=2,disc_number=2), 120))
-    assertEq('(02:05)  title1 (a1) same lngth',
+    assertEq('(02:05)  (a1) title1 same lngth',
         getChoiceString(dict(duration_ms=125000,name='title1', artists=[dict(name='a1')], track_number=2,disc_number=2), 120))
-    assertEq('(02:09)  title1 (a1) lnger(9s)',
+    assertEq('(02:09)  (a1) title1 lnger(9s)',
         getChoiceString(dict(duration_ms=129000,name='title1', artists=[dict(name='a1')], track_number=2,disc_number=2), 120))
-    assertEq('(01:52)  title1 (a1) shrter(8s)',
+    assertEq('(01:52)  (a1) title1 shrter(8s)',
         getChoiceString(dict(duration_ms=112000,name='title1', artists=[dict(name='a1')], track_number=2,disc_number=2), 120))
     
     # test getStrRemoteAudio
-    assertEq('(00:00)  title1 (a1)', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, False, ''))
-    assertEq('(00:00) 01 title1 (a1)', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, True, ''))
-    assertEq('(00:00) 02 01 title1 (a1)', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), True, True, ''))
-    assertEq('(00:00)  title1 ', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, False, 'a1'))
+    assertEq('(00:00)  (a1) title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, False, ''))
+    assertEq('(00:00) 01 (a1) title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, True, ''))
+    assertEq('(00:00) 02 01 (a1) title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), True, True, ''))
+    assertEq('(00:00)   title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, False, 'a1'))
     
     
 def testsLinkSpotifyInteractive():
@@ -532,7 +532,7 @@ def testsMusicToUrlInteractive():
 if __name__=='__main__':
     testsEasyPythonMutagenLengthAndBitrate()
     testsEasyPythonMutagenMetadataTags()
-    testsOrganize()
+    testsCoordinate()
     testsCoordMusicUtil()
     testsLinkSpotify()
     if getInputBool('Run interactive tests?'):

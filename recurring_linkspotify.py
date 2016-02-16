@@ -76,7 +76,7 @@ def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknum
         return
         
     if not getSpotifyClientID():
-        trace('Connecting to Spotify has been disabled, provide a clientID in coordmusicuserconfig.py to enable.'
+        trace('Connecting to Spotify has been disabled, provide a clientID in coordmusicuserconfig.py to enable.')
         return
         
     trace('\n\n\n\nAssociate with Spotify, for directory\n'+fullpathdir+'\n\n')
@@ -232,7 +232,7 @@ def getChoiceString(track, localduration, artistExpected='', inclAlbum=False):
     return ret
 
 def linkspotifypertrack(market, fullpathdir, tag, parsed):
-    if tag.short.endswith('.url') or tag.getLink() and 'spotify:' in tag.getLink():
+    if tag.short.endswith('.url') or 'spotify:' in tag.getLink():
         return
     
     path = fullpathdir + '/' + tag.short
@@ -276,7 +276,7 @@ def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
         if not tag.short.endswith('.url'):
             tags.append(tag)
             parsedNames.append(parsed)
-            if 'spotify:track:' in (tag.getLink() or ''):
+            if 'spotify:track:' in tag.getLink():
                 if not getInputBool('this will overwrite existing spotify link for '+tag.short+', continue?'):
                     return
     
@@ -353,7 +353,7 @@ def isTagAcceptibleToBeMadeIntoShortcuts(fullpathdir, tag):
     return not tag.short.endswith('.url') and not tag.short.endswith('.flac') and \
         (tag.short.endswith('.mp3') or (tag.short.endswith('.m4a') and getFileBitrate(fullpathdir+'/'+tag.short) < 170)) and \
         not '.sv.' in tag.short and not '.movetosv.' in tag.short and not '.3.mp3' in tag.short and \
-        'spotify:track:' in (tag.getLink() or '')
+        'spotify:track:' in tag.getLink()
 
 def startSpotifyFromM4a(s):
     assert getFieldForFile(s, False) != None, 'unknown file type'

@@ -48,7 +48,7 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         return fieldname
     
     def getLink(self):
-        return self.get_or_default('%spotifylink%', None)
+        return self.get_or_default('%spotifylink%', '')
         
     def setLink(self, val):
         return self.set('%spotifylink%', val)

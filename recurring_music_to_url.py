@@ -8,7 +8,7 @@ def getPopularitiesList(fullpathdir, tags):
     mapUriToListIndex = dict()
     trackIds = []
     for i in range(len(tags)):
-        if tags[i].getLink() and 'spotify:track:' in tags[i].getLink():
+        if 'spotify:track:' in tags[i].getLink():
             trackIds.append(tags[i].getLink())
             mapUriToListIndex[unicode(tags[i].getLink())] = i
         
