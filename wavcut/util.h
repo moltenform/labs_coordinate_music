@@ -55,10 +55,13 @@ public:
 	}
 };
 
+void assertEqualImpl(int a, int b, const char* msg, int line, const char* file);
 
-void assertEqualImpl(int a, int b, const char* msg, int lineno, const char* file);
-#define assertEqual(a,b) assertEqualImpl((a), (b), null,__LINE__, __FILE__)
-#define assertTrue(b) assertEqualImpl(((b) ? 1 : 0), 1, "err "#b, __LINE__, __FILE__)
+#define assertEqual(a,b) \
+	assertEqualImpl((a), (b), null,__LINE__, __FILE__)
+
+#define assertTrue(b) \
+	assertEqualImpl(((b) ? 1 : 0), 1, "err "#b, __LINE__, __FILE__)
 
 #define return_err(err) do { return err; } while(false)
 typedef const char* errormsg;
@@ -69,6 +72,8 @@ bool fileExists(const char* path);
 bool getBoolFromUser(const char* prompt);
 uint64 getFileSize(const char* path);
 errormsg truncateFile(const char* path, int64 length);
+int fseek64(FILE *stream, int64 offset, int type);
+int64 ftell64(FILE *stream);
 std::vector<int64> parseLengthsFile(const char* filename, int sampleRate);
 const uint64 fourgb = 268435456ULL * 16ULL;
 

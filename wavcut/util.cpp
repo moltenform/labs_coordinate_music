@@ -32,12 +32,13 @@ bool getBoolFromUser(const char* prompt)
 	}
 }
 
-void assertEqualImpl(int a, int b, const char* msg, int lineno, const char* file)
+void assertEqualImpl(int a, int b, const char* msg, int line, const char* file)
 {
 	if (a != b)
 	{
 		std::ostringstream ss;
-		ss << "Assertion failure on line " << lineno << " of file " << file << " " << a << " != " << b;
+		ss << "Assertion failure on line " << line << 
+			" of file " << file << " " << a << " != " << b;
 		ss << (msg ? msg : "");
 		fprintf(stderr, "%s\nPress enter to continue...\n", ss.str().c_str());
 		std::cin.get();
@@ -91,7 +92,8 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 	std::string item;
 	while (std::getline(buffer, item, '\n'))
 	{
-		elems.push_back(item);
+		if (item.size() > 0)
+			elems.push_back(item);
 	}
 
 	if (elems.size() == 0)
@@ -107,7 +109,9 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 		std::vector<std::string> parts = splitString(elems[i], '|');
 		if (parts.size() != 2)
 		{
-			printf("Error: expected one line of text per cut point, every line in the form seconds|trackname but got\n%s", elems[i].c_str());
+			printf("Error: expected one line of text per cut point,"
+				"every line in the form seconds|trackname but got\n%s",
+				elems[i].c_str());
 			return std::vector<int64>();
 		}
 
@@ -124,7 +128,8 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 	return result;
 }
 
-#ifndef WIN32
+#ifndef _WIN32
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <time.h>
@@ -146,6 +151,16 @@ errormsg truncateFile(const char* path, int64 length)
 		return OK;
 	else
 		return "failed to truncate file.";
+}
+
+int fseek64(FILE *stream, int64 offset, int type)
+{
+	return fseeko(stream, offset, type);
+}
+
+int64 ftell64(FILE *stream)
+{
+	return ftello(stream);
 }
 
 #else
@@ -204,6 +219,16 @@ errormsg truncateFile(const char* path, int64 length)
 
 	CloseHandle(handle);
 	return OK;
+}
+
+int fseek64(FILE *stream, int64 offset, int type)
+{
+	return _fseeki64(stream, offset, type);
+}
+
+int64 ftell64(FILE *stream)
+{
+	return _ftelli64(stream);
 }
 
 #endif

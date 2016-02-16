@@ -6,7 +6,8 @@
 struct WavFileInfoT
 {
 	uint64 nRifflength, nExpectedSamples, nRawdatalength, nDataOffset;
-	uint32 nAudioformat, nChannels, nSampleRate, nByteRate, nBlockAlign, nBitsPerSample, nRiffParts;
+	uint32 nAudioformat, nChannels, nSampleRate, nByteRate;
+	uint32 nBlockAlign, nBitsPerSample, nRiffParts;
 	WavFileInfoT() { memset(this, 0, sizeof(*this)); }
 };
 
@@ -68,22 +69,22 @@ public:
 	{
 		close();
 	}
-	size_t fwrite(const void * ptr, size_t size, size_t count)
+	size_t write(const void * ptr, size_t size, size_t count)
 	{
 		flush();
 		return ::fwrite(ptr, size, count, _file);
 	}
-	int fseek64(int64 offset, int origin)
+	int seek64(int64 offset, int origin)
 	{
 		flush();
-		return ::_fseeki64(_file, offset, origin);
+		return fseek64(_file, offset, origin);
 	}
-	int64 ftell64()
+	int64 tell64()
 	{
 		flush();
-		return ::_ftelli64(_file);
+		return ftell64(_file);
 	}
-	int fputc(int character)
+	int putc(int character)
 	{
 		_buffer[_pos] = character;
 		_pos++;
@@ -129,21 +130,21 @@ public:
 	{
 		close();
 	}
-	size_t fwrite(const void * ptr, size_t size, size_t count)
+	size_t write(const void * ptr, size_t size, size_t count)
 	{
-		return ::fwrite(ptr, size, count, _file);
+		return fwrite(ptr, size, count, _file);
 	}
-	int fseek64(int64 offset, int origin)
+	int seek64(int64 offset, int origin)
 	{
-		return ::_fseeki64(_file, offset, origin);
+		return fseek64(_file, offset, origin);
 	}
-	int fputc(int character)
+	int putc(int character)
 	{
-		return ::fputc(character, _file);
+		return fputc(character, _file);
 	}
-	int64 ftell64()
+	int64 tell64()
 	{
-		return ::_ftelli64(_file);
+		return ftell64(_file);
 	}
 	void close()
 	{
@@ -161,9 +162,10 @@ public:
 	}
 };
 
-errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength);
-errormsg writeWavHeader(FILE * f, int nLenInSamples, int bitsPerSample, int nSampleRate);
+errormsg readWavFileHeader(
+	FILE* f, WavFileInfoT* info, uint64 addToLength);
 
-
+errormsg writeWavHeader(
+	FILE * f, int nLenInSamples, int bitsPerSample, int nSampleRate);
 
 #endif /* WAV_H */

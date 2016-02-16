@@ -21,6 +21,7 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	uint32 nByteRate;
 	uint16 nBlockAlignUnused;
 	uint16 nBitsPerSample;
+	uint16 nAudioformat;
 
 	memset(info, 0, sizeof(*info));
 	if (!readFourChars(f, 'R', 'I', 'F', 'F'))
@@ -38,7 +39,8 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	if (size != 16)
 		return_err("Size of fmt header != 16.");
 
-	uint16 nAudioformat; ReadUint16(f, &nAudioformat); // audio format. 1 refers to uncompressed PCM
+	// audio format. 1 refers to uncompressed PCM
+	ReadUint16(f, &nAudioformat);
 	info->nAudioformat = nAudioformat;
 	if (nAudioformat != 1)
 		return_err("Only audio format 1 is supported");
@@ -56,10 +58,10 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	info->nBitsPerSample = nBitsPerSample;
 
 	if (nChannels != 1 && nChannels != 2)
-		return_err("Unsupported number of channels. Currently only support 1 or 2.");
+		return_err("Currently only supports # of channels = 1 or 2.");
 
 	if (nBitsPerSample != 8 && nBitsPerSample != 16)
-		return_err("Unsupported bitrate, Currently supports 8bit and 16 bit audio.");
+		return_err("Currently only supports 8bit or 16 bit audio.");
 
 	uint32 dataSize = 0;
 	const int maxTries = 100;
@@ -81,7 +83,7 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 		else
 		{
 			// look ahead by dataSize bytes, skipping over the current chunk
-			int seekres = _fseeki64(f, dataSize, SEEK_CUR);
+			int seekres = fseek64(f, dataSize, SEEK_CUR);
 			if (seekres != 0) return "seek failed";
 		}
 	}
@@ -89,9 +91,10 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 		return_err("Could not find data tag");
 
 	info->nRawdatalength = dataSize + addToLength;
-	info->nDataOffset = _ftelli64(f);
+	info->nDataOffset = ftell64(f);
 
-	uint64 nSamples = ((info->nRawdatalength) / ((info->nBitsPerSample / 8) * info->nChannels));
+	uint64 nSamples = ((info->nRawdatalength) /
+		((info->nBitsPerSample / 8) * info->nChannels));
 	info->nExpectedSamples = nSamples;
 
 	if (nBitsPerSample != 16)
@@ -103,23 +106,25 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	return OK;
 }
 
-errormsg writeWavHeader(FILE * f, int nLenInSamples, int bitsPerSample, int nSampleRate)
+errormsg writeWavHeader(
+	FILE * f, int nLenInSamples, int bitsPerSample, int nSampleRate)
 {
 	if (bitsPerSample != 16)
-		return_err("NotSupported:Only 8 bit and 16 bit supported.");
+		return_err("NotSupported: Only 8 bit and 16 bit supported.");
 
 	if (nLenInSamples == 0)
-		return_err("Error:Tried to save empty wave file.");
+		return_err("Error: Tried to save empty wave file.");
 
 	int nChannels = 2;
-	uint32 thedatasize = (uint32)(nLenInSamples * (bitsPerSample / 8) * nChannels);
-	uint32 thefilesize_minus8 = 4 + (8 + 16) + 8 + thedatasize; // header + fmt chunk + data chunk
+	uint32 datasize = (uint32)(nLenInSamples * (bitsPerSample / 8) * nChannels);
+	uint32 filesize_minus8 = 4 /*header*/ + (8 + 16) /*fmt chunk*/ + 
+		8 /*data chunk*/ + datasize;
 
 	fputc('R', f);
 	fputc('I', f);
 	fputc('F', f);
 	fputc('F', f);
-	fwrite(&thefilesize_minus8, sizeof(uint32), 1, f); // size of data + headers
+	fwrite(&filesize_minus8, sizeof(uint32), 1, f);
 
 	fputc('W', f);
 	fputc('A', f);
@@ -129,22 +134,29 @@ errormsg writeWavHeader(FILE * f, int nLenInSamples, int bitsPerSample, int nSam
 	fputc('m', f);
 	fputc('t', f);
 	fputc(' ', f);
-	uint32 tmpuint = 16; fwrite(&tmpuint, sizeof(uint32), 1, f); //size is 16 bytes
-	uint16 tmpushort = 1; fwrite(&tmpushort, sizeof(uint16), 1, f); //format 1
-	tmpushort = (uint16)nChannels; fwrite(&tmpushort, sizeof(uint16), 1, f); //nChannels
-	tmpuint = (uint32)nSampleRate; fwrite(&tmpuint, sizeof(uint32), 1, f); //SampleRate
+	uint32 tmpuint = 16;
+	fwrite(&tmpuint, sizeof(uint32), 1, f); //size is 16 bytes
+	uint16 tmpushort = 1;
+	fwrite(&tmpushort, sizeof(uint16), 1, f); //format 1
+	tmpushort = (uint16)nChannels;
+	fwrite(&tmpushort, sizeof(uint16), 1, f);
+	tmpuint = (uint32)nSampleRate;
+	fwrite(&tmpuint, sizeof(uint32), 1, f);
 
-	uint32 nByteRate = (uint32)((nChannels * bitsPerSample * nSampleRate) / 8); //ByteRate
+	uint32 nByteRate = (uint32)
+		((nChannels * bitsPerSample * nSampleRate) / 8);
 	fwrite(&nByteRate, sizeof(uint32), 1, f);
 
-	uint16 blockAlign = (uint16)((nChannels * bitsPerSample) / 8); //BlockAlign
+	uint16 blockAlign = (uint16)((nChannels * bitsPerSample) / 8);
 	fwrite(&blockAlign, sizeof(uint16), 1, f);
 
-	tmpushort = (uint16)bitsPerSample; fwrite(&tmpushort, sizeof(uint16), 1, f); //BitsPerSample
+	tmpushort = (uint16)bitsPerSample;
+	fwrite(&tmpushort, sizeof(uint16), 1, f);
+
 	fputc('d', f);
 	fputc('a', f);
 	fputc('t', f);
 	fputc('a', f);
-	fwrite(&thedatasize, sizeof(uint32), 1, f); // Data size
+	fwrite(&datasize, sizeof(uint32), 1, f);
 	return OK;
 }

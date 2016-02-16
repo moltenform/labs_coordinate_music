@@ -10,7 +10,9 @@ std::string getOutputFileName(const char* prefix, int n)
 	return ret;
 }
 
-errormsg startOutputFile(FileWriteWrapper** f, int whichOutputFile, const char* prefix, const WavFileInfoT* info, int64* nLengthOfHeader)
+errormsg startOutputFile(
+	FileWriteWrapper** f, int whichOutputFile, const char* prefix,
+	const WavFileInfoT* info, int64* nLengthOfHeader)
 {
 	assertTrue(*f == null);
 	std::string outputname = getOutputFileName(prefix, whichOutputFile);
@@ -21,24 +23,29 @@ errormsg startOutputFile(FileWriteWrapper** f, int whichOutputFile, const char* 
 	if (!ftemp)
 		return_err("could not create output file");
 
-	errormsg msg = writeWavHeader(ftemp, 1 /*length in samples, to be corrected afterwards*/, info->nBitsPerSample, info->nSampleRate);
+	errormsg msg = writeWavHeader(
+		ftemp, 1 /*length in samples, to be corrected afterwards*/,
+		info->nBitsPerSample, info->nSampleRate);
 	if (msg)
 		return msg;
 
-	*nLengthOfHeader = ::_ftelli64(ftemp);
+	*nLengthOfHeader = ftell64(ftemp);
 	fclose(ftemp);
 	*f = new FileWriteWrapper(outputname.c_str(), "rb+");
-	int seekres = (*f)->fseek64(*nLengthOfHeader, SEEK_SET);
+	int seekres = (*f)->seek64(*nLengthOfHeader, SEEK_SET);
 	if (seekres != 0)
 		return_err("seek failed");
 
 	return OK;
 }
 
-errormsg finishOutputFileAndStartNext(FileWriteWrapper** f, int whichOutputFile, const char* prefix, const WavFileInfoT* info, int64 lengthOfHeader, bool fStartNext, bool isMark)
+errormsg finishOutputFileAndStartNext(
+	FileWriteWrapper** f, int whichOutputFile, const char* prefix,
+	const WavFileInfoT* info, int64 lengthOfHeader,
+	bool fStartNext, bool isMark)
 {
 	// which sample are we at?
-	int64 whichByte = (*f)->ftell64() - lengthOfHeader;
+	int64 whichByte = (*f)->tell64() - lengthOfHeader;
 	assertTrue(whichByte % 4 == 0);
 	if (whichByte >= fourgb)
 	{
@@ -51,6 +58,7 @@ errormsg finishOutputFileAndStartNext(FileWriteWrapper** f, int whichOutputFile,
 	{
 		lengthInSamples = std::max(2, lengthInSamples - 133400);
 	}
+
 	printf("\n%d) Writing a track with length ", whichOutputFile - 1);
 	printADuration(lengthInSamples, info->nSampleRate);
 
@@ -58,11 +66,12 @@ errormsg finishOutputFileAndStartNext(FileWriteWrapper** f, int whichOutputFile,
 	FILE* ftemp = (*f)->detach();
 	*f = null;
 	assertTrue(ftemp != null);
-	if (_fseeki64(ftemp, 0, SEEK_SET) != 0)
+	if (fseek64(ftemp, 0, SEEK_SET) != 0)
 		return_err("seek failed");
 
 	// write the corrected header
-	errormsg msg = writeWavHeader(ftemp, lengthInSamples, info->nBitsPerSample, info->nSampleRate);
+	errormsg msg = writeWavHeader(
+		ftemp, lengthInSamples, info->nBitsPerSample, info->nSampleRate);
 	fclose(ftemp);
 	ftemp = null;
 	if (msg)
@@ -70,7 +79,8 @@ errormsg finishOutputFileAndStartNext(FileWriteWrapper** f, int whichOutputFile,
 
 	// then go and truncate what we didn't want.
 	std::string filename = getOutputFileName(prefix, whichOutputFile - 1);
-	errormsg err = truncateFile(filename.c_str(), lengthOfHeader + 4 * lengthInSamples);
+	errormsg err = truncateFile(
+		filename.c_str(), lengthOfHeader + 4 * lengthInSamples);
 	if (err)
 		printf("\nNon-fatal Warning: truncate failed with:\n%s\n.", err);
 
@@ -81,20 +91,27 @@ errormsg finishOutputFileAndStartNext(FileWriteWrapper** f, int whichOutputFile,
 		return OK;
 }
 
-void debugWriteTimesToDisk(const char* filename, int64* times, int timesLen)
+void debugWriteTimesToDisk(
+	const char* filename, int64* times, int timesLen, bool diffs)
 {
 #ifdef _DEBUG
-	FILE* fDebug = fopen(filename, "w");
-	double pos = 0;
+	FILE* f = fopen(filename, "w");
 	for (int i = 0; i < timesLen; i++)
 	{
-		pos += times[i] / 44100.0;
-		fprintf(fDebug, "%f\n", pos);
-	} fclose(fDebug);
+		int64 diff = (times[i] - (i == 0 ? 0 : times[i - 1]));
+		if (diffs)
+			fprintf(f, "%f|%d\n", diff / 44100.0, i);
+		else
+			fprintf(f, "%f|%d\n", times[i] / 44100.0, i);
+	}
+	fclose(f);
 #endif
 }
 
-errormsg adjustGivenTimesBasedOnObservedSilence(FILE* f, const WavFileInfoT* info, int64* times, int timesLen, int64 startingpoint, SimpleBuffer& trackNeedsFadeIn, SimpleBuffer& trackNeedsFadeOut)
+errormsg adjustGivenTimesBasedOnObservedSilence(
+	FILE* f, const WavFileInfoT* info, 
+	int64* times, int timesLen, int64 startingpoint, 
+	SimpleBuffer& trackNeedsFadeIn, SimpleBuffer& trackNeedsFadeOut)
 {
 	const uint64 bytesPerSample = 4;
 	SimpleBuffer bufferWindow(4 * bytesPerSample * 44100);
@@ -104,23 +121,37 @@ errormsg adjustGivenTimesBasedOnObservedSilence(FILE* f, const WavFileInfoT* inf
 		if (times[i] / 44100.0 <= 9)
 			return_err("we don't support tracks shorter than 9seconds");
 
-		// go to the approximate end of the song. take a 4 second window and look for longest silence.
+		// go to the approximate end of the song.
+		// take a 4 second window and look for longest silence.
 		int lookBefore = 2;
 		int64 timeprev = i == 0 ? 0 : times[i - 1];
-		if (startingpoint + (times[i] + timeprev)*bytesPerSample - lookBefore * 44100 * bytesPerSample >= info->nExpectedSamples * bytesPerSample ||
-			startingpoint + (times[i] + timeprev)*bytesPerSample - lookBefore * 44100 * bytesPerSample + bufferWindow.Size() >= info->nExpectedSamples * bytesPerSample)
-			return_err("tried to read past end of file??");
-		int64 positionToSeekToNotCountingStartingPoint = (times[i] + timeprev)*bytesPerSample - lookBefore * 44100 * bytesPerSample;
-		int seekres = _fseeki64(f, startingpoint + positionToSeekToNotCountingStartingPoint, SEEK_SET);
-		if (seekres != 0) return_err("seek failed");
+		uint64 firstPoint = startingpoint + 
+			(times[i] + timeprev) * bytesPerSample -
+			lookBefore * 44100 * bytesPerSample;
+
+		if (firstPoint >= info->nExpectedSamples * bytesPerSample ||
+			firstPoint + bufferWindow.Size() >= 
+			info->nExpectedSamples * bytesPerSample)
+			return_err("tried to read past end of file?");
+		int64 positionToSeekToNotCountingStartingPoint = 
+			(times[i] + timeprev)*bytesPerSample -
+			lookBefore * 44100 * bytesPerSample;
+		int seekres = fseek64(
+			f,
+			startingpoint + positionToSeekToNotCountingStartingPoint,
+			SEEK_SET);
+		if (seekres != 0)
+			return_err("seek failed");
 
 		// read from disk
-		size_t amountRead = fread(bufferWindow.Get(), sizeof(byte), bufferWindow.Size(), f);
+		size_t amountRead = fread(
+			bufferWindow.Get(), sizeof(byte), bufferWindow.Size(), f);
 		if (amountRead != bufferWindow.Size())
 			return_err("did not read full buffer");
 
 		// look for silence in the next 4 seconds
-		int longestPeriodOfSilenceStart = 0, longestPeriodOfSilenceLength = 0, currentStart = 0, currentElapsedSilence = 0;
+		int longestPeriodOfSilenceStart = 0, longestPeriodOfSilenceLength = 0;
+		int currentStart = 0, currentElapsedSilence = 0;
 		bool isSilentPrev = false;
 		byte* buffer = bufferWindow.Get();
 		for (size_t j = 0; j < bufferWindow.Size() / 4; j++)
@@ -165,36 +196,54 @@ errormsg adjustGivenTimesBasedOnObservedSilence(FILE* f, const WavFileInfoT* inf
 
 		if (longestPeriodOfSilenceLength <= 50)
 		{
-			printf("\ndid not find very much silence in track %d, only %d. Will apply auto-fade", i + 1, longestPeriodOfSilenceLength);
-			trackNeedsFadeIn.Get()[i] = 1;
-			if (i>0)
-				trackNeedsFadeOut.Get()[i - 1] = 1;
+			printf("\ndid not find very much silence in track %d, only %d. "
+				"Will apply auto-fade", i + 1, longestPeriodOfSilenceLength);
+			trackNeedsFadeOut.Get()[i] = 1;
+			trackNeedsFadeIn.Get()[i+1] = 1;
 		}
-
-		// return the best spot (has the longest silence).
-		int64 relativespot = longestPeriodOfSilenceStart + longestPeriodOfSilenceLength - std::min(longestPeriodOfSilenceLength, 1400);
-		int64 nextBytePos = positionToSeekToNotCountingStartingPoint + relativespot*bytesPerSample; // relativespot = longestPeriodOfSilenceStart + longestPeriodOfSilenceLength / 2;
-		times[i] = nextBytePos / bytesPerSample;
+		
+		if (longestPeriodOfSilenceLength <= 8)
+		{
+			// silence found is too short to really be the end of the song.
+			// ignore and use provided length instead.
+			times[i] = times[i] + timeprev;
+		}
+		else
+		{
+			// adjust the time to the best spot (has the longest silence).
+			int64 relativespot = 
+				longestPeriodOfSilenceStart + longestPeriodOfSilenceLength
+				- std::min(longestPeriodOfSilenceLength, 1400);
+			int64 nextBytePos = positionToSeekToNotCountingStartingPoint +
+				relativespot*bytesPerSample; 
+			// relativespot = longestPeriodOfSilenceStart + 
+			//	longestPeriodOfSilenceLength / 2;
+			times[i] = nextBytePos / bytesPerSample;
+		}
 	}
 
 	return OK;
 }
 
-
-errormsg runWavCutUsingProvidedTimes(FILE* f, const WavFileInfoT* info, const char* prefix, int64* times, int timesLen)
+errormsg runWavCutUsingProvidedTimes(
+	FILE* f, const WavFileInfoT* info, const char* prefix,
+	int64* times, int timesLen)
 {
-	debugWriteTimesToDisk("./dataLengthUnadjusted.txt", times, timesLen);
+	debugWriteTimesToDisk("./lengthsUnadjusted.txt", times, timesLen, false);
 
-	// in a 4 second window, use observed silence to see where the end actually is. (or if no silence, we need fade-out).
-	int64 startingpoint = _ftelli64(f);
+	// in a 4 second window, use observed silence to see where the end really is.
+	// (or if no silence, enable fade-out).
+	int64 startingpoint = ftell64(f);
 	const uint64 bytesPerSample = 4;
-	SimpleBuffer trackNeedsFadeIn(timesLen);
-	SimpleBuffer trackNeedsFadeOut(timesLen); 
-	errormsg err = adjustGivenTimesBasedOnObservedSilence(f, info, times, timesLen, startingpoint, trackNeedsFadeIn, trackNeedsFadeOut);
+	SimpleBuffer trackNeedsFadeIn(timesLen+1);
+	SimpleBuffer trackNeedsFadeOut(timesLen+1); 
+	errormsg err = adjustGivenTimesBasedOnObservedSilence(
+		f, info, times, timesLen, startingpoint, 
+		trackNeedsFadeIn, trackNeedsFadeOut);
 	if (err)
 		return err;
 
-	debugWriteTimesToDisk("./dataLengthAdjusted.txt", times, timesLen);
+	debugWriteTimesToDisk("./lengthsAdjusted.txt", times, timesLen, true);
 	
 	// write output file.
 	SimpleBuffer bufferToWrite(1 * 1024 * 1024);
@@ -208,32 +257,49 @@ errormsg runWavCutUsingProvidedTimes(FILE* f, const WavFileInfoT* info, const ch
 		int64 endpos = i == timesLen ? info->nExpectedSamples : times[i];
 		uint64 lenInSamples = bytesPerSample*(endpos - startpos);
 		if (lenInSamples >= fourgb)
+		{
+			getBoolFromUser("h");
 			return_err("track is too big for wave format");
+		}
 
 		FILE* fout = fopen(filename.c_str(), "wb");
 		if (!fout)
 			return_err("could not create output file");
 
-		errormsg msg = writeWavHeader(fout, (int)(lenInSamples), info->nBitsPerSample, info->nSampleRate);
+		errormsg msg = writeWavHeader(
+			fout, (int)(lenInSamples),
+			info->nBitsPerSample, info->nSampleRate);
 		if (msg)
 			return msg;
 
-		int64 startingPointOutput = _ftelli64(fout);
-		int seekres = _fseeki64(f, startingpoint + startpos * bytesPerSample, SEEK_SET);
+		int64 startingPointOutput = ftell64(fout);
+		int seekres = fseek64(
+			f, startingpoint + startpos * bytesPerSample, SEEK_SET);
 		if (seekres != 0)
 			return_err("seek failed");
 
 		uint64 written = 0;
 		while (written < lenInSamples)
 		{
-			size_t nGotThisIteration = fread(bufferToWrite.Get(), sizeof(byte), std::min((size_t)(lenInSamples - written), bufferToWrite.Size()), f);
+			size_t nGotThisIteration = fread(
+				bufferToWrite.Get(), sizeof(byte),
+				std::min(
+					(size_t)(lenInSamples - written),
+					bufferToWrite.Size()),
+				f);
 			if (!nGotThisIteration)
 				return_err("error: read no data");
 
+			// when applying the fade-out, for simplicity, the audio is written
+			// in one-mb chunks. it's possible that the fade-out falls near the
+			// boundary of one of these chunks, in which case we succeed 
+			// and just have a quicker fade-out, see the std::min below.
 			byte* ptr = bufferToWrite.Get();
-			if (i>0 && trackNeedsFadeIn.Get()[i - 1] && (written == 0))
+			if (trackNeedsFadeIn.Get()[i] && (written == 0))
 			{
-				size_t fadeLength = std::min((size_t)(.6 * 44100), nGotThisIteration / 4);
+				// fade in the first part of this buffer.
+				size_t fadeLength = std::min(
+					(size_t)(.6 * 44100), nGotThisIteration / 4);
 				printf("\nin file %s writing fadein", filename.c_str());
 				for (size_t j = 0; j < fadeLength; j++)
 				{
@@ -253,14 +319,18 @@ errormsg runWavCutUsingProvidedTimes(FILE* f, const WavFileInfoT* info, const ch
 					ptr[j * 4 + 3] = shNewVal >> 8; }
 				}
 			}
-			else if (i>0 && trackNeedsFadeOut.Get()[i - 1] && (written + nGotThisIteration >= lenInSamples))
+			else if (trackNeedsFadeOut.Get()[i] &&
+				(written + nGotThisIteration >= lenInSamples))
 			{
 				// fade out the last part of this buffer.
-				size_t fadeLength = std::min((size_t)(.6 * 44100), nGotThisIteration / 4);
-				printf("\nin file %s writing fadeout len=%d", filename.c_str(), fadeLength);
+				size_t fadeLength = std::min(
+					(size_t)(.6 * 44100), nGotThisIteration / 4);
+				printf("\nin %s writing fadeout len=%d",
+					filename.c_str(), fadeLength);
 				for (size_t jcounter = 0; jcounter < fadeLength; jcounter++)
 				{
-					double factor = (fadeLength - jcounter) / ((double)fadeLength);
+					double factor = (fadeLength - jcounter) /
+						((double)fadeLength);
 					size_t j = jcounter + nGotThisIteration / 4 - fadeLength;
 					{short sh1 = (short)ptr[j * 4]; // intel byte order
 					short sh2 = (short)(((short)ptr[j * 4 + 1]) << 8);
@@ -277,6 +347,7 @@ errormsg runWavCutUsingProvidedTimes(FILE* f, const WavFileInfoT* info, const ch
 					ptr[j * 4 + 3] = shNewVal >> 8; }
 				}
 			}
+
 			fwrite(bufferToWrite.Get(), nGotThisIteration, sizeof(byte), fout);
 			written += nGotThisIteration;
 		}
@@ -288,12 +359,14 @@ errormsg runWavCutUsingProvidedTimes(FILE* f, const WavFileInfoT* info, const ch
 }
 
 const short amplitudeThreshold = (short)(0.09*(SHRT_MAX - 1));
-errormsg runWavCutUsingAudioMark(FILE* f, const WavFileInfoT* info, const char* prefix)
+errormsg runWavCutUsingAudioMark(
+	FILE* f, const WavFileInfoT* info, const char* prefix)
 {
 	int whichOutputFile = 1;
 	FileWriteWrapper* outputFile = 0;
 	int64 lengthOfHeader = 0;
-	errormsg err = startOutputFile(&outputFile, whichOutputFile, prefix, info, &lengthOfHeader);
+	errormsg err = startOutputFile(
+		&outputFile, whichOutputFile, prefix, info, &lengthOfHeader);
 	if (err)
 		return err;
 
@@ -302,13 +375,13 @@ errormsg runWavCutUsingAudioMark(FILE* f, const WavFileInfoT* info, const char* 
 	{
 		int b = 0;
 		b = fgetc(f);
-		outputFile->fputc(b);
+		outputFile->putc(b);
 		b = fgetc(f);
-		outputFile->fputc(b);
+		outputFile->putc(b);
 		int b1 = fgetc(f);
-		outputFile->fputc(b1);
+		outputFile->putc(b1);
 		int b2 = fgetc(f);
-		outputFile->fputc(b2);
+		outputFile->putc(b2);
 
 		// we only need to look at one of the channels
 		short sh1 = (short)b1; // intel byte order
@@ -323,14 +396,17 @@ errormsg runWavCutUsingAudioMark(FILE* f, const WavFileInfoT* info, const char* 
 			if (nConsectiveWellAboveZero > 47 * 1000)
 			{
 				++whichOutputFile;
-				err = finishOutputFileAndStartNext(&outputFile, whichOutputFile, prefix, info, lengthOfHeader, true, true /*fUseMark*/);
+				err = finishOutputFileAndStartNext(
+					&outputFile, whichOutputFile, prefix, info,
+					lengthOfHeader, true, true /*fUseMark*/);
 				if (err)
 					return err;
 
 				// seek forward past the silence
 				int64 nSamplesSeekForward = 44 * 1000;
 				i += nSamplesSeekForward;
-				int seekres = _fseeki64(f, nSamplesSeekForward * 4/*bytes per sample*/, SEEK_CUR);
+				int seekres = fseek64(
+					f, nSamplesSeekForward * 4/*bytes per sample*/, SEEK_CUR);
 				if (seekres != 0)
 					return_err("seek failed");
 
@@ -344,7 +420,9 @@ errormsg runWavCutUsingAudioMark(FILE* f, const WavFileInfoT* info, const char* 
 	}
 
 	++whichOutputFile;
-	err = finishOutputFileAndStartNext(&outputFile, whichOutputFile, prefix, info, lengthOfHeader, false, true /*fUseMark*/);
+	err = finishOutputFileAndStartNext(
+		&outputFile, whichOutputFile, prefix, info,
+		lengthOfHeader, false, true /*fUseMark*/);
 	if (err)
 		return err;
 
@@ -352,12 +430,14 @@ errormsg runWavCutUsingAudioMark(FILE* f, const WavFileInfoT* info, const char* 
 }
 
 
-errormsg runWavCutUsingAutoDetectSilence(FILE* f, const WavFileInfoT* info, const char* prefix)
+errormsg runWavCutUsingAutoDetectSilence(
+	FILE* f, const WavFileInfoT* info, const char* prefix)
 {
 	int whichOutputFile = 1;
 	FileWriteWrapper* outputFile = 0;
 	int64 lengthOfHeader = 0;
-	errormsg err = startOutputFile(&outputFile, whichOutputFile, prefix, info, &lengthOfHeader);
+	errormsg err = startOutputFile(
+		&outputFile, whichOutputFile, prefix, info, &lengthOfHeader);
 	if (err)
 		return err;
 
@@ -368,13 +448,13 @@ errormsg runWavCutUsingAutoDetectSilence(FILE* f, const WavFileInfoT* info, cons
 	{
 		int b = 0;
 		b = fgetc(f);
-		outputFile->fputc(b);
+		outputFile->putc(b);
 		b = fgetc(f);
-		outputFile->fputc(b);
+		outputFile->putc(b);
 		int b1 = fgetc(f);
-		outputFile->fputc(b1);
+		outputFile->putc(b1);
 		int b2 = fgetc(f);
-		outputFile->fputc(b2);
+		outputFile->putc(b2);
 
 		// 8 seconds is shortest song length
 		if (i - nFileWrittenAt < 44100 * 8)
@@ -396,13 +476,16 @@ errormsg runWavCutUsingAutoDetectSilence(FILE* f, const WavFileInfoT* info, cons
 
 				// first, write the track we came up with
 				++whichOutputFile;
-				err = finishOutputFileAndStartNext(&outputFile, whichOutputFile, prefix, info, lengthOfHeader, true, false /*fUseMark*/);
+				err = finishOutputFileAndStartNext(
+					&outputFile, whichOutputFile, prefix, info, 
+					lengthOfHeader, true, false /*fUseMark*/);
 				if (err)
 					return err;
 
 				// now, skip backwards a bit
 				int64 newPoint = std::max((uint64)0, i - 13550 /*0.03s*/);
-				int seekres = _fseeki64(f, (newPoint - i) * 4/*bytes per sample*/, SEEK_CUR);
+				int seekres = fseek64(
+					f, (newPoint - i) * 4/*bytes per sample*/, SEEK_CUR);
 				if (seekres != 0) return_err("seek failed");
 				i = newPoint;
 				nFileWrittenAt = i;
@@ -415,7 +498,9 @@ errormsg runWavCutUsingAutoDetectSilence(FILE* f, const WavFileInfoT* info, cons
 	}
 
 	++whichOutputFile;
-	err = finishOutputFileAndStartNext(&outputFile, whichOutputFile, prefix, info, lengthOfHeader, false, false /*fUseMark*/);
+	err = finishOutputFileAndStartNext(
+		&outputFile, whichOutputFile, prefix, info, 
+		lengthOfHeader, false, false /*fUseMark*/);
 	if (err)
 		return err;
 
@@ -435,10 +520,12 @@ bool checkForNameConflict(const char* prefix)
 
 int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 {
-	if (!stringEndsWith(path, ".wav") && !getBoolFromUser("expected a .wav file. continue?"))
+	if (!stringEndsWith(path, ".wav") && 
+		!getBoolFromUser("expected a .wav file. continue?"))
 		return 1;
 
-	if (pathLengthsFile && !stringEndsWith(pathLengthsFile, ".txt") && !getBoolFromUser("expected a .txt file. continue?"))
+	if (pathLengthsFile && !stringEndsWith(pathLengthsFile, ".txt") &&
+		!getBoolFromUser("expected a .txt file. continue?"))
 		return 1;
 
 	uint64 size = getFileSize(path);
@@ -446,7 +533,8 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 	uint64 addToLength = 0;
 	if (parts > 0)
 	{
-		printf("file has %d 4gb sections, should we read the entire file? ", (int)parts);
+		printf("file has %d 4gb sections, should we read the entire file? ",
+			(int)parts);
 		if (getBoolFromUser(""))
 		{
 			addToLength = fourgb * parts;
@@ -477,7 +565,8 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 	char prefix[] = { (char)nPrefix, 0 };
 	if (checkForNameConflict(prefix))
 	{
-		printf("\nLikely name conflict, please move all out_01.wav and out_02.wav files so that they aren't overwritten.");
+		printf("\nLikely name conflict, please move all out_01.wav "
+			"and out_02.wav files so that they aren't overwritten.");
 		return 1;
 	}
 
@@ -488,11 +577,13 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 		if (!lengths.size())
 			return 1;
 
-		msg = runWavCutUsingProvidedTimes(f, &info, prefix, &lengths[0], lengths.size());
+		msg = runWavCutUsingProvidedTimes(
+			f, &info, prefix, &lengths[0], lengths.size());
 	}
 	else
 	{
-		bool fUseMark = getBoolFromUser(" Use audio mark (y), or look for silence (n)?");
+		bool fUseMark = getBoolFromUser(
+			" Use audio mark (y), or look for silence (n)?");
 		if (!fUseMark)
 			msg = runWavCutUsingAutoDetectSilence(f, &info, prefix);
 		else
