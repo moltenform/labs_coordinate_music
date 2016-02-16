@@ -27,7 +27,7 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	if (!readFourChars(f, 'R', 'I', 'F', 'F'))
 		return_err("No RIFF tag, probably invalid wav file.");
 
-	ReadUint32(f, &length32bit); // (length of file in bytes) - 8
+	readUint32(f, &length32bit); // (length of file in bytes) - 8
 	info->nRifflength = length32bit;
 	if (!readFourChars(f, 'W', 'A', 'V', 'E'))
 		return_err("No WAVE tag, probably invalid wav file.");
@@ -35,21 +35,21 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	if (!readFourChars(f, 'f', 'm', 't', ' '))
 		return_err("No fmt  tag.");
 
-	ReadUint32(f, &size); // header size
+	readUint32(f, &size); // header size
 	if (size != 16)
 		return_err("Size of fmt header != 16.");
 
 	// audio format. 1 refers to uncompressed PCM
-	ReadUint16(f, &nAudioformat);
+	readUint16(f, &nAudioformat);
 	info->nAudioformat = nAudioformat;
 	if (nAudioformat != 1)
 		return_err("Only audio format 1 is supported");
 
-	ReadUint16(f, &nChannels);
-	ReadUint32(f, &nSampleRate);
-	ReadUint32(f, &nByteRate); 
-	ReadUint16(f, &nBlockAlignUnused);
-	ReadUint16(f, &nBitsPerSample); 
+	readUint16(f, &nChannels);
+	readUint32(f, &nSampleRate);
+	readUint32(f, &nByteRate); 
+	readUint16(f, &nBlockAlignUnused);
+	readUint16(f, &nBitsPerSample); 
 	
 	info->nChannels = nChannels;
 	info->nSampleRate = nSampleRate;
@@ -71,7 +71,7 @@ errormsg readWavFileHeader(FILE* f, WavFileInfoT* info, uint64 addToLength)
 	{
 		info->nRiffParts++;
 		bool rightTag = readFourChars(f, 'd', 'a', 't', 'a');
-		ReadUint32(f, &dataSize);
+		readUint32(f, &dataSize);
 		if (!rightTag && dataSize > INT_MAX)
 			return_err("Data size too large.");
 
@@ -116,7 +116,7 @@ errormsg writeWavHeader(
 		return_err("Error: Tried to save empty wave file.");
 
 	int nChannels = 2;
-	uint32 datasize = (uint32)(nLenInSamples * (bitsPerSample / 8) * nChannels);
+	uint32 datasize = (nLenInSamples * (bitsPerSample / 8) * nChannels);
 	uint32 filesize_minus8 = 4 /*header*/ + (8 + 16) /*fmt chunk*/ + 
 		8 /*data chunk*/ + datasize;
 
@@ -143,7 +143,7 @@ errormsg writeWavHeader(
 	tmpuint = (uint32)nSampleRate;
 	fwrite(&tmpuint, sizeof(uint32), 1, f);
 
-	uint32 nByteRate = (uint32)
+	uint32 nByteRate =
 		((nChannels * bitsPerSample * nSampleRate) / 8);
 	fwrite(&nByteRate, sizeof(uint32), 1, f);
 

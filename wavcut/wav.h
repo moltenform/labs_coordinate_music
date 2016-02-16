@@ -28,14 +28,18 @@ inline void WavFileInfoTPrint(const WavFileInfoT& s)
 	printf("%s ", ss.str().c_str());
 }
 
-inline void ReadUint32(FILE* f, uint32 *dest)
+inline void readUint32(FILE* f, uint32 *dest)
 {
-	fread(dest, sizeof(uint32), 1, f);
+	*dest = 0;
+	size_t read = fread(dest, sizeof(uint32), 1, f);
+	assertTrue(read == 1);
 }
 
-inline void ReadUint16(FILE* f, uint16 *dest)
+inline void readUint16(FILE* f, uint16 *dest)
 {
-	fread(dest, sizeof(uint16), 1, f);
+	*dest = 0;
+	size_t read = fread(dest, sizeof(uint16), 1, f);
+	assertTrue(read == 1);
 }
 
 inline void printADuration(uint64 nSamples, uint64 nSampleRate)
@@ -48,12 +52,12 @@ inline void printADuration(uint64 nSamples, uint64 nSampleRate)
 class FileWriteWrapper
 {
 	FILE* _file;
-	const size_t bufsize = 1024 * 1024 * 16;
-	size_t _pos;
+	const uint32 bufsize = 1024 * 1024 * 16;
+	uint32 _pos;
 	byte* _buffer;
 	void flush()
 	{
-		::fwrite(_buffer, 1, _pos, _file);
+		fwrite(_buffer, 1, _pos, _file);
 		_pos = 0;
 	}
 
@@ -69,10 +73,10 @@ public:
 	{
 		close();
 	}
-	size_t write(const void * ptr, size_t size, size_t count)
+	uint32 write(const void * ptr, uint32 size, uint32 count)
 	{
 		flush();
-		return ::fwrite(ptr, size, count, _file);
+		return size_t_to32(fwrite(ptr, size, count, _file));
 	}
 	int seek64(int64 offset, int origin)
 	{
@@ -84,7 +88,7 @@ public:
 		flush();
 		return ftell64(_file);
 	}
-	int putc(int character)
+	int putchar(int character)
 	{
 		_buffer[_pos] = character;
 		_pos++;
@@ -130,15 +134,15 @@ public:
 	{
 		close();
 	}
-	size_t write(const void * ptr, size_t size, size_t count)
+	uint32 write(const void * ptr, uint32 size, uint32 count)
 	{
-		return fwrite(ptr, size, count, _file);
+		return size_t_to32(fwrite(ptr, size, count, _file));
 	}
 	int seek64(int64 offset, int origin)
 	{
 		return fseek64(_file, offset, origin);
 	}
-	int putc(int character)
+	int putchar(int character)
 	{
 		return fputc(character, _file);
 	}

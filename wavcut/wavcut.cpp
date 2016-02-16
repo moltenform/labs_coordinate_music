@@ -45,7 +45,7 @@ errormsg finishOutputFileAndStartNext(
 	bool fStartNext, bool isMark)
 {
 	// which sample are we at?
-	int64 whichByte = (*f)->tell64() - lengthOfHeader;
+	uint64 whichByte = (*f)->tell64() - lengthOfHeader;
 	assertTrue(whichByte % 4 == 0);
 	if (whichByte >= fourgb)
 	{
@@ -53,7 +53,7 @@ errormsg finishOutputFileAndStartNext(
 	}
 
 	// truncate the ramp we don't want.
-	int32 lengthInSamples = (int32)(whichByte / 4);
+	int32 lengthInSamples = u64_to32(whichByte / 4);
 	if (isMark)
 	{
 		lengthInSamples = std::max(2, lengthInSamples - 133400);
@@ -130,7 +130,7 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 			lookBefore * 44100 * bytesPerSample;
 
 		if (firstPoint >= info->nExpectedSamples * bytesPerSample ||
-			firstPoint + bufferWindow.Size() >= 
+			firstPoint + bufferWindow.size() >= 
 			info->nExpectedSamples * bytesPerSample)
 			return_err("tried to read past end of file?");
 		int64 positionToSeekToNotCountingStartingPoint = 
@@ -144,17 +144,17 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 			return_err("seek failed");
 
 		// read from disk
-		size_t amountRead = fread(
-			bufferWindow.Get(), sizeof(byte), bufferWindow.Size(), f);
-		if (amountRead != bufferWindow.Size())
+		uint32 amountRead = size_t_to32(fread(
+			bufferWindow.get(), sizeof(byte), bufferWindow.size(), f));
+		if (amountRead != bufferWindow.size())
 			return_err("did not read full buffer");
 
 		// look for silence in the next 4 seconds
 		int longestPeriodOfSilenceStart = 0, longestPeriodOfSilenceLength = 0;
 		int currentStart = 0, currentElapsedSilence = 0;
 		bool isSilentPrev = false;
-		byte* buffer = bufferWindow.Get();
-		for (size_t j = 0; j < bufferWindow.Size() / 4; j++)
+		byte* buffer = bufferWindow.get();
+		for (uint32 j = 0; j < bufferWindow.size() / 4; j++)
 		{
 			int b1 = buffer[j * 4 + 2], b2 = buffer[j * 4 + 3];
 			short sh1 = (short)b1; // intel byte order
@@ -198,8 +198,8 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 		{
 			printf("\ndid not find very much silence in track %d, only %d. "
 				"Will apply auto-fade", i + 1, longestPeriodOfSilenceLength);
-			trackNeedsFadeOut.Get()[i] = 1;
-			trackNeedsFadeIn.Get()[i+1] = 1;
+			trackNeedsFadeOut.get()[i] = 1;
+			trackNeedsFadeIn.get()[i+1] = 1;
 		}
 		
 		if (longestPeriodOfSilenceLength <= 8)
@@ -257,10 +257,7 @@ errormsg runWavCutUsingProvidedTimes(
 		int64 endpos = i == timesLen ? info->nExpectedSamples : times[i];
 		uint64 lenInSamples = bytesPerSample*(endpos - startpos);
 		if (lenInSamples >= fourgb)
-		{
-			getBoolFromUser("h");
 			return_err("track is too big for wave format");
-		}
 
 		FILE* fout = fopen(filename.c_str(), "wb");
 		if (!fout)
@@ -272,21 +269,21 @@ errormsg runWavCutUsingProvidedTimes(
 		if (msg)
 			return msg;
 
-		int64 startingPointOutput = ftell64(fout);
-		int seekres = fseek64(
-			f, startingpoint + startpos * bytesPerSample, SEEK_SET);
-		if (seekres != 0)
+		if (fseek64(f, 
+			startingpoint + startpos * bytesPerSample,
+			SEEK_SET) != 0)
 			return_err("seek failed");
 
 		uint64 written = 0;
 		while (written < lenInSamples)
 		{
-			size_t nGotThisIteration = fread(
-				bufferToWrite.Get(), sizeof(byte),
+			uint32 difference = u64_to32(lenInSamples - written);
+			uint32 nGotThisIteration = size_t_to32(fread(
+				bufferToWrite.get(), sizeof(byte),
 				std::min(
-					(size_t)(lenInSamples - written),
-					bufferToWrite.Size()),
-				f);
+					difference,
+					bufferToWrite.size()),
+				f));
 			if (!nGotThisIteration)
 				return_err("error: read no data");
 
@@ -294,14 +291,14 @@ errormsg runWavCutUsingProvidedTimes(
 			// in one-mb chunks. it's possible that the fade-out falls near the
 			// boundary of one of these chunks, in which case we succeed 
 			// and just have a quicker fade-out, see the std::min below.
-			byte* ptr = bufferToWrite.Get();
-			if (trackNeedsFadeIn.Get()[i] && (written == 0))
+			byte* ptr = bufferToWrite.get();
+			if (trackNeedsFadeIn.get()[i] && (written == 0))
 			{
 				// fade in the first part of this buffer.
-				size_t fadeLength = std::min(
-					(size_t)(.6 * 44100), nGotThisIteration / 4);
+				uint32 fadeLength = std::min(
+					(uint32)(.6 * 44100), nGotThisIteration / 4);
 				printf("\nin file %s writing fadein", filename.c_str());
-				for (size_t j = 0; j < fadeLength; j++)
+				for (uint32 j = 0; j < fadeLength; j++)
 				{
 					double factor = j / ((double)fadeLength);
 					{short sh1 = (short)ptr[j * 4]; // intel byte order
@@ -319,19 +316,19 @@ errormsg runWavCutUsingProvidedTimes(
 					ptr[j * 4 + 3] = shNewVal >> 8; }
 				}
 			}
-			else if (trackNeedsFadeOut.Get()[i] &&
+			else if (trackNeedsFadeOut.get()[i] &&
 				(written + nGotThisIteration >= lenInSamples))
 			{
 				// fade out the last part of this buffer.
-				size_t fadeLength = std::min(
-					(size_t)(.6 * 44100), nGotThisIteration / 4);
+				uint32 fadeLength = std::min(
+					(uint32)(.6 * 44100), nGotThisIteration / 4);
 				printf("\nin %s writing fadeout len=%d",
 					filename.c_str(), fadeLength);
-				for (size_t jcounter = 0; jcounter < fadeLength; jcounter++)
+				for (uint32 jcounter = 0; jcounter < fadeLength; jcounter++)
 				{
 					double factor = (fadeLength - jcounter) /
 						((double)fadeLength);
-					size_t j = jcounter + nGotThisIteration / 4 - fadeLength;
+					uint32 j = jcounter + nGotThisIteration / 4 - fadeLength;
 					{short sh1 = (short)ptr[j * 4]; // intel byte order
 					short sh2 = (short)(((short)ptr[j * 4 + 1]) << 8);
 					short shVal = (short)(sh1 + sh2);
@@ -348,7 +345,7 @@ errormsg runWavCutUsingProvidedTimes(
 				}
 			}
 
-			fwrite(bufferToWrite.Get(), nGotThisIteration, sizeof(byte), fout);
+			fwrite(bufferToWrite.get(), nGotThisIteration, sizeof(byte), fout);
 			written += nGotThisIteration;
 		}
 
@@ -375,13 +372,13 @@ errormsg runWavCutUsingAudioMark(
 	{
 		int b = 0;
 		b = fgetc(f);
-		outputFile->putc(b);
+		outputFile->putchar(b);
 		b = fgetc(f);
-		outputFile->putc(b);
+		outputFile->putchar(b);
 		int b1 = fgetc(f);
-		outputFile->putc(b1);
+		outputFile->putchar(b1);
 		int b2 = fgetc(f);
-		outputFile->putc(b2);
+		outputFile->putchar(b2);
 
 		// we only need to look at one of the channels
 		short sh1 = (short)b1; // intel byte order
@@ -442,19 +439,18 @@ errormsg runWavCutUsingAutoDetectSilence(
 		return err;
 
 	int64 nSamplesCloseToZero = 0;
-	int64 nLastNotZero = 0;
 	int64 nFileWrittenAt = 0;
 	for (uint64 i = 0; i < info->nExpectedSamples; i++)
 	{
 		int b = 0;
 		b = fgetc(f);
-		outputFile->putc(b);
+		outputFile->putchar(b);
 		b = fgetc(f);
-		outputFile->putc(b);
+		outputFile->putchar(b);
 		int b1 = fgetc(f);
-		outputFile->putc(b1);
+		outputFile->putchar(b1);
 		int b2 = fgetc(f);
-		outputFile->putc(b2);
+		outputFile->putchar(b2);
 
 		// 8 seconds is shortest song length
 		if (i - nFileWrittenAt < 44100 * 8)
@@ -472,8 +468,6 @@ errormsg runWavCutUsingAutoDetectSilence(
 		{
 			if (nSamplesCloseToZero > 14550 /*0.03s*/)
 			{
-				double labeltime = i / 44100.0;
-
 				// first, write the track we came up with
 				++whichOutputFile;
 				err = finishOutputFileAndStartNext(
@@ -489,11 +483,8 @@ errormsg runWavCutUsingAutoDetectSilence(
 				if (seekres != 0) return_err("seek failed");
 				i = newPoint;
 				nFileWrittenAt = i;
-
-				labeltime = i / 44100.0;
 			}
 			nSamplesCloseToZero = 0;
-			nLastNotZero = i;
 		}
 	}
 
@@ -534,7 +525,7 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 	if (parts > 0)
 	{
 		printf("file has %d 4gb sections, should we read the entire file? ",
-			(int)parts);
+			u64_to32(parts));
 		if (getBoolFromUser(""))
 		{
 			addToLength = fourgb * parts;
@@ -578,7 +569,7 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 			return 1;
 
 		msg = runWavCutUsingProvidedTimes(
-			f, &info, prefix, &lengths[0], lengths.size());
+			f, &info, prefix, &lengths[0], size_t_to32(lengths.size()));
 	}
 	else
 	{

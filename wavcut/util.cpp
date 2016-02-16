@@ -47,16 +47,6 @@ void assertEqualImpl(int a, int b, const char* msg, int line, const char* file)
 	}
 }
 
-uint64 getFileSize(const char* path)
-{
-	struct __stat64 buf;
-	int result = _stat64(path, &buf);
-	if (result != 0)
-		return 0;
-	else
-		return buf.st_size;
-}
-
 std::vector<std::string> splitString(const std::string & s, char delim)
 {
 	std::vector<std::string> elems;
@@ -104,7 +94,7 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 		return std::vector<int64>();
 
 	result.resize(elems.size());
-	for (size_t i = 0; i < elems.size(); i++)
+	for (uint32 i = 0; i < size_t_to32(elems.size()); i++)
 	{
 		std::vector<std::string> parts = splitString(elems[i], '|');
 		if (parts.size() != 2)
@@ -127,6 +117,8 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 
 	return result;
 }
+
+
 
 #ifndef _WIN32
 #include <stdio.h>
@@ -163,13 +155,22 @@ int64 ftell64(FILE *stream)
 	return ftello(stream);
 }
 
+uint64 getFileSize(const char* path)
+{
+	struct stat64 st = { 0 };
+	if (stat64(path, &st) == 0)
+		return st.st_size;
+	else
+		return 0;
+}
+
 #else
 #include <windows.h>
 
 PerfTimer::PerfTimer()
 {
 	LARGE_INTEGER tmp = { 0 };
-	::QueryPerformanceCounter(&tmp);
+	QueryPerformanceCounter(&tmp);
 	_start = tmp.QuadPart;
 }
 
@@ -177,10 +178,10 @@ double PerfTimer::stop()
 {
 	assertTrue(_start != 0);
 	LARGE_INTEGER nstop;
-	::QueryPerformanceCounter(&nstop);
+	QueryPerformanceCounter(&nstop);
 	uint64 ndiff = nstop.QuadPart - _start;
 	LARGE_INTEGER freq;
-	::QueryPerformanceFrequency(&freq);
+	QueryPerformanceFrequency(&freq);
 	return (ndiff) / ((double)freq.QuadPart);
 }
 
@@ -191,7 +192,7 @@ errormsg truncateFile(const char* path, int64 length)
 		return_err("currently only supports truncate if less than 4gb.");
 	}
 
-	uint32 length32 = (uint32)length;
+	uint32 length32 = u64_to32(length);
 	HANDLE handle = CreateFileA(path, // file to be opened
 		GENERIC_WRITE, // open for writing
 		FILE_SHARE_READ, // share for reading
@@ -229,6 +230,16 @@ int fseek64(FILE *stream, int64 offset, int type)
 int64 ftell64(FILE *stream)
 {
 	return _ftelli64(stream);
+}
+
+uint64 getFileSize(const char* path)
+{
+	struct __stat64 buf;
+	int result = _stat64(path, &buf);
+	if (result != 0)
+		return 0;
+	else
+		return buf.st_size;
 }
 
 #endif

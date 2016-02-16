@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
+#include <climits>
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -23,6 +25,8 @@ typedef uint8_t byte;
 #ifdef _MSC_VER
 #define debugBreak() __debugbreak()
 #else
+#include <signal.h>
+#include <sys/stat.h>
 #define debugBreak() raise(SIGTRAP)
 #endif
 
@@ -89,26 +93,26 @@ public:
 class SimpleBuffer
 {
 	byte* _ptr = 0;
-	size_t _count = 0;
+	uint32 _count = 0;
 
 public:
-	SimpleBuffer(size_t count)
+	SimpleBuffer(uint32 count)
 	{
 		_ptr = (byte*)calloc(count, sizeof(byte));
 		_count = count;
 	}
-	void Clear()
+	void clear()
 	{
 		if (_ptr)
 		{
 			memset(_ptr, 0, sizeof(byte) * _count);
 		}
 	}
-	byte* Get()
+	byte* get()
 	{ 
 		return _ptr;
 	}
-	size_t Size()
+	uint32 size()
 	{
 		return sizeof(byte) * _count;
 	}
@@ -121,9 +125,29 @@ public:
 
 inline bool stringEndsWith(const char* s1, const char*s2)
 {
-	size_t len1 = strlen(s1), len2 = strlen(s2);
+	uint64 len1 = strlen(s1), len2 = strlen(s2);
 	if (len2>len1) return false;
 	return strcmp(s1 + len1 - len2, s2) == 0;
 }
+
+inline uint32 size_t_to32(size_t n)
+{
+	if (sizeof(size_t) == sizeof(uint32))
+	{
+		return (uint32)n;
+	}
+	else
+	{
+		assertTrue(((uint64)n) < fourgb);
+		return (uint32)n;
+	}
+}
+
+inline uint32 u64_to32(uint64 n)
+{
+	assertTrue(n < fourgb);
+	return (uint32)n;
+}
+
 
 #endif /* UTIL_H */
