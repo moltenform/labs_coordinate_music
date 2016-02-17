@@ -1,5 +1,4 @@
 import re
-import spotipy
 import recurring_linkspotify
 import recurring_music_to_url
 import copy
@@ -424,33 +423,12 @@ def getHelpers(root, market, enableSaveSpace):
         
 # example: if root is ~/music, scope is c:/music/classic rock, and startingpoint is c:/music/classic rock/hendrix
 # we'll go through c:/music/classic rock and process all directories that sort lower than c:/music/classic rock/hendrix
-def mainCoordinate(scope=None, startingpoint=None, isTopDown = True, spotifyEnabled=True, market='US', enableSaveSpace=False):
+def mainCoordinate(isTopDown=True, enableSaveSpace=False):
     root = getMusicRoot()
-    if not scope:
-        scope = root
-    if spotifyEnabled:
-        trace('Spotify market set to %s.'%market)
-        
-    assertTrue(scope.startswith(root), 'scope %s must be within root %s'%(scope, root))
-    assertTrue(not startingpoint or startingpoint.startswith(scope), 'startingpoint %s must be within scope %s'%(startingpoint, scope))
+    market = getSpotifyGeographicMarketName()
     
-    reachedstartingpoint = False
-    startingpointlower = startingpoint.lower() if startingpoint else None
     helpers = getHelpers(root, market, enableSaveSpace)
-    for fullpathdir, pathshort in files.recursedirs(scope, topdown=isTopDown):
-        # don't start until we've reached startingpoint
-        fullpathdirlower = fullpathdir.lower()
-        if not reachedstartingpoint:
-            if fullpathdirlower==startingpointlower:
-                reachedstartingpoint = True
-            if startingpoint:
-                continue
-        
-        # ignore anything under a 'lib' directory
-        dirsplit = fullpathdir.replace('\\','/').split('/')
-        if 'lib' in dirsplit:
-            continue
-        
+    for fullpathdir, pathshort in getScopedRecurseDirs(root, topdown=isTopDown, filterOutLib=True):
         # we'll need a few passes through the directory in some cases
         while True:
             err = None

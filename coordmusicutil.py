@@ -1,7 +1,7 @@
 import sys
 from ben_python_common import *
 from coordmusicuserconfig import *
-from easypythonmutagen import EasyPythonMutagen, get_audio_duration, get_empirical_bitrate
+from easypythonmutagen import EasyPythonMutagen, get_empirical_bitrate
    
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
@@ -80,7 +80,7 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
             val = str(val)
         EasyPythonMutagen.set(self, fieldname, val)
 
-def getWavDuration(filename):
+def get_audio_duration(filename, obj=None):
     if filename.lower().endswith('.wav'):
         # rough estimate, doesn't take metadata into account
         sz = files.getsize(filename)
@@ -89,7 +89,8 @@ def getWavDuration(filename):
         length = sz / freq
         return length
     else:
-        assert False, 'unexpected extension'
+        import easypythonmutagen
+        return easypythonmutagen.get_audio_duration(filename, obj)
     
 def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
     obj = CoordMusicAudioMetadata(filename)
@@ -215,7 +216,60 @@ def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
     subprocess.Popen([mplayer, path], shell=False)
 
+def getTestMediaLocation():
+    return './test'
+
 def getTestTempLocation():
     import tempfile
     return tempfile.gettempdir()+'/test_music_coordination'
+    
+def getFormattedDuration(seconds, showMilliseconds=False):
+    if not seconds and seconds != 0:
+        return ''
+    if showMilliseconds:
+        milli = int(seconds*1000)
+        return '%02d:%02d:%03d'%(int(seconds)//60, int(seconds)%60, milli%1000)
+    else:
+        return '%02d:%02d'%(int(seconds)//60, int(seconds)%60)
 
+def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown = True):
+    def chooseChild(dir, prompt):
+        choices = [item[1] for item in files.listchildren(dir) if files.isdir(item[0])]
+        choices.insert(0, 'All')
+        if len(choices)==1:
+            return choices[0][1]
+        ret = getInputFromChoices(prompt, choices)
+        return None if ret[0] == -1 else ret[1]
+    
+    scope = chooseChild(dir, 'filter to files under which directory?')
+    if not scope:
+        return
+    if scope != 'All':
+        dir = files.join(dir, scope)
+    
+    startingPlace = chooseChild(dir, 'begin at which directory?')
+    if not startingPlace:
+        return
+    if startingPlace == 'All':
+        startingPlace = None
+        
+    reachedStartingPlace = False
+    startingPlace = files.join(dir, startingPlace).lower() if startingPlace else None
+    lib = files.sep + 'lib' + files.sep
+    for fullpath, short in files.recursedirs(dir, topdown=isTopDown):
+        # don't start until we've reached startingpoint
+        fullpathLower = fullpath.lower()
+        if not reachedStartingPlace:
+            if fullpathLower == startingPlace:
+                reachedStartingPlace = True
+            if startingPlace:
+                continue
+        
+        if not filterOutLib or lib not in fullpathLower+files.sep:
+            yield fullpath, short
+        
+def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown = True):
+    for fullpathdir, shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
+        for fullpath, short in files.listfiles(fullpathdir):
+            yield fullpath, short
+    

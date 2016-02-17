@@ -2,41 +2,6 @@
 from coordmusicutil import *
 import re
 
-class RemoveRemasteredString(object):
-    def __init__(self):
-        self.regexp = re.compile(r' - [0-9][0-9][0-9][0-9] (- )?(Digital )?Remaster(ed)?')
-        self.knownBad = [' - mono version', ' - Remastered Album Version', ' - REMASTERED',' - Remastered', 
-            ' - Single Version (Mono)',' - Single Version (Stereo)',' - Single Version - Stereo',' - Mono Single Version',
-            ' - Album Version (Mono)',' - Album Version (Stereo)',' - Album Version-Stereo',
-            ' - Album Version',' - Single Version',
-            ' (Mono Version)',' [Mono Version]', ' (Remastered)', ' [Remastered]', ' Version']
-            
-    def getProposedName(self, short):
-        newshort = short
-        newshort = self.regexp.sub('', newshort)
-        for bad in self.knownBad: 
-            newshort = newshort.replace(bad, '')
-        
-        return newshort
-        
-    def check(self, parentName, allShorts):
-        for short in allShorts:
-            lower = short.lower()
-            if 'remaster' in lower or 'version' in lower: 
-                trace(parentName)
-                trace('disallowed word in '+ short)
-                newshort = self.getProposedName(short)
-                
-                if newshort==short or not getInputBool(u'use proposed name '+newshort+'?'):
-                    print 'could not automatically fix.'; 
-                    askExplorer(parentName)
-                    newshort = getInputString('type a new name?')
-                    
-                if newshort!=short:
-                    files.move(parentName+'/'+short, parentName+'/'+newshort, False)
-                    stopIfFileRenamed(True)
-
-
 def lookupAlbumForFile(path, tag, parsed, spotlink):
     trackSeen = None
     whatToSet = None
@@ -122,7 +87,6 @@ def getStrRemoteAudio(track, includeDiscNum, includeTracknum, artistsAlreadyShow
     return getPrintable('(%02d:%02d) %s%s %s %s'%(duration//60, duration%60,
         discnumber, tracknumber, artists, track['name']))
     
-
 def getTracksRemoteAlbum(albumid, market):
     results = spotipyconn().album_tracks(albumid)
     tracks = results['items']
@@ -348,7 +312,41 @@ def linkspotifyperalbumtrack(fullpathdir, tag, parsed, mapNumToTrack, estimateda
             break
         # otherwise we updated key.key, re-enter loop
     return True
-    
+
+class RemoveRemasteredString(object):
+    def __init__(self):
+        self.regexp = re.compile(r' - [0-9][0-9][0-9][0-9] (- )?(Digital )?Remaster(ed)?')
+        self.knownBad = [' - mono version', ' - Remastered Album Version', ' - REMASTERED',' - Remastered', 
+            ' - Single Version (Mono)',' - Single Version (Stereo)',' - Single Version - Stereo',' - Mono Single Version',
+            ' - Album Version (Mono)',' - Album Version (Stereo)',' - Album Version-Stereo',
+            ' - Album Version',' - Single Version',
+            ' (Mono Version)',' [Mono Version]', ' (Remastered)', ' [Remastered]', ' Version']
+            
+    def getProposedName(self, short):
+        newshort = short
+        newshort = self.regexp.sub('', newshort)
+        for bad in self.knownBad: 
+            newshort = newshort.replace(bad, '')
+        
+        return newshort
+        
+    def check(self, parentName, allShorts):
+        for short in allShorts:
+            lower = short.lower()
+            if 'remaster' in lower or 'version' in lower: 
+                trace(parentName)
+                trace('disallowed word in '+ short)
+                newshort = self.getProposedName(short)
+                
+                if newshort==short or not getInputBool(u'use proposed name '+newshort+'?'):
+                    print 'could not automatically fix.'; 
+                    askExplorer(parentName)
+                    newshort = getInputString('type a new name?')
+                    
+                if newshort!=short:
+                    files.move(parentName+'/'+short, parentName+'/'+newshort, False)
+                    stopIfFileRenamed(True)
+
 def isTagAcceptibleToBeMadeIntoShortcuts(fullpathdir, tag):
     return not tag.short.endswith('.url') and not tag.short.endswith('.flac') and \
         (tag.short.endswith('.mp3') or (tag.short.endswith('.m4a') and getFileBitrate(fullpathdir+'/'+tag.short) < 170)) and \
@@ -378,4 +376,22 @@ def startSpotifyFromM4aArgs(args):
         alertGui(unicode(e))
         del e
         sys.exit(1)
+
+def viewTagsFromM4aOrDirectory(path):
+    def viewTagsFromFile(fullpath):
+        if fullpath.lower().endswith('.url'):
+            return getFromUrlFile(fullpath)
+        elif getFieldForFile(fullpath, False):
+            return CoordMusicAudioMetadata(fullpath).getLink()
+        else:
+            return ''
+            
+    if files.isdir(path):
+        trace('Spotify links in', path)
+        for full, short in files.listfiles(path):
+            trace(short, viewTagsFromFile(full))
+    else:
+        trace('Spotify links in', files.getparent(path))
+        trace(files.getname(path), viewTagsFromFile(path))
+            
 

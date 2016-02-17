@@ -356,6 +356,18 @@ def testsEasyPythonMutagenMetadataTags():
             assertEq(unicode(fields[field]), obj.get(field))
  
 def testsCoordMusicUtil():
+    # test getFormattedDuration
+    assertEq('00:00', getFormattedDuration(0))
+    assertEq('02:01', getFormattedDuration(121))
+    assertEq('02:01', getFormattedDuration(121.75))
+    assertEq('12:13', getFormattedDuration(733))
+    assertEq('00:00:000', getFormattedDuration(0, True))
+    assertEq('02:01:000', getFormattedDuration(121, True))
+    assertEq('02:01:750', getFormattedDuration(121.75, True))
+    assertEq('12:13:000', getFormattedDuration(733, True))
+    assertEq('12:13:002', getFormattedDuration(733.002, True))
+    assertEq('12:13:998', getFormattedDuration(733.998, True))
+    
     # test m4aToUrl
     createOrClearDirectory(tmpdir)
     newname = tmpdirsl+'m4a24.m4a'
@@ -381,8 +393,8 @@ def testsCoordMusicUtil():
     assertException(lambda: getFieldForFile(r'c:\dir\test.ogg'), AssertionError, 'unexpected extension')
         
     # test getWavDuration
-    assertEq(727, int(1000*getWavDuration('./test/media/wav.wav')))
-    assertException(lambda: getWavDuration('./test/media/wav.wav.mp3'), AssertionError, 'unexpected extension')
+    assertEq(727, int(1000*get_audio_duration('./test/media/wav.wav')))
+    assertException(lambda: get_audio_duration('./test/media/wav.awav'), ValueError, 'unsupported extension')
     
     # test setLink and getLink
     filenames = ['flac.flac', 'm4a128.m4a', 'mp3_avgb128.mp3', 'mp3_cnsb128.mp3']
@@ -408,6 +420,26 @@ def testsCoordMusicUtil():
         assertEq('abc', obj.get_or_default('album', 'abc'))
         assertException(lambda: obj.get('album'), KeyError)
         assertEq('spotify:1234', obj.getLink())
+        
+    # test saveFilenamesMetadataToText
+    import coordmusictools
+    files.makedirs(tmpdirsl+'/tmp')
+    coordmusictools.saveFilenamesMetadataToText(sorted(
+        files.listfiles(tmpdir)), False, tmpdirsl+'/tmp/out.txt', requestBatchSize=15, maxBatchSize=50)
+    expected = u'''%dir%m4a24.url00:00:0000test
+%dir%test1.url00:00:0000https://www.youtube.com/watch?v=0OSF
+%dir%test2.url00:00:00000Svkvt5I79wficMFgaqEQJ
+%dir%testflac.flac00:01:0237901234
+%dir%testm4a128.m4a00:01:0911431234
+%dir%testmp3_avgb128.mp300:02:7731361234
+%dir%testmp3_cnsb128.mp300:02:7731341234
+'''.replace('%dir%', tmpdirsl).replace('\r\n', '\n')
+    got = files.readall(tmpdirsl+'/tmp/out.txt', 'r', 'utf-8-sig')
+    assertEq(expected, got.replace('\r\n', '\n').replace('\t',''))
+    coordmusictools.saveFilenamesMetadataToText(sorted(
+        files.listfiles(tmpdir)), False, tmpdirsl+'/tmp/out2.txt', requestBatchSize=2, maxBatchSize=2)
+    got = files.readall(tmpdirsl+'/tmp/out2.txt', 'r', 'utf-8-sig')
+    assertEq(expected, got.replace('\r\n', '\n').replace('\t',''))
     
 def testsLinkSpotify():
     from recurring_linkspotify import RemoveRemasteredString, getChoiceString, getStrRemoteAudio

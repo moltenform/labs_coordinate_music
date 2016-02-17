@@ -19,7 +19,14 @@ def getInputYesNoCancel(sPrompt):
         if s=='n': return 'No'
         if s=='cancel': return 'Cancel'
         if s=='BRK': raise KeyboardInterrupt()
-        
+
+def getInputInt(sPrompt, min=0, max=0xffffffff):
+    sPrompt+=' between %d and %d '%(min, max)
+    while True:
+        s = raw_input(getPrintable(sPrompt)).strip()
+        if s.isdigit() and min <= int(s) <= max: return int(s)
+        if s=='BRK': raise KeyboardInterrupt()
+
 def getInputString(sPrompt, bConfirm=True):
     sPrompt+=' '
     while True:
@@ -50,7 +57,6 @@ def getInputFromChoices(sPrompt, arrChoices, fnOtherCommands=None, otherCommands
             if breakLoop:
                 return (-1, breakLoop)
     
-
 def err(s=''):
     raise RuntimeError('fatal error\n'+getPrintable(s))
     

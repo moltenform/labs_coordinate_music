@@ -1,36 +1,48 @@
 
+def getMusicRoot():
+    # return u'~/music'
+
 def getSpotifyUsername():
-    return 'getSpotifyUsername'
+    # return ''
     
 def getSpotifyClientID():
     # return None to disable spotify connection
-    return 'getSpotifyClientID'
+    # return ''
     
 def getSpotifyClientSecret():
-    return 'getSpotifyClientSecret'
+    # sign up at https://developer.spotify.com/my-applications/
+    # return ''
 
 def getSpotifyCallbackUrl():
     # specify a url that will print all GET / POST parameters given to the page, so that you can see ClientSecret
     # this only needs to be called once.
     return 'http://downpoured.com/printinputs.php'
 
-def getMusicRoot():
-    return ur'c:\music'
-
-def getTestMediaLocation():
-    return './test'
+def getSpotifyGeographicMarketName():
+    return 'US'
 
 def getSpotifyLocation():
-    import os
-    appdata = os.getenv('APPDATA')
-    return appdata + r'\Spotify\spotify.exe'
+    import os, sys
+    if sys.platform=='win32':
+        return os.getenv('APPDATA') + r'\Spotify\spotify.exe'
+    else:
+        return 'full/path/to/spotify'
 
 def getMediaPlayer():
-    return r'C:\Program Files (x86)\foobar2000\foobar2000.exe'
+    return 'full/path/to/mediaplayer'
     
 def getPopularityCutoff():
     # when turning .mp3s into .urls to save disk space, skip rare/'unpopular' songs that might be hard to find in the future.
     # 18 is about where spotify UI begins to show 2 bars.
     return 18
     
-    
+def getDefaultDirectorySpotifyToFilenames():
+    return None
+
+def getDefaultSpotifyPlaylist():
+    # optionally a default spotify playlist id.
+    return None
+
+def runAfterCoordinate():
+    # optionally provide code to run here after mainCoordinate() is called.
+    pass
