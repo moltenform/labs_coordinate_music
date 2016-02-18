@@ -3,6 +3,10 @@ from coordmusicutil import *
 import re
 
 def lookupAlbumForFile(path, tag, parsed, spotlink):
+    if get_empirical_bitrate(path, tag) < 30:
+        trace('skipping lookupAlbumForFile for %s since bitrate is low'%path)
+        return False
+    
     trackSeen = None
     whatToSet = None
     if spotlink and 'spotify:track:' in spotlink:
@@ -16,11 +20,16 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
         choices.extend(['Spotify: '+track['album']['name'], 'Spotify: '+track['album']['name'].split(' (')[0].split(' [')[0]])
        
     def callback(s, arrChoices, otherCommandsContext):
-        if not s or s[0].isdigit():
+        if not s:
             return False
         elif s=='hear0':
             launchMediaPlayer(otherCommandsContext.path)
             return False
+        elif s=='explorer':
+            askExplorer(files.getparent(path))
+            return False
+        elif s=='SS':
+            return 'enteredmanally'+parsed.title
         else:
             return 'enteredmanally'+s
         
@@ -35,10 +44,11 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
         subprocess.Popen(['start', 'http://google.com/search?q='+urllib2.quote(parsed.artist+' '+parsed.title)], shell=True)
         return lookupAlbumForFile(path, tag, parsed, spotlink)
     elif choice[0] < 0:
-        return
+        return False
 
     tag.set('album', choice[1].replace('Spotify: ', ''))
     tag.save()
+    return True
 
 def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, market):
     if not seenWithoutSpotify:
@@ -51,8 +61,14 @@ def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknum
     trace('\n\n\n\nAssociate with Spotify, for directory\n'+fullpathdir+'\n\n')
     trace('containing\n', '\n\t'.join(tag.short for tag in tags),'\n\n')
     choices = ['associate with Spotify, each track individually']
-    if seenTracknumber: choices.append('associate with Spotify, whole album')
-    choice = getInputFromChoices('', choices)
+    if seenTracknumber:
+        choices.append('associate with Spotify, whole album')
+    if len(choices)==1:
+        # there's only one option, so just go ahead.
+        choice = (0, choices[0])
+    else:
+        choice = getInputFromChoices('', choices)
+    
     if choice[0]==0:
         [linkspotifypertrack(market, fullpathdir, tag, parsed) for tag, parsed in zip(tags, parsedNames)]
     elif choice[0]==1:
@@ -276,7 +292,8 @@ def linkspotifyperalbumtracks(market, fullpathdir, tags, parsedNames, albumid, e
     tracks = getTracksRemoteAlbum(albumid, market)
     
     # first, just print the tracks
-    trace('local:\n'+'\n'.join('%s %s'%(getStrLocalAudioFile(fullpathdir+'/'+tag.short, Bucket(title='', artist=parsed.artist), tag), tag.short) for parsed, tag in zip(parsedNames, tags)))
+    trace('local:\n'+'\n'.join('%s %s'%(getStrLocalAudioFile(fullpathdir+'/'+tag.short, Bucket(title='',
+        artist=parsed.artist), tag), tag.short) for parsed, tag in zip(parsedNames, tags)))
     trace('\n\nremote:\n'+getStrRemoteAlbum(tracks, estimatedalbumartist))
     
     # now, go one-by one for each file on disk

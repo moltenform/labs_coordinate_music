@@ -192,7 +192,7 @@ def checkDeleteUrlsInTheWayOfM4as(fullpathdir, shorts):
     
     stopIfFileRenamed(changedAtLeastOne)
 
-def checkForLowBitratesFile(fullpathdir, bitrate, tag):
+def checkForLowBitratesFile(fullpathdir, bitrate, tag, allowMakeUrl=True):
     if '.sv.' in tag.short or '.movetosv.' in tag.short:
         return None
     if ' (vv)' in tag.short:
@@ -200,16 +200,16 @@ def checkForLowBitratesFile(fullpathdir, bitrate, tag):
     if bitrate < 19 and tag.short.endswith('.m4a'):
         trace('automatically deleting low bitrate file ', fullpathdir, tag.short)
         return 'delete'
-    if bitrate < 27 and tag.short.endswith('.m4a'):
+    if bitrate < 27 and tag.short.endswith('.m4a') and allowMakeUrl:
         trace('automatically urling low bitrate file ', fullpathdir, tag.short)
         return 'makeurl'
-    if bitrate < 29 or ' (v)' in tag.short:
+    if allowMakeUrl and (bitrate < 27 or ' (v)' in tag.short):
         trace(fullpathdir, tag.short)
         choice = getInputFromChoices('file has low bitrate (%f)'%bitrate, ['remove', 'make url'])
         if choice[0]==0: return 'delete'
         if choice[0]==1: return 'makeurl'
 
-def checkForLowBitrates(fullpathdir, tags):
+def checkForLowBitrates(fullpathdir, tags, allowMakeUrl):
     changedAtLeastOne = False
     for tag in tags:
         if tag.short.endswith('.url'):
@@ -222,8 +222,9 @@ def checkForLowBitrates(fullpathdir, tags):
             changedAtLeastOne = True
         elif action=='makeurl':
             # m4aToUrl will automatically remove and ' (vv)' ' (v)' in filename
-            m4aToUrl(fullpathdir, tag.short, tag)
-            changedAtLeastOne = True
+            if allowMakeUrl:
+                m4aToUrl(fullpathdir, tag.short, tag)
+                changedAtLeastOne = True
         elif action != None:
             assert False, 'unknown action '+action
             
@@ -313,8 +314,9 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
         if not fromFilename and not fromTag and not field in optionalFields:
             assertTrue(False, 'file',fullpathdir,tag.short,'could not infer value for field',field)
         if not doStringsMatchForField(fromFilename, fromTag, field):
-            # the Compilation keyword allows files with different album tags to coexist in the same directory.
-            if field=='album' and fromTag != None and ' Compilation' in dirsplit[-1]:
+            # the Compilation/Selections keyword allows files with different album tags to coexist in the same directory.
+            if field=='album' and fromTag != None and dirsplit[-1].endswith(' Compilation') or \
+                dirsplit[-1].endswith(' Selections'):
                 continue
                 
             bulkSetValue = userAllowsBulkSet.get((field, fromTag, fromFilename), None)
@@ -363,8 +365,8 @@ def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
             if not tag.get_or_default(field, None):
                 spotlink = tag.getLink()
                 if field=='album':
-                    recurring_linkspotify.lookupAlbumForFile(fullpathdir+'/'+tag.short, tag,parsed, spotlink)
-                    raise StopBecauseWeRenamedFile
+                    if recurring_linkspotify.lookupAlbumForFile(fullpathdir+'/'+tag.short, tag,parsed, spotlink):
+                        raise StopBecauseWeRenamedFile
                 else:
                     assertTrue(False, 'missing required field',field,fullpathdir,tag.short)
     
@@ -376,7 +378,7 @@ def checkFilenamesMain(fullpathdir, dirsplit, tags, helpers):
 
     shorts = [tag.short for tag in tags]
     checkDeleteUrlsInTheWayOfM4as(fullpathdir, shorts)
-    checkForLowBitrates(fullpathdir, tags)
+    checkForLowBitrates(fullpathdir, tags, False)
     checkFilenameIrregularities(fullpathdir, shorts)
     checkUrlContents(fullpathdir, shorts)
     helpers.removeRemasteredString.check(fullpathdir, shorts)
@@ -390,6 +392,7 @@ def checkFilenamesMain(fullpathdir, dirsplit, tags, helpers):
     seenTracknumber, seenWithoutSpotify = checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames)
     recurring_linkspotify.linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, helpers.market)
     helpers.music_to_url.go(fullpathdir, tags, parsedNames)
+    checkForLowBitrates(fullpathdir, tags, True)
 
 def goPerDirectory(fullpathdir, dirsplit, helpers):
     allshorts = files.listchildren(fullpathdir, filenamesOnly=True)
@@ -413,22 +416,23 @@ def goPerDirectory(fullpathdir, dirsplit, helpers):
 
     checkFilenamesMain(fullpathdir, dirsplit, tags, helpers)
 
-def getHelpers(root, market, enableSaveSpace):
+def getHelpers(root, enableSaveSpace):
     helpers = Bucket()
     helpers.checkFileExtensions = CheckFileExtensions()
     helpers.removeRemasteredString = recurring_linkspotify.RemoveRemasteredString()
     helpers.music_to_url = recurring_music_to_url.SaveDiskSpaceMusicToUrl(enableSaveSpace)
     helpers.extsCheckFilenames = dict(mp3=1,m4a=1,flac=1,url=1)
     helpers.splroot = root.split(files.sep)
-    helpers.market = market
+    helpers.market = getSpotifyGeographicMarketName()
     return helpers
         
-def mainCoordinate(isTopDown=True, enableSaveSpace=False):
+def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
     root = getMusicRoot()
-    market = getSpotifyGeographicMarketName()
+    if not dir:
+        dir = root
     
-    helpers = getHelpers(root, market, enableSaveSpace)
-    for fullpathdir, pathshort in getScopedRecurseDirs(root, isTopDown=isTopDown, filterOutLib=True):
+    helpers = getHelpers(root, enableSaveSpace)
+    for fullpathdir, pathshort in getScopedRecurseDirs(dir, isTopDown=isTopDown, filterOutLib=True):
         # we'll need a few passes through the directory in some cases
         while True:
             err = None
@@ -439,11 +443,15 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False):
                 continue
             except (KeyboardInterrupt, IOError, OSError, AssertionError) as err:
                 trace(err)
-                choice = getInputFromChoices('encountered exception.', ['retry', 'next dir'])
+                choice = getInputFromChoices('encountered exception.', ['retry', 'next dir', 'explorer'])
                 if choice[0] == -1: return #exit
                 elif choice[0] == 0: continue #retry dir
                 elif choice[0] == 1: break #go to next dir
+                elif choice[0] == 2: 
+                    askExplorer(fullpathdir)
+                    continue
                 
             break
 
     trace('Complete.')
+    

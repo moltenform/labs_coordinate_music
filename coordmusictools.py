@@ -1,8 +1,8 @@
+import time
 import recurring_linkspotify
 import recurring_music_to_url
 import codecs
 from coordmusicutil import *
-import time
 
 def tools_getPlaylistId(playlistId=None):
     if not playlistId:
@@ -113,7 +113,10 @@ def tools_filenamesToMetadataAndRemoveLowBitrate():
                 softDeleteFile(fullpath)
             else:
                 trace('saved tags for', short)
-        
+
+def tools_outsideMp3sToSpotifyPlaylist():
+    dir = getOpenFileGui(initialdir=getDefaultDirectorySpotifyToFilenames())
+
 
 def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
     results = []
@@ -150,7 +153,7 @@ class ExtendedSongInfo():
         elif filename.endswith('.url'):
             self.info['uri'] = getFromUrlFile(filename)
         elif filename.endswith('.txt'):
-            self.info['localAlbum'] = readall(filename).replace('\r\n','\n').replace('\n','|')
+            self.info['localAlbum'] = files.readall(filename).replace('\r\n','\n').replace('\n','|')
         elif getFieldForFile(filename, throw=False):
             obj = CoordMusicAudioMetadata(filename)
             self.info['uri'] = obj.getLink()
@@ -210,4 +213,4 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchS
                 goBatch()
                 
         goBatch()
-        
+

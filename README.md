@@ -55,3 +55,9 @@ this is an album track. to specify another artist or disc number, the following 
 01 01 Fleet Foxes - Sun Giant.m4a
 
 This structure is maintained by main.py's checkFilenamesMain, which will ensure valid structure and also set corresponding ID3/metadata tags based on the file and directory names. 
+
+A directory name can end with one of these two special keywords to change behavior:
+	' Compilation': within this directory, allow tracks to have tag for a different album
+	' Selections': do not require track numbers in this directory
+
+

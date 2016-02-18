@@ -241,7 +241,7 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown = True):
         choices = [item[1] for item in files.listchildren(dir) if files.isdir(item[0])]
         choices.insert(0, 'All')
         if len(choices)==1:
-            return choices[0][1]
+            return choices[0]
         ret = getInputFromChoices(prompt, choices)
         return None if ret[0] == -1 else ret[1]
     

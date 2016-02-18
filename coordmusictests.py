@@ -215,6 +215,8 @@ def testsCoordinate():
                 self.fields[key] = None
         def get(self, key):
             return self.fields[key]
+        def get_or_default(self, key, default):
+            return self.fields.get(key, default)
         def getLink(self):
             return 'spotify:track:0Svkvt5I79wficMFgaqEQJ'
     def testCheckRequiredFieldsSet(dir, short, fieldsmissing):
@@ -562,14 +564,14 @@ def testsMusicToUrlInteractive():
     trace('Resulting filenames:\n'+'\n'.join(short for fullfile, short in files.listfiles(tmpdir)))
 
 if __name__=='__main__':
-    #~ testsEasyPythonMutagenLengthAndBitrate()
-    #~ testsEasyPythonMutagenMetadataTags()
-    #~ testsCoordinate()
+    testsEasyPythonMutagenLengthAndBitrate()
+    testsEasyPythonMutagenMetadataTags()
+    testsCoordinate()
     testsCoordMusicUtil()
     testsLinkSpotify()
-    #~ if getInputBool('Run interactive tests?'):
-        #~ testsLinkSpotifyInteractive()
-        #~ testsMusicToUrlInteractive()
+    if getInputBool('Run interactive tests?'):
+        testsLinkSpotifyInteractive()
+        testsMusicToUrlInteractive()
         
         
 
