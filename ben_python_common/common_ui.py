@@ -213,16 +213,25 @@ def registerDebughook(b=True):
     else: sys.excepthook = sys.__excepthook__
     
 def softDeleteFile(s):
-    trashdir = ur'C:\data\local\less_important\trash'
-    newname = trashdir + u'\\' + files.split(s)[1] + getRandomString()
+    trashdir = u'~/local/less_important/trash'
+    if not files.exists(trashdir):
+        trashdir = ur'C:\data\local\less_important\trash'
+        if not files.exists(trashdir):
+            raise Exception('please edit softDeleteFile() in common_ui.py '+
+                'and specify a directory for removed files.')
+            
+    newname = trashdir + files.sep + files.split(s)[1] + getRandomString()
     files.move(s, newname, False)
     return newname
 
-
 if __name__=='__main__':
     # test softDeleteFile
+    import tempfile
+    tmpdir = tempfile.gettempdir()+files.sep+'pytest'
+    if not files.exists(tmpdir):
+        files.mkdir(tmpdir)
     movedname = None
-    srcfile = ur'C:\data\local\less_important\trash\tmp.txt'
+    srcfile = tmpdir+files.sep+'tmp.txt'
     files.writeall(srcfile, 'test')
     try:
         assertTrue(files.exists(srcfile))

@@ -7,9 +7,9 @@ import time
 def tools_getPlaylistId(playlistId=None):
     if not playlistId:
         playlistId = getDefaultSpotifyPlaylist()
-    if not playlistId:
-        warn('no default playlist, please edit coordmusicuserconfig.py '+
-            'and implement getDefaultSpotifyPlaylist()')
+        if not playlistId:
+            warn('no default playlist, please edit coordmusicuserconfig.py '+
+                'and implement getDefaultSpotifyPlaylist()')
     return playlistId
         
 def tools_clearPlaylist(playlistId=None):
@@ -42,6 +42,29 @@ def tools_spotifyPlaylistToSongLengths(playlistId=None):
             fout.write('\n')
     trace('wrote %d lengths to %s'%(len(tracks), outpath))
     
+def tools_spotifyPlaylistToFilenames(playlistId=None):
+    playlistId = tools_getPlaylistId(playlistId)
+    tracks = getTracksFromPlaylist(spotipyconnect(), playlistId)
+    startInPlaylist = getInputInt('start where in the playlist (default 1)?', 1, len(tracks))-1
+    tracks = tracks[startInPlaylist:]
+    
+    potentialRenames = []
+    localfiles = list(getScopedRecurseFiles(getDefaultDirectorySpotifyToFilenames()))
+    for i, track in enumerate(tracks):
+        if i>=len(localfiles):
+            trace('reached end of available files, %d files needed but got %d'%(len(tracks), len(localfiles)))
+            return
+        trace('%d) %s %s\t->%s %s - %s'%(i+1, localfiles[i][1], getFormattedDuration(get_audio_duration(localfiles[i][0])),
+            getFormattedDuration(track['duration_ms']/1000.0), 
+            track['artists'][0]['name'], track['name']))
+        newname = files.getparent(localfiles[i][0])+files.sep+getFilenameFromTrack(i+1, track)+'.'+files.getext(localfiles[i][0])
+        potentialRenames.append((localfiles[i][0], newname))
+    
+    if getInputBool('begin renaming?'):
+        for old, new in potentialRenames:
+            trace('renaming "%s" to "%s"'%(files.getname(old), files.getname(new)))
+            files.move(old, new, False)
+
 def getFilenameFromTrack(number, track):
     newname = '$' + track['artists'][0]['name']+ '$'
     newname += '%02d'%(int(track['track_number'])) + \
@@ -60,30 +83,37 @@ def getFilenameFromTrack(number, track):
     newname = '%04d '%number + newname
     return safefilename(newname)
     
-def tools_spotifyPlaylistToFilenames(playlistId=None):
-    playlistId = tools_getPlaylistId(playlistId)
-    tracks = getTracksFromPlaylist(spotipyconnect(), playlistId)
-    startInPlaylist = getInputInt('start where in the playlist (default 1)?', 1, len(tracks))-1
-    tracks = tracks[startInPlaylist:]
+def setMetadataFromFilename(fullpath):
+    parts = files.getname(fullpath).split('$')
+    if len(parts)!=5:
+        trace('for file %s incorrect # of $'%(fullpath))
+        return
+    alb, artist, tracknum, title, spotifyUri = parts
+    position, alb = alb.split(' ', 1)
+    spotifyUri = spotifyUri.split('.')[0]
+    obj = CoordMusicAudioMetadata(fullpath)
+    obj.setLink('spotify:track:'+spotifyUri)
+    obj.set('album', alb)
+    obj.set('artist', artist)
+    obj.set('title', title)
+    obj.set('tracknumber', tracknum)
+    obj.save()
     
-    potentialRenames = []
+def tools_filenamesToMetadataAndRemoveLowBitrate():
     localfiles = list(getScopedRecurseFiles(getDefaultDirectorySpotifyToFilenames()))
-    for i, track in enumerate(tracks):
-        if i>=len(localfiles):
-            trace('reached end of available files, %d files needed but got %d'%(len(tracks), len(localfiles)))
-            return
-        trace('%d) %s %s\t->%s %s - %s'%(i+1, localfiles[i][1], getFormattedDuration(get_audio_duration(localfiles[i][0])),
-            getFormattedDuration(track['duration_ms']/1000.0), 
-            ';'.join(art['name'] for art in track['artists']),
-            track['name']))
-        newname = files.getparent(localfiles[i][0])+files.sep+getFilenameFromTrack(i+1, track)+'.'+files.getext(localfiles[i][0])
-        potentialRenames.append((localfiles[i][0], newname))
+    for fullpath, short in localfiles:
+        if short.endswith('.wav'): warn('why is there still a wav here? '+short)
+        if '__MARKAS' in short: warn('why is there a file with MARKAS here? '+short)
     
-    if getInputBool('begin renaming?'):
-        for old, new in potentialRenames:
-            trace('renaming "%s" to "%s"'%(files.getname(old), files.getname(new)))
-            files.move(old, new, False)
-
+    for fullpath, short in localfiles:
+        if fullpath.endswith('.m4a'):
+            setMetadataFromFilename(fullpath)
+            if get_empirical_bitrate(fullpath) < 20:
+                trace('auto-deleting low bitrate', short)
+                softDeleteFile(fullpath)
+            else:
+                trace('saved tags for', short)
+        
 
 def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
     results = []
@@ -109,8 +139,6 @@ def tools_saveFilenamesMetadataToText():
     fileIterator = getScopedRecurseFiles(getMusicRoot(), filterOutLib=True)
     useSpotify = getSpotifyClientID() and getInputBool('retrieve Spotify metadata?')
     saveFilenamesMetadataToText(fileIterator, useSpotify, outName)
-    
-
     
 class ExtendedSongInfo():
     def __init__(self, filename, short):
@@ -183,4 +211,3 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchS
                 
         goBatch()
         
-

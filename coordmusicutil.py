@@ -55,19 +55,23 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
     
     def get(self, fieldname):
         if fieldname=='discnumber' or fieldname=='disc_number':
-            return self.get_or_default('discnumber', 1, False)
+            return self.get_or_default('discnumber', 1, True)
         else:
-            return self.get_or_default(fieldname, None, True)
+            return self.get_or_default(fieldname, None, False)
         
-    def get_or_default(self, fieldname, default, allowThrow=False):
+    def get_or_default(self, fieldname, default, allowThrow=True):
         import mutagen
         fieldname = self.normalizeFieldname(fieldname)
-        catchable = str if allowThrow else (KeyError, mutagen.easymp4.EasyMP4KeyError)
+        if fieldname=='discnumber' and default is None:
+            default = 1
         
-        try:
+        if not allowThrow:
             ret = EasyPythonMutagen.get(self, fieldname)
-        except catchable:
-            return default
+        else:
+            try:
+                ret = EasyPythonMutagen.get(self, fieldname)
+            except KeyError, mutagen.easymp4.EasyMP4KeyError:
+                return default
             
         if fieldname=='tracknumber' and '/' in ret:
             ret = ret.split('/')[0]

@@ -14,7 +14,7 @@ def createOrClearDirectory(d):
 def testsCoordinate():
     from recurring_coordinate import parseAFilename, getNewnameFromTag, bnsplitext, renderAFilename, doStringsMatchForField, \
     fillFieldsFromContext, checkDeleteUrlsInTheWayOfM4as, checkForLowBitratesFile, checkFilenameIrregularitiesLookForInconsistency,\
-    checkUrlContents, CheckFileExtensions, checkDuplicatedTrackNumbers, Namestyle, checkStyleConsistency, checkRequiredFieldsSet
+    checkUrlContents, CheckFileExtensions, checkDuplicatedTrackNumbers, NameStyle, checkStyleConsistency, checkRequiredFieldsSet
     def resToString(obj):
         return ';'.join(key+'='+str(object.__getattribute__(obj, key)) 
             for key in dir(obj) if (not key.startswith('_') and key!='short' and key!='album'))
@@ -189,7 +189,7 @@ def testsCoordinate():
     
     # test checkDuplicatedTrackNumbers
     def makeMockParsed(discnumber, tracknumber, artist=None, title=None):
-        return Bucket(style=Namestyle.TrackTitle, short=0,discnumber=discnumber, tracknumber=tracknumber, 
+        return Bucket(style=NameStyle.TrackTitle, short=0,discnumber=discnumber, tracknumber=tracknumber, 
             artist=artist if artist else getRandomString(), title=title if title else getRandomString())
     checkDuplicatedTrackNumbers(d, [makeMockParsed(1,1)])
     checkDuplicatedTrackNumbers(d, [makeMockParsed(1,1), makeMockParsed(2,1)])
@@ -562,14 +562,14 @@ def testsMusicToUrlInteractive():
     trace('Resulting filenames:\n'+'\n'.join(short for fullfile, short in files.listfiles(tmpdir)))
 
 if __name__=='__main__':
-    testsEasyPythonMutagenLengthAndBitrate()
-    testsEasyPythonMutagenMetadataTags()
-    testsCoordinate()
+    #~ testsEasyPythonMutagenLengthAndBitrate()
+    #~ testsEasyPythonMutagenMetadataTags()
+    #~ testsCoordinate()
     testsCoordMusicUtil()
     testsLinkSpotify()
-    if getInputBool('Run interactive tests?'):
-        testsLinkSpotifyInteractive()
-        testsMusicToUrlInteractive()
+    #~ if getInputBool('Run interactive tests?'):
+        #~ testsLinkSpotifyInteractive()
+        #~ testsMusicToUrlInteractive()
         
         
 

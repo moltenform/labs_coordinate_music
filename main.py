@@ -6,7 +6,7 @@ import recurring_linkspotify
 import sys
 
 def showCmdOptions():
-    trace('main.py'+
+    coordmusictools.trace('main.py'+
     '\n\tInteractive mode: organization and more.'+
     'main.py startspotify /path/to/song.mp3'+
     '\n\tStarts playing the Spotify track that this mp3\'s metadata points to.'+
@@ -18,18 +18,27 @@ def main():
         'organize + save disk space (replace with Spotify shortcuts)',
         'Spotify playlist to song lengths',
         'Spotify playlist to filenames',
-        'filenames to id3 tags',
+        'filenames to id3 tags, remove low bitrate',
         'save all filenames+metadata to text file',
         'show cmd-line options']
-    choice = getInputFromChoices('', choices)
+        
+    choice = coordmusictools.getInputFromChoices('', choices)
     if choice[0]==0:
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=False)
+        coordmusicuserconfig.runAfterCoordinate()
     elif choice[0]==1:
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=True)
-    
-    coordmusictools.tools_spotifyPlaylistToSongLengths
-    
-    coordmusicuserconfig.runAfterCoordinate()
+        coordmusicuserconfig.runAfterCoordinate()
+    elif choice[0]==2:
+        coordmusictools.tools_spotifyPlaylistToSongLengths()
+    elif choice[0]==3:
+        coordmusictools.tools_spotifyPlaylistToFilenames()
+    elif choice[0]==4:
+        coordmusictools.tools_filenamesToMetadataAndRemoveLowBitrate()
+    elif choice[0]==5:
+        coordmusictools.tools_saveFilenamesMetadataToText()
+    elif choice[0]==6:
+        showCmdOptions()
     
 if __name__=='__main__':
     if len(sys.argv)>1 and (sys.argv[1] == '-?' or sys.argv[1] == '-h' or sys.argv[1] == '/?'):
@@ -38,7 +47,7 @@ if __name__=='__main__':
         recurring_linkspotify.startSpotifyFromM4aArgs(sys.argv)
     elif len(sys.argv)>2 and sys.argv[1] == 'viewspotify':
         recurring_linkspotify.viewTagsFromM4aOrDirectory(sys.argv[2])
-    else if len(sys.argv)==1:
+    elif len(sys.argv)==1:
         main()
     else:
         showCmdOptions()

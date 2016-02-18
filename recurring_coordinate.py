@@ -8,7 +8,9 @@ from coordmusicutil import *
 # ' Compilation': within this directory, allow tracks to have tag for a different album
 # ' Selections': do not require track numbers in this directory
 
-Namestyle = SimpleEnum('Title|ArtistTitle|TrackTitle|TrackArtistTitle|DiscTrackTitle|DiscTrackArtistTitle'.split('|'))
+NameStyle = SimpleEnum(('Title', 'ArtistTitle', 'TrackTitle', 
+    'TrackArtistTitle', 'DiscTrackTitle', 'DiscTrackArtistTitle'))
+    
 def parseAFilename(short):
     name = bnsplitext(short)[0]
     name = name.replace(' (^)','').replace(' (v)','')
@@ -17,7 +19,7 @@ def parseAFilename(short):
     
     tryRe = re.match('([0-9][0-9]) ([0-9][0-9]) (.*?) - (.*)', name)
     if tryRe:
-        res.style = Namestyle.DiscTrackArtistTitle
+        res.style = NameStyle.DiscTrackArtistTitle
         res.discnumber = int(tryRe.group(1))
         res.tracknumber = int(tryRe.group(2))
         res.artist = tryRe.group(3)
@@ -26,7 +28,7 @@ def parseAFilename(short):
     
     tryRe = re.match('([0-9][0-9]) ([0-9][0-9]) (.*)', name)
     if tryRe:
-        res.style = Namestyle.DiscTrackTitle
+        res.style = NameStyle.DiscTrackTitle
         res.discnumber = int(tryRe.group(1))
         res.tracknumber = int(tryRe.group(2))
         res.title = tryRe.group(3)
@@ -34,7 +36,7 @@ def parseAFilename(short):
     
     tryRe = re.match('([0-9][0-9]) (.*?) - (.*)', name)
     if tryRe:
-        res.style = Namestyle.TrackArtistTitle
+        res.style = NameStyle.TrackArtistTitle
         res.tracknumber = int(tryRe.group(1))
         res.artist = tryRe.group(2)
         res.title = tryRe.group(3)
@@ -42,35 +44,35 @@ def parseAFilename(short):
         
     tryRe = re.match('([0-9][0-9]) (.*)', name)
     if tryRe:
-        res.style = Namestyle.TrackTitle
+        res.style = NameStyle.TrackTitle
         res.tracknumber = int(tryRe.group(1))
         res.title = tryRe.group(2)
         return res
         
     tryRe = re.match('(.*?) - (.*)', name)
     if tryRe:
-        res.style = Namestyle.ArtistTitle
+        res.style = NameStyle.ArtistTitle
         res.artist = tryRe.group(1)
         res.title = tryRe.group(2)
         return res
     
-    res.style = Namestyle.Title
+    res.style = NameStyle.Title
     res.title = name
     return res
 
 def renderAFilename(res, short):
     rest = bnsplitext(short)[1]
-    if res.style==Namestyle.Title:
+    if res.style==NameStyle.Title:
         name = res.title
-    elif res.style==Namestyle.ArtistTitle:
+    elif res.style==NameStyle.ArtistTitle:
         name = '%s - %s'%(res.artist, res.title)
-    elif res.style==Namestyle.TrackTitle:
+    elif res.style==NameStyle.TrackTitle:
         name = '%02d %s'%(res.tracknumber, res.title)
-    elif res.style==Namestyle.TrackArtistTitle:
+    elif res.style==NameStyle.TrackArtistTitle:
         name = '%02d %s - %s'%(res.tracknumber, res.artist, res.title)
-    elif res.style==Namestyle.DiscTrackTitle:
+    elif res.style==NameStyle.DiscTrackTitle:
         name = '%02d %02d %s'%(res.discnumber, res.tracknumber, res.title)
-    elif res.style==Namestyle.DiscTrackArtistTitle:
+    elif res.style==NameStyle.DiscTrackArtistTitle:
         name = '%02d %02d %s - %s'%(res.discnumber, res.tracknumber, res.artist, res.title)
     
     if ' (^)' in short: name += ' (^)'
@@ -213,7 +215,7 @@ def checkForLowBitrates(fullpathdir, tags):
         if tag.short.endswith('.url'):
             continue
         
-        bitrate = getFileBitrate(fullpathdir+'/'+tag.short, tag)
+        bitrate = get_empirical_bitrate(fullpathdir+'/'+tag.short, tag)
         action = checkForLowBitratesFile(fullpathdir, bitrate, tag)
         if action=='delete':
             softDeleteFile(fullpathdir +'/'+ tag.short)
@@ -305,7 +307,7 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
         return
     for field in fields:
         fromFilename = object.__getattribute__(parsed, field)
-        fromTag = tag.get(field)
+        fromTag = tag.get_or_default(field, None)
         if not fromFilename and field in optionalFields:
             continue
         if not fromFilename and not fromTag and not field in optionalFields:
@@ -358,7 +360,7 @@ def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
         seenTracknumber |= 'Track' in parsed.style
         seenWithoutSpotify |= not tag.getLink()
         for field in requiredfields:
-            if not tag.get(field):
+            if not tag.get_or_default(field, None):
                 spotlink = tag.getLink()
                 if field=='album':
                     recurring_linkspotify.lookupAlbumForFile(fullpathdir+'/'+tag.short, tag,parsed, spotlink)
@@ -402,7 +404,7 @@ def goPerDirectory(fullpathdir, dirsplit, helpers):
                 if ext=='url':
                     tags.append(Bucket(short=short, ext=ext))
                 else:
-                    tags.append(BnTagWrapper(path))
+                    tags.append(CoordMusicAudioMetadata(path))
                     tags[-1].short = short
     
     if not seenOne:
@@ -417,23 +419,21 @@ def getHelpers(root, market, enableSaveSpace):
     helpers.removeRemasteredString = recurring_linkspotify.RemoveRemasteredString()
     helpers.music_to_url = recurring_music_to_url.SaveDiskSpaceMusicToUrl(enableSaveSpace)
     helpers.extsCheckFilenames = dict(mp3=1,m4a=1,flac=1,url=1)
-    helpers.splroot = root.replace('\\','/').split('/')
+    helpers.splroot = root.split(files.sep)
     helpers.market = market
     return helpers
         
-# example: if root is ~/music, scope is c:/music/classic rock, and startingpoint is c:/music/classic rock/hendrix
-# we'll go through c:/music/classic rock and process all directories that sort lower than c:/music/classic rock/hendrix
 def mainCoordinate(isTopDown=True, enableSaveSpace=False):
     root = getMusicRoot()
     market = getSpotifyGeographicMarketName()
     
     helpers = getHelpers(root, market, enableSaveSpace)
-    for fullpathdir, pathshort in getScopedRecurseDirs(root, topdown=isTopDown, filterOutLib=True):
+    for fullpathdir, pathshort in getScopedRecurseDirs(root, isTopDown=isTopDown, filterOutLib=True):
         # we'll need a few passes through the directory in some cases
         while True:
             err = None
             try:
-                goPerDirectory(fullpathdir, dirsplit, helpers)
+                goPerDirectory(fullpathdir, fullpathdir.split(files.sep), helpers)
             except StopBecauseWeRenamedFile:
                 trace('we renamed a file; re-entering directory.')
                 continue
@@ -445,4 +445,5 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False):
                 elif choice[0] == 1: break #go to next dir
                 
             break
-            
+
+    trace('Complete.')

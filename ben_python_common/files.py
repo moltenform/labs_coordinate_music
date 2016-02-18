@@ -204,8 +204,9 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
     return retcode, stdout, stderr
 
 if __name__=='__main__':
-    tmpdir = ur'C:\data\local\less_important\trash\pytest'
-    tmpdirsl = tmpdir+os_hide.path.sep
+    import tempfile
+    tmpdir = tempfile.gettempdir()+sep+'pytest'
+    tmpdirsl = tmpdir+sep
     if not os_hide.path.exists(tmpdir):
         os_hide.mkdir(tmpdir)
     def cleardirectoryfiles(d):
@@ -305,8 +306,9 @@ if __name__=='__main__':
     # tmpdir/s1/ss1 has files, no dirs
     # tmpdir/s1/ss2 has no files, dirs
     cleardirectoryfiles(tmpdir)
-    dirstomake = [tmpdir, tmpdirsl+'s1', tmpdirsl+'s1\\ss1', tmpdirsl+'s1\\ss2', tmpdirsl+'s2']
-    filestomake = [tmpdirsl+'P1.PNG', tmpdirsl+'a1.txt', tmpdirsl+'a2png', tmpdirsl+'s1\\ss1\\file.txt', tmpdirsl+'s2\\other.txt']
+    dirstomake = [tmpdir, tmpdirsl+'s1', tmpdirsl+'s1'+sep+'ss1', tmpdirsl+'s1'+sep+'ss2', tmpdirsl+'s2']
+    filestomake = [tmpdirsl+'P1.PNG', tmpdirsl+'a1.txt', tmpdirsl+'a2png',
+        tmpdirsl+'s1'+sep+'ss1'+sep+'file.txt', tmpdirsl+'s2'+sep+'other.txt']
     for dir in dirstomake:
         if dir != tmpdir:
             makedir(dir)

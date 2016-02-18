@@ -5,28 +5,32 @@ import re
 def lookupAlbumForFile(path, tag, parsed, spotlink):
     trackSeen = None
     whatToSet = None
-    if spotlink and 'spotify:track:' in spotlink and 'notfound' not in spotlink:
+    if spotlink and 'spotify:track:' in spotlink:
         results = spotipyconn().tracks([spotlink])
         for track in results['tracks']:
             if track['id']==spotlink or track['uri']==spotlink:
                 trackSeen = track
 
-    choices = ['enter manually', 'search online']
+    choices = ['search online']
     if trackSeen:
         choices.extend(['Spotify: '+track['album']['name'], 'Spotify: '+track['album']['name'].split(' (')[0].split(' [')[0]])
        
     def callback(s, arrChoices, otherCommandsContext):
-        if not s or s[0].isdigit(): return False
-        else: return 'enteredmanally'+s
-    choice = getInputFromChoices('\n\nthe album for %s is (or type name)'%path, choices, callback)
-    if choice[0]==0:
-        choice = (choice[0], getInputString('album name:'))
-    elif choice[0]==-1 and choice[1].startswith('enteredmanally'):
+        if not s or s[0].isdigit():
+            return False
+        elif s=='hear0':
+            launchMediaPlayer(otherCommandsContext.path)
+            return False
+        else:
+            return 'enteredmanally'+s
+        
+    choice = getInputFromChoices('\n\nthe album for %s is (or type name)'%path, choices, callback, Bucket(path=path))
+    if choice[0]==-1 and choice[1].startswith('enteredmanally'):
         # instead of typing 0, 1, or 2, the user directly typed in text.
         choice = (choice[0], choice[1].replace('enteredmanally',''))
-        if not getInputBool(choice[1]):
-            choice = (choice[0], getInputString('album name:'))
-    elif choice[0]==1:
+        if not getInputBool('confirm that album is '+choice[1]):
+            return lookupAlbumForFile(path, tag, parsed, spotlink)
+    elif choice[0]==0:
         import urllib2, subprocess
         subprocess.Popen(['start', 'http://google.com/search?q='+urllib2.quote(parsed.artist+' '+parsed.title)], shell=True)
         return lookupAlbumForFile(path, tag, parsed, spotlink)
@@ -349,7 +353,7 @@ class RemoveRemasteredString(object):
 
 def isTagAcceptibleToBeMadeIntoShortcuts(fullpathdir, tag):
     return not tag.short.endswith('.url') and not tag.short.endswith('.flac') and \
-        (tag.short.endswith('.mp3') or (tag.short.endswith('.m4a') and getFileBitrate(fullpathdir+'/'+tag.short) < 170)) and \
+        (tag.short.endswith('.mp3') or (tag.short.endswith('.m4a') and get_empirical_bitrate(fullpathdir+'/'+tag.short) < 170)) and \
         not '.sv.' in tag.short and not '.movetosv.' in tag.short and not '.3.mp3' in tag.short and \
         'spotify:track:' in tag.getLink()
 
@@ -357,7 +361,7 @@ def startSpotifyFromM4a(s):
     assert getFieldForFile(s, False) != None, 'unknown file type'
     assert files.exists(s), 'file not found'
     
-    obj = BnTagWrapper(s)
+    obj = CoordMusicAudioMetadata(s)
     spotifyUri = obj.getLink()
     if 'spotify:notfound' in spotifyUri:
         assert False, 'audio file explicitly marked as not in spotify'
@@ -374,7 +378,6 @@ def startSpotifyFromM4aArgs(args):
     except:
         e = sys.exc_info()[1]
         alertGui(unicode(e))
-        del e
         sys.exit(1)
 
 def viewTagsFromM4aOrDirectory(path):
