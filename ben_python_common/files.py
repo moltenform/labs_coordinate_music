@@ -1,3 +1,5 @@
+# BenPythonCommon,
+# 2015 Ben Fisher, released under the GPLv3 license.
 
 import os as os_hide
 import shutil as shutil_hide
@@ -212,25 +214,20 @@ def runWithoutWaitUnicode(listArgs):
         p = subprocess.Popen(listArgs, shell=False)
         return p.pid
     else:
-        # unfortunately this doesn't work for anything nontrivial since apparently Croatian/etc characters 
-        # just get stuffed into ascii during encode(sys.getfilesystemencoding()) and it still fails.
-        import subprocess, _subprocess, types
+        import winprocess, subprocess, _subprocess, types
         if isinstance(listArgs, types.StringTypes):
             combinedArgs = listArgs
         else:
             combinedArgs = subprocess.list2cmdline(listArgs)
             
-        if isinstance(combinedArgs, unicode):
-            combinedArgs = combinedArgs.encode(sys.getfilesystemencoding())
-        
-        print combinedArgs
+        combinedArgs = unicode(combinedArgs)
         executable = None
         close_fds = False
         creationflags = 0
         env = None
         cwd = None
-        startupinfo = subprocess.STARTUPINFO()
-        handle, ht, pid, tid = _subprocess.CreateProcess(executable, combinedArgs,
+        startupinfo = winprocess.STARTUPINFO()
+        handle, ht, pid, tid = winprocess.CreateProcess(executable, combinedArgs,
              None, None,
              int(not close_fds),
              creationflags,
@@ -388,11 +385,24 @@ if __name__=='__main__':
     returncode, stdout, stderr = run([tmpdirsl+'script.bat'])
     assertEq(0, returncode)
     assertTrue(exists(tmpdirsl+'dest.txt'))
+    
     # specify no capture and run again
     delete(tmpdirsl+'dest.txt')
     returncode, stdout, stderr = run([tmpdirsl+'script.bat'], captureoutput=False)
     assertEq(0, returncode)
     assertTrue(exists(tmpdirsl+'dest.txt'))
+    
+    # run process with unicode characters
+    delete(tmpdirsl+'dest.txt')
+    unicodepath = tmpdirsl+u'scr#1pt#2.bat'.replace('#1', u'\u012B').replace('#2', u'\u013C')
+    writeall(unicodepath, 'copy "%ssrc.txt" "%sdest.txt"'%(tmpdirsl,tmpdirsl))
+    try:
+        import time
+        runWithoutWaitUnicode([unicodepath])
+        time.sleep(0.5)
+        assertTrue(exists(tmpdirsl+'dest.txt'))
+    finally:
+        delete(unicodepath)
     
     # test run process, batch script returns failure
     cleardirectoryfiles(tmpdir)
@@ -450,7 +460,4 @@ if __name__=='__main__':
     returncode, stdout, stderr = run(['copy', tmpdirsl+'src.txt', tmpdirsl+'dest.txt'], shell=True)
     assertEq(0, returncode)
     assertTrue(exists(tmpdirsl+'dest.txt'))
-    
-
-    
     

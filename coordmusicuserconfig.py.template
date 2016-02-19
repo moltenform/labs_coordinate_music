@@ -21,13 +21,6 @@ def getSpotifyCallbackUrl():
 def getSpotifyGeographicMarketName():
     return 'US'
 
-def getSpotifyLocation():
-    import os, sys
-    if sys.platform=='win32':
-        return os.getenv('APPDATA') + r'\Spotify\spotify.exe'
-    else:
-        return 'full/path/to/spotify'
-
 def getMediaPlayer():
     return 'full/path/to/mediaplayer'
     

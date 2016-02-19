@@ -1,3 +1,5 @@
+# BenPythonCommon,
+# 2015 Ben Fisher, released under the GPLv3 license.
 
 class Bucket(object):
     "simple named-tuple; o.field looks nicer than o['field']. "

@@ -33,16 +33,14 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
         else:
             return 'enteredmanally'+s
         
-    choice = getInputFromChoices('\n\nthe album for %s is (or type name)'%path, choices, callback, Bucket(path=path))
+    choice = getInputFromChoices('\n\nthe album for %s is (or "SS" or type name)'%path, choices, callback, Bucket(path=path))
     if choice[0]==-1 and choice[1].startswith('enteredmanally'):
         # instead of typing 0, 1, or 2, the user directly typed in text.
         choice = (choice[0], choice[1].replace('enteredmanally',''))
         if not getInputBool('confirm that album is '+choice[1]):
             return lookupAlbumForFile(path, tag, parsed, spotlink)
     elif choice[0]==0:
-        import urllib2, subprocess
-        subprocess.Popen(['start', 'http://google.com/search?q='+urllib2.quote(parsed.artist+' '+parsed.title)], shell=True)
-        return lookupAlbumForFile(path, tag, parsed, spotlink)
+        launchGoogleQuery(parsed.artist+' '+parsed.title)
     elif choice[0] < 0:
         return False
 
@@ -80,7 +78,7 @@ def runspotifysearch(market, search_str, type, limit, filterCovers):
     result = result[type+'s']['items']
     resultFiltered = []
     for res in result:
-        if type=='track': 
+        if type=='track':
             textlower = res[u'name'].lower() + ' '+ ' '.join((getPrintable(art['name']) for art in res['artists'])).lower()
         else:
             textlower = res[u'name'].lower()
@@ -245,8 +243,8 @@ def linkspotifypertrack(market, fullpathdir, tag, parsed):
             break
 
 def getArtistFromAlbumid(albumid):
-    id = spotipyconn()._get_id('album', 'spotify:album:52NFKuYav3gArQgbsxiHwS')
-    results = spotipyconn()._get('albums/' + id + '/tracks/?offset=0&limit=1')
+    idcompact = spotipyconn()._get_id('album', albumid)
+    results = spotipyconn()._get('albums/' + idcompact + '/tracks/?offset=0&limit=1')
     if results and len(results['items']):
         return ';; '.join((artist['name'] for artist in results['items'][0]['artists']))
     else:

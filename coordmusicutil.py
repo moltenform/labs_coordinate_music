@@ -206,19 +206,31 @@ def typeIntoSpotifySearch(s):
         trace('exception thrown, ',sys.exc_info()[1])
     
 def launchSpotifyUri(uri):
-    import subprocess
     if not uri or uri=='spotify:notfound':
         trace('cannot start uri', str(uri))
         return
     assert uri.startswith('spotify:track:')
-    assert all(c=='#' or c==':' or c.isalnum() for c in uri)
-    args = ['start', uri]
-    subprocess.Popen(args, shell=True)
+    assert all(c=='#' or c==':' or c.isalnum() for c in uri) and len(uri)<50
+    if sys.platform=='win32':
+        import subprocess
+        args = ['start', uri]
+        subprocess.Popen(args, shell=True)
+    else:
+        import webbrowser
+        url = 'https://open.spotify.com/track/'+uri.replace('spotify:track:', '')
+        webbrowser.open(url, new=2)
 
 def launchMediaPlayer(path):
-    import subprocess
     mplayer = getMediaPlayer()
-    subprocess.Popen([mplayer, path], shell=False)
+    files.runWithoutWaitUnicode([mplayer, path], shell=False)
+    
+def launchGoogleQuery(query):
+    assert '/' not in query and '\\' not in query and '^' not in query and '%' not in query and ':' not in query
+    if sys.platform=='win32':
+        files.runWithoutWaitUnicode(['cmd', '/c', 'start', 'http://google.com/search?q='+query])
+    else:
+        import webbrowser
+        webbrowser.open('http://google.com/search?q='+query, new=2)
 
 def getTestMediaLocation():
     return './test'
@@ -272,8 +284,10 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown = True):
         if not filterOutLib or lib not in fullpathLower+files.sep:
             yield fullpath, short
         
-def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown = True):
+def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown=True):
     for fullpathdir, shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
         for fullpath, short in files.listfiles(fullpathdir):
             yield fullpath, short
     
+
+

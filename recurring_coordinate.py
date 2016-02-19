@@ -203,7 +203,7 @@ def checkForLowBitratesFile(fullpathdir, bitrate, tag, allowMakeUrl=True):
     if bitrate < 27 and tag.short.endswith('.m4a') and allowMakeUrl:
         trace('automatically urling low bitrate file ', fullpathdir, tag.short)
         return 'makeurl'
-    if allowMakeUrl and (bitrate < 27 or ' (v)' in tag.short):
+    if allowMakeUrl and (bitrate < 27 or ' (v)' in tag.short) and not '.3.mp3' in tag.short:
         trace(fullpathdir, tag.short)
         choice = getInputFromChoices('file has low bitrate (%f)'%bitrate, ['remove', 'make url'])
         if choice[0]==0: return 'delete'
@@ -216,7 +216,7 @@ def checkForLowBitrates(fullpathdir, tags, allowMakeUrl):
             continue
         
         bitrate = get_empirical_bitrate(fullpathdir+'/'+tag.short, tag)
-        action = checkForLowBitratesFile(fullpathdir, bitrate, tag)
+        action = checkForLowBitratesFile(fullpathdir, bitrate, tag, allowMakeUrl)
         if action=='delete':
             softDeleteFile(fullpathdir +'/'+ tag.short)
             changedAtLeastOne = True
@@ -264,7 +264,7 @@ def checkFilenameIrregularities(fullpathdir, shorts):
                     first+' '+second]
                 choice = getInputFromChoices('choose a new name:', proposednames)
                 if choice >= 0:
-                    files.move(parentName +'/'+ short, parentName +'/'+ proposednames[choice[0]])
+                    files.move(fullpathdir +'/'+ short, fullpathdir +'/'+ proposednames[choice[0]])
                     changedAtLeastOne = True
     
     stopIfFileRenamed(changedAtLeastOne)
@@ -365,10 +365,12 @@ def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
             if not tag.get_or_default(field, None):
                 spotlink = tag.getLink()
                 if field=='album':
-                    if recurring_linkspotify.lookupAlbumForFile(fullpathdir+'/'+tag.short, tag,parsed, spotlink):
+                    if recurring_linkspotify.lookupAlbumForFile(fullpathdir+'/'+tag.short, tag, parsed, spotlink):
                         raise StopBecauseWeRenamedFile
+                elif field=='tracknumber' and 'Track' not in parsed.style:
+                    pass #allowing missing tracknumber since non-album
                 else:
-                    assertTrue(False, 'missing required field',field,fullpathdir,tag.short)
+                    assertTrue(False, 'missing required field', field, fullpathdir, tag.short)
     
     return seenTracknumber, seenWithoutSpotify
 
