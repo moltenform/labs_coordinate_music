@@ -202,6 +202,45 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
         raise throwOnFailure(getPrintable(exceptionText))
     
     return retcode, stdout, stderr
+    
+def runWithoutWaitUnicode(listArgs):
+    # in Windows, non-ascii characters cause subprocess.Popen to fail.
+    # https://bugs.python.org/issue1759845
+    import sys
+    if sys.platform!='win32' or all(isinstance(arg, str) for arg in listArgs):
+        import subprocess
+        p = subprocess.Popen(listArgs, shell=False)
+        return p.pid
+    else:
+        # unfortunately this doesn't work for anything nontrivial since apparently Croatian/etc characters 
+        # just get stuffed into ascii during encode(sys.getfilesystemencoding()) and it still fails.
+        import subprocess, _subprocess, types
+        if isinstance(listArgs, types.StringTypes):
+            combinedArgs = listArgs
+        else:
+            combinedArgs = subprocess.list2cmdline(listArgs)
+            
+        if isinstance(combinedArgs, unicode):
+            combinedArgs = combinedArgs.encode(sys.getfilesystemencoding())
+        
+        print combinedArgs
+        executable = None
+        close_fds = False
+        creationflags = 0
+        env = None
+        cwd = None
+        startupinfo = subprocess.STARTUPINFO()
+        handle, ht, pid, tid = _subprocess.CreateProcess(executable, combinedArgs,
+             None, None,
+             int(not close_fds),
+             creationflags,
+             env,
+             cwd,
+             startupinfo)
+        ht.Close()
+        handle.Close()
+        return pid
+        
 
 if __name__=='__main__':
     import tempfile
