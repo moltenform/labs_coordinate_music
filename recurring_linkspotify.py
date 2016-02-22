@@ -41,6 +41,7 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
             return lookupAlbumForFile(path, tag, parsed, spotlink)
     elif choice[0]==0:
         launchGoogleQuery(parsed.artist+' '+parsed.title)
+        return lookupAlbumForFile(path, tag, parsed, spotlink)
     elif choice[0] < 0:
         return False
 

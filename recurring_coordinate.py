@@ -450,7 +450,7 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
                 elif choice[0] == 0: continue #retry dir
                 elif choice[0] == 1: break #go to next dir
                 elif choice[0] == 2: 
-                    askExplorer(fullpathdir)
+                    files.openDirectoryInExplorer(fullpathdir)
                     continue
                 
             break

@@ -159,15 +159,14 @@ def isemptydir(dir):
 def openDirectoryInExplorer(dir):
     import os
     assert isdir(dir), 'not a dir? '+dir
-    assert not '^' in dir and not '"' in dir
-    import subprocess
-    subprocess.call(['start', 'explorer.exe', dir], shell=True)
+    assert not '^' in dir and not '"' in dir, 'dir cannot contain ^ or "'
+    runWithoutWaitUnicode([u'cmd', u'/c', u'start', u'explorer.exe', dir])
 
 def openUrl(s):
-    assert s.startsWith('http:') or s.startsWith('https:')
-    assert not ' ' in s and not '^' in s and not '"' in s and not "'" in s
-    import subprocess
-    subprocess.call(['start', fullurl], shell=True)
+    assert s.startswith('http:') or s.startswith('https:')
+    assert not '^' in s and not '"' in s, 'url cannot contain ^ or "'
+    import webbrowser
+    webbrowser.open(s, new=2)
 
 # returns tuple (returncode, stdout, stderr)
 def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True, 

@@ -177,7 +177,7 @@ def askRename(parentName, short1, short2, prompt=''):
     
 def askExplorer(dir):
     if getInputBool('open explorer window?'):
-        files.openDirectoryInExplorer(dir) 
+        files.openDirectoryInExplorer(dir)
                
 def typeIntoSpotifySearch(s):
     try:
@@ -216,9 +216,8 @@ def launchSpotifyUri(uri):
         args = ['start', uri]
         subprocess.Popen(args, shell=True)
     else:
-        import webbrowser
         url = 'https://open.spotify.com/track/'+uri.replace('spotify:track:', '')
-        webbrowser.open(url, new=2)
+        files.openUrl(url)
 
 def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
@@ -226,11 +225,7 @@ def launchMediaPlayer(path):
     
 def launchGoogleQuery(query):
     assert '/' not in query and '\\' not in query and '^' not in query and '%' not in query and ':' not in query
-    if sys.platform=='win32':
-        files.runWithoutWaitUnicode(['cmd', '/c', 'start', 'http://google.com/search?q='+query])
-    else:
-        import webbrowser
-        webbrowser.open('http://google.com/search?q='+query, new=2)
+    files.openUrl('http://google.com/search?q='+query)
 
 def getTestMediaLocation():
     return './test'
