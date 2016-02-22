@@ -44,6 +44,8 @@ class EasyPythonMutagen(object):
     def set(self, fieldname, val):
         if isinstance(val, int):
             val = str(val)
+            
+        assert isinstance(val, basestring), 'val must be a string'
         self.obj[fieldname] = val
         
     def save(self):
@@ -132,7 +134,7 @@ class _EasyPythonMutagenM4a(easymp4.EasyMP4):
         super(_EasyPythonMutagenM4a, self).__init__(filename)
         easymp4.EasyMP4Tags.RegisterTextKey('composer', b'\xa9wrt')
         easymp4.EasyMP4Tags.RegisterTextKey('desc', b'desc')
-        easymp4.EasyMP4Tags.RegisterTextKey('website', b'----:com.apple.iTunes:WWW')
+        easymp4.EasyMP4Tags.RegisterFreeformKey('website', b'WWW')
 
 class EasyPythonMutagenId3(object):
     '''like EasyId3, but supports id3_v23 and handles missing tags more gracefully.'''
@@ -219,6 +221,8 @@ class EasyPythonMutagenId3(object):
         if key=='website':
             return self.setWebsite(val)
         else:
+            assert isinstance(val, basestring), 'val must be a string'
+            val = [val]
             frameid = self.map[key]
             encoding = 3 #Encoding.UTF8; mutagen apparently converts to UTF16 when needed
             try:
@@ -277,5 +281,4 @@ def get_empirical_bitrate(filename, alreadyobj=None):
     
     duration = get_audio_duration(filename, alreadyobj)
     return (8.0*os.path.getsize(filename)/1000.0) / duration
-    
-    
+

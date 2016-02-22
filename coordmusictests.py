@@ -8,7 +8,7 @@ tmpdirsl = tmpdir+files.sep
 def createOrClearDirectory(d):
     if files.exists(d):
         files.rmtree(d)
-        files.makedirs(d)
+    files.makedirs(d)
     assertTrue(files.isemptydir(d))
 
 def testsCoordinate():
@@ -219,17 +219,17 @@ def testsCoordinate():
             return self.fields.get(key, default)
         def getLink(self):
             return 'spotify:track:0Svkvt5I79wficMFgaqEQJ'
-    def testCheckRequiredFieldsSet(dir, short, fieldsmissing):
-        checkRequiredFieldsSet(dir, dir.split('/'), [MockTag(short, fieldsmissing)], [Bucket(style='')])
+    def testCheckRequiredFieldsSet(dir, short, fieldsmissing, parsedstyle=''):
+        checkRequiredFieldsSet(dir, dir.split('/'), [MockTag(short, fieldsmissing)], [Bucket(style=parsedstyle)])
     
     testCheckRequiredFieldsSet('c:/test/1999, The Album', '01 test test.m4a', fieldsmissing=[])
     testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.url', fieldsmissing=['artist'])
-    testCheckRequiredFieldsSet('c:/test/1999, The Album Selections', 'test test.m4a', fieldsmissing=['tracknumber'])
+    testCheckRequiredFieldsSet('c:/test/1999, The Album Selections', 'test test.m4a', fieldsmissing=[])
     testCheckRequiredFieldsSet('c:/test', 'test test.m4a', fieldsmissing=['tracknumber'])
     testCheckRequiredFieldsSet('c:/test', '1234 test test.m4a', fieldsmissing=['tracknumber'])
     assertException(lambda: testCheckRequiredFieldsSet('c:/test', '01 test test.m4a', []), AssertionError, 'outside of album')
     assertException(lambda: testCheckRequiredFieldsSet('c:/test', '01 test test.url', []), AssertionError, 'outside of album')
-    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['tracknumber']),AssertionError, 'required field tracknumber')
+    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', '01 test test.m4a', ['tracknumber'], 'TrackTitle'), AssertionError, 'required field tracknumber')
     assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['artist']), AssertionError, 'required field artist')
     assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['discnumber']), AssertionError, 'required field discnumber')
     
@@ -356,6 +356,18 @@ def testsEasyPythonMutagenMetadataTags():
         obj = EasyPythonMutagen(tmpdirsl+file)
         for field in fields:
             assertEq(unicode(fields[field]), obj.get(field))
+            
+        # append data to each text field
+        for field in fields:
+            if not isinstance(fields[field], int):
+                obj.set(field, unicode(fields[field]) + 'appended')
+        obj.save()
+        
+        # verify data was saved
+        obj = EasyPythonMutagen(tmpdirsl+file)
+        for field in fields:
+            if not isinstance(fields[field], int):
+                assertEq(unicode(fields[field]) + 'appended', obj.get(field))
  
 def testsCoordMusicUtil():
     # test getFormattedDuration

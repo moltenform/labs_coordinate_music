@@ -119,7 +119,7 @@ def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
     return newname
 
 def removeCharsFlavor1(s):
-    return s.replace(u'?', u'').replace(u'\\', u'').replace(u'/', u'').replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
+    return s.replace(u'?', u'').replace(u'\\', u'-').replace(u'/', u'-').replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
 
 def removeCharsFlavor2(s):
     return s.replace(u'!', u'').replace(u'\\', u'-').replace(u'/', u'-').replace(u'\u2019', u'\'').replace(u'?', u'').replace(u'/', u'').replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
@@ -221,7 +221,7 @@ def launchSpotifyUri(uri):
 
 def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
-    files.runWithoutWaitUnicode([mplayer, path], shell=False)
+    files.runWithoutWaitUnicode([mplayer, path])
     
 def launchGoogleQuery(query):
     assert '/' not in query and '\\' not in query and '^' not in query and '%' not in query and ':' not in query
