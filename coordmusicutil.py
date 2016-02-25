@@ -124,7 +124,7 @@ def removeCharsFlavor1(s):
 def removeCharsFlavor2(s):
     return s.replace(u'!', u'').replace(u'\\', u'-').replace(u'/', u'-').replace(u'\u2019', u'\'').replace(u'?', u'').replace(u'/', u'').replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
 
-def spotipyconnect():
+def _spotipyconnect():
     import spotipy
     import spotipy.util as sputil
     
@@ -139,7 +139,7 @@ g_spotipyObject = None
 def spotipyconn():
     global g_spotipyObject
     if not g_spotipyObject:
-        g_spotipyObject = spotipyconnect()
+        g_spotipyObject = _spotipyconnect()
     return g_spotipyObject
 
 class StopBecauseWeRenamedFile(Exception):

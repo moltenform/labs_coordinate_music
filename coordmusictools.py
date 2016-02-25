@@ -14,7 +14,7 @@ def tools_getPlaylistId(playlistId=None):
         
 def tools_clearPlaylist(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
-    sp = spotipyconnect()
+    sp = spotipyconn()
     tracks = getTracksFromPlaylist(sp, playlistId)
     trace('removing %d tracks.'%len(tracks))
     urisToRemove = [track[u'uri'] for track in tracks]
@@ -25,7 +25,7 @@ def tools_clearPlaylist(playlistId=None):
 
 def tools_viewSpotifyPlaylist(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
-    tracks = getTracksFromPlaylist(spotipyconnect(), playlistId)
+    tracks = getTracksFromPlaylist(spotipyconn(), playlistId)
     for i, track in enumerate(tracks):
         info = ExtendedSongInfo(None, None)
         info.info['uri'] = track['uri'].replace('spotify:track:', '')
@@ -34,7 +34,7 @@ def tools_viewSpotifyPlaylist(playlistId=None):
 
 def tools_spotifyPlaylistToSongLengths(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
-    tracks = getTracksFromPlaylist(spotipyconnect(), playlistId)
+    tracks = getTracksFromPlaylist(spotipyconn(), playlistId)
     outpath = getDefaultDirectorySpotifyToFilenames()+'/data/lengths.txt'
     with open(outpath, 'w') as fout:
         for i, track in enumerate(tracks):
@@ -44,7 +44,7 @@ def tools_spotifyPlaylistToSongLengths(playlistId=None):
     
 def tools_spotifyPlaylistToFilenames(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
-    tracks = getTracksFromPlaylist(spotipyconnect(), playlistId)
+    tracks = getTracksFromPlaylist(spotipyconn(), playlistId)
     startInPlaylist = getInputInt('start where in the playlist (default 1)?', 1, len(tracks))-1
     tracks = tracks[startInPlaylist:]
     
@@ -117,8 +117,8 @@ def tools_filenamesToMetadataAndRemoveLowBitrate():
 def tools_outsideMp3sToSpotifyPlaylist():
     dir = getOpenFileGui(initialdir=getDefaultDirectorySpotifyToFilenames())
 
-
 def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
+    playlistId = tools_getPlaylistId(playlistId)
     results = []
     for fullpath, short in getScopedRecurseFiles(dir, filterOutLib=True):
         if fullpath.endswith('.mp3') and not fullpath.endswith('.3.mp3') and not fullpath.endswith('.sv.mp3'):
@@ -132,11 +132,10 @@ def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
             trace('adding to playlist', '\n'.join((item[0] for item in batch)))
             sp.user_playlist_add_tracks(getSpotifyUsername(), playlistId, [item[1] for item in batch])
             time.sleep(0.2)
-
+            
 def tools_saveFilenamesMetadataToText():
     outName = getInputString('save to what output file:', False)
-    if files.exists(outName):
-        trace('already exists.')
+    if files.exists(outName) and not getInputBool('append to existing file?'):
         return
         
     fileIterator = getScopedRecurseFiles(getMusicRoot(), filterOutLib=True)
@@ -153,7 +152,8 @@ class ExtendedSongInfo():
         elif filename.endswith('.url'):
             self.info['uri'] = getFromUrlFile(filename)
         elif filename.endswith('.txt'):
-            self.info['localAlbum'] = files.readall(filename).replace('\r\n','\n').replace('\n','|')
+            # read the first 64k of utf8 text.
+            self.info['localAlbum'] = files.readall(filename, 'r', 'utf-8').replace('\r\n','\n').replace('\n','|')[0: 1024*64]
         elif getFieldForFile(filename, throw=False):
             obj = CoordMusicAudioMetadata(filename)
             self.info['uri'] = obj.getLink()
@@ -175,10 +175,10 @@ class ExtendedSongInfo():
     def __unicode__(self):
         return u'%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s'%(self.info['filename'], 
             getFormattedDuration(self.info['localLength'], True), int(self.info['localBitrate']), 
-            self.info['localAlbum'], self.info['uri'].replace('spotify:track:','').replace('spotify:',''),
+            self.info['localAlbum'], self.info['uri'].replace('spotify:track:','').replace('spotify:notfound','ns').replace('spotify:',''),
             self.info['spotifyArtist'], self.info['spotifyTitle'], 
             getFormattedDuration(self.info['spotifyLength'], True),
-            self.info['spotifyAlbum'],self.info['isMarketWarn'])
+            self.info['spotifyAlbum'], self.info['isMarketWarn'])
 
 def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchSize=15, maxBatchSize=50):
     batch = []
@@ -195,14 +195,23 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchS
                     '\n'.join(uri+','+mapUriToExtendedSongInfo[uri].filename
                         for uri in mapUriToExtendedSongInfo)))
         
+        urlsNoMarket = '\n'.join(item.info['filename'] for item in batch if item.info['isMarketWarn'] and item.info['filename'].endswith('.url'))
+        delUrlsNoMarket = urlsNoMarket and getInputBool('no market -- delete these urls?'+urlsNoMarket)
         for songInfo in batch:
             fout.write(unicode(songInfo))
-            fout.write('\n')
+            fout.write(files.linesep)
+            if songInfo.info['isMarketWarn'] and songInfo.info['filename'].endswith('.url') and delUrlsNoMarket:
+                softDeleteFile(songInfo.info['filename'])
+            elif songInfo.info['isMarketWarn'] and not songInfo.info['filename'].endswith('.url'):
+                trace('warning: market unavailable, removing link', songInfo.info['filename'])
+                obj = CoordMusicAudioMetadata(songInfo.info['filename'])
+                obj.setLink('')
+                obj.save()
         
         batch[:] = []
         mapUriToExtendedSongInfo.clear()
         
-    with codecs.open(outName, 'a', "utf-8-sig") as fout:
+    with codecs.open(outName, 'a', 'utf-8-sig') as fout:
         for filename, short in fileIterator:
             batch.append(ExtendedSongInfo(filename, short))
             if 'spotify:track:' in batch[-1].info['uri']:
@@ -213,4 +222,3 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchS
                 goBatch()
                 
         goBatch()
-

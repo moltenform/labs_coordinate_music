@@ -17,6 +17,7 @@ chdir = os_hide.chdir
 makedir = os_hide.mkdir
 makedirs = os_hide.makedirs
 sep = os_hide.path.sep
+linesep = os_hide.linesep
 abspath = shutil_hide.abspath
 rmtree = shutil_hide.rmtree
 
