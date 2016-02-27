@@ -91,12 +91,13 @@ def getInputFloatGui(sPrompt, default=None, min=0.0,max=100.0, title=''):
     return tkSimpleDialog.askfloat(' ', sPrompt, minvalue=min, maxvalue=max, **kwargs)
     
 # returns '' on cancel
-def getInputStringGui(sPrompt, unused=None):
+def getInputStringGui(prompt, initialvalue=None, title=' '):
     import Tkinter, tkSimpleDialog
     root = Tkinter.Tk()
     root.withdraw()
-    s = tkSimpleDialog.askstring(' ', sPrompt)
-    return '' if s is None else s 
+    options = dict(initialvalue=initialvalue) if initialvalue else dict()
+    s = tkSimpleDialog.askstring(title, prompt, **options)
+    return '' if s is None else s
 
 def _findUnusedLetter(dictUsed, newWord):
     for i, c in enumerate(newWord):

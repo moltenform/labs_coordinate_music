@@ -22,22 +22,22 @@ def main():
         'save all filenames+metadata to text file',
         'show cmd-line options']
         
-    choice = coordmusictools.getInputFromChoices('', choices)
-    if choice[0]==0:
+    choice, s = coordmusictools.getInputFromChoices('', choices)
+    if choice==0:
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=False)
         coordmusicuserconfig.runAfterCoordinate()
-    elif choice[0]==1:
+    elif choice==1:
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=True)
         coordmusicuserconfig.runAfterCoordinate()
-    elif choice[0]==2:
+    elif choice==2:
         coordmusictools.tools_spotifyPlaylistToSongLengths()
-    elif choice[0]==3:
+    elif choice==3:
         coordmusictools.tools_spotifyPlaylistToFilenames()
-    elif choice[0]==4:
+    elif choice==4:
         coordmusictools.tools_filenamesToMetadataAndRemoveLowBitrate()
-    elif choice[0]==5:
+    elif choice==5:
         coordmusictools.tools_saveFilenamesMetadataToText()
-    elif choice[0]==6:
+    elif choice==6:
         showCmdOptions()
     
 if __name__=='__main__':
