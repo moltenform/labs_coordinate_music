@@ -1,8 +1,8 @@
 from coordmusicutil import *
 
-dirtestmedia = getTestMediaLocation()+files.sep+'media'+files.sep
-tmpdir = getTestTempLocation()+files.sep+'test'
-tmpdirsl = tmpdir+files.sep
+dirtestmedia = getTestMediaLocation() + files.sep + 'media' + files.sep
+tmpdir = getTestTempLocation() + files.sep + 'test'
+tmpdirsl = tmpdir + files.sep
 
 
 def createOrClearDirectory(d):
@@ -399,12 +399,13 @@ def testsCoordMusicUtil():
     assertException(lambda: writeUrlFile(tmpdirsl+'test1.url', 'a'), AssertionError, 'already exists')
     
     # test getFieldForFile
-    assertEq(getFieldForFile(r'c:\dir\test.MP3'), 'website')
-    assertEq(getFieldForFile(r'c:\dir\test.mp3'), 'website')
-    assertEq(getFieldForFile(r'c:\dir\test.m4a'), 'description')
-    assertEq(getFieldForFile(r'c:\dir\test.flac'), 'desc')
-    assertException(lambda: getFieldForFile(r'c:\dir\test.mp4'), AssertionError, 'unexpected extension')
-    assertException(lambda: getFieldForFile(r'c:\dir\test.ogg'), AssertionError, 'unexpected extension')
+    assertEq(getFieldForFile(r'/dir/test.MP3'), 'website')
+    assertEq(getFieldForFile(r'/dir/test.mp3'), 'website')
+    assertEq(getFieldForFile(r'/dir/test.m4a'), 'description')
+    assertEq(getFieldForFile(r'/dir/test.flac'), 'desc')
+    assertException(lambda: getFieldForFile(r'/dir/test.mp4'), AssertionError, 'unexpected extension')
+    assertException(lambda: getFieldForFile(r'/dir/test.ogg'), AssertionError, 'unexpected extension')
+    assertException(lambda: getFieldForFile(r'/dir/test'), AssertionError, 'unexpected extension')
         
     # test getWavDuration
     assertEq(727, int(1000*get_audio_duration('./test/media/wav.wav')))
@@ -489,8 +490,8 @@ def testsLinkSpotify():
     
 def testsLinkSpotifyInteractive():
     from recurring_linkspotify import linkspotify, launchSpotifyUri
-    if not files.exists(tmpdir):
-        files.makedirs(tmpdir)
+    if not getInputBool('Run interactive LinkSpotify test (requires Spotify connection)?'):
+        return
     
     # testing files outside of an album
     trace('testing files outside of an album')
@@ -554,6 +555,9 @@ def testsLinkSpotifyInteractive():
 
 def testsMusicToUrlInteractive():
     from recurring_music_to_url import getStringTrackAndPopularity, SaveDiskSpaceMusicToUrl
+    if not getInputBool('Run interactive MusicToUrl test?'):
+        return
+    
     createOrClearDirectory(tmpdir)
     files.copy(dirtestmedia+'/m4a128.m4a', tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a', False)
     files.copy(dirtestmedia+'/mp3_avgb128.mp3', tmpdirsl+'Qua - Ritmo Giallo.mp3', False)
@@ -575,12 +579,20 @@ def testsMusicToUrlInteractive():
         
     trace('Resulting filenames:\n'+'\n'.join(short for fullfile, short in files.listfiles(tmpdir)))
 
+def testsFromOutsideMp3Interactive():
+    import coordmusictools
+    if not getInputBool('Run interactive OutsideMp3 test?'):
+        return
+        
+    createOrClearDirectory(tmpdir)
+
+
 if __name__=='__main__':
     testsEasyPythonMutagenLengthAndBitrate()
     testsEasyPythonMutagenMetadataTags()
     testsCoordinate()
     testsCoordMusicUtil()
     testsLinkSpotify()
-    if getInputBool('Run interactive tests?'):
-        testsLinkSpotifyInteractive()
-        testsMusicToUrlInteractive()
+    testsMusicToUrlInteractive()
+    testsFromOutsideMp3Interactive()
+    testsLinkSpotifyInteractive()
