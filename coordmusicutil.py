@@ -243,29 +243,28 @@ def getFormattedDuration(seconds, showMilliseconds=False):
     else:
         return '%02d:%02d'%(int(seconds)//60, int(seconds)%60)
 
-def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown = True):
-    def chooseChild(dir, prompt):
-        choices = [item[1] for item in files.listchildren(dir) if files.isdir(item[0])]
-        choices.insert(0, 'All')
-        if len(choices)==1:
-            return choices[0]
-        ret = getInputFromChoices(prompt, choices)
-        return None if ret[0] == -1 else ret[1]
-    
-    scope = chooseChild(dir, 'filter to files under which directory?')
-    if not scope:
+def getDirChoice(dir, prompt):
+    choices = [item[1] for item in files.listchildren(dir) if files.isdir(item[0])]
+    choices.insert(0, 'All')
+    if len(choices)==1:
+        return choices[0]
+    ret = getInputFromChoices(prompt, choices)
+    if ret[0] == -1:
+        return None
+    else:
+        return dir if ret[1] == 'All' else files.join(dir, ret[1])
+
+def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
+    dir = getDirChoice(dir, 'filter to files under which directory?')
+    if not dir:
         return
-    if scope != 'All':
-        dir = files.join(dir, scope)
     
-    startingPlace = chooseChild(dir, 'begin at which directory?')
+    startingPlace = getDirChoice(dir, 'begin at which directory?')
     if not startingPlace:
         return
-    if startingPlace == 'All':
-        startingPlace = None
         
-    reachedStartingPlace = False
-    startingPlace = files.join(dir, startingPlace).lower() if startingPlace else None
+    startingPlace = startingPlace.lower()
+    reachedStartingPlace = startingPlace == dir.lower()
     lib = files.sep + 'lib' + files.sep
     for fullpath, short in files.recursedirs(dir, topdown=isTopDown):
         # don't start until we've reached startingpoint
