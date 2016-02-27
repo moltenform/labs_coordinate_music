@@ -86,6 +86,11 @@ def getClipboardText():
         r = Tk()
         r.withdraw()
         s = r.clipboard_get()
+    except BaseException as e:
+        if 'selection doesn\'t exist' in str(e):
+            s = ''
+        else:
+            raise
     finally:
         r.destroy()
     return s
@@ -112,6 +117,24 @@ def takeBatchOnArbitraryIterable(iterable, size):
 def takeBatch(l, n):
     """ Yield successive n-sized chunks from l."""
     return list(takeBatchOnArbitraryIterable(l, n))
+    
+class TakeBatch(object):
+    def __init__(self, batchSize, callback):
+        self.batch = []
+        self.batchSize = batchSize
+        self.callback = callback
+    def append(self, item):
+        self.batch.append(item)
+        if len(self.batch) >= self.batchSize:
+            self.callback(self.batch)
+            self.batch = []
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        # if exiting normally (not by exception), run the callback
+        import sys
+        if not exc_type:
+            self.callback(self.batch)
         
 def startThread(fn, args=None):
     import threading
@@ -251,6 +274,43 @@ if __name__=='__main__':
     assertEq( [[1,2,3],[4,5,6]], takeBatch([1,2,3,4,5,6], 3))
     assertEq( [[1,2,3],[4,5]], takeBatch([1,2,3,4,5], 3))
     assertEq( [[1,2],[3,4],[5]], takeBatch([1,2,3,4,5], 2))
+    
+    # test TakeBatch class
+    callbackLog = []
+    def callback(batch, callbackLog=callbackLog):
+        callbackLog.append(batch)
+        
+    tb1 = TakeBatch(2, callback)
+    tb1.append(1)
+    assertEq([], callbackLog)
+    tb1.append(2)
+    assertEq([[1, 2]], callbackLog)
+    tb1.append(3)
+    assertEq([[1, 2]], callbackLog)
+    tb1.append(4)
+    assertEq([[1, 2], [3, 4]], callbackLog)
+    
+    # TakeBatch should call, if going out of scope normally
+    callbackLog[:] = []
+    with TakeBatch(2, callback) as tb2:
+        tb2.append(1)
+        tb2.append(2)
+        tb2.append(3)
+    assertEq([[1, 2], [3]], callbackLog)
+    
+    # TakeBatch should not call, if going out of scope due to exception
+    callbackLog[:] = []
+    sawException = False
+    try:
+        with TakeBatch(2, callback) as tb3:
+            tb3.append(1)
+            tb3.append(2)
+            tb3.append(3)
+            raise TypeError()
+    except TypeError:
+        sawException = True
+    assertEq(True, sawException)
+    assertEq([[1, 2]], callbackLog)
     
     # test OrderedDict equality checks
     from collections import OrderedDict
