@@ -439,7 +439,7 @@ def testsCoordMusicUtil():
     import coordmusictools
     files.makedirs(tmpdirsl+'/tmp')
     coordmusictools.saveFilenamesMetadataToText(sorted(
-        files.listfiles(tmpdir)), False, tmpdirsl+'/tmp/out.txt', requestBatchSize=15, maxBatchSize=50)
+        files.listfiles(tmpdir)), False, tmpdirsl+'/tmp/out.txt', requestBatchSize=15)
     expected = u'''%dir%m4a24.url00:00:0000test
 %dir%test1.url00:00:0000https://www.youtube.com/watch?v=0OSF
 %dir%test2.url00:00:00000Svkvt5I79wficMFgaqEQJ
@@ -451,7 +451,7 @@ def testsCoordMusicUtil():
     got = files.readall(tmpdirsl+'/tmp/out.txt', 'r', 'utf-8-sig')
     assertEq(expected, got.replace('\r\n', '\n').replace('\t',''))
     coordmusictools.saveFilenamesMetadataToText(sorted(
-        files.listfiles(tmpdir)), False, tmpdirsl+'/tmp/out2.txt', requestBatchSize=2, maxBatchSize=2)
+        files.listfiles(tmpdir)), False, tmpdirsl+'/tmp/out2.txt', requestBatchSize=2)
     got = files.readall(tmpdirsl+'/tmp/out2.txt', 'r', 'utf-8-sig')
     assertEq(expected, got.replace('\r\n', '\n').replace('\t',''))
     
@@ -584,6 +584,3 @@ if __name__=='__main__':
     if getInputBool('Run interactive tests?'):
         testsLinkSpotifyInteractive()
         testsMusicToUrlInteractive()
-        
-        
-
