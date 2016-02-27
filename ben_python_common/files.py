@@ -364,13 +364,20 @@ if __name__=='__main__':
     assertEq(['P1.PNG', 'a1.txt'], sorted(list(listfiles(tmpdir, filenamesOnly=True, allowedexts=['png','txt']))))
     
     # test recursefiles
-    assertEq([(s,getname(s)) for s in filestomake], sorted(list(recursefiles(tmpdir))))
-    assertEq([getname(s) for s in filestomake], sorted(list(recursefiles(tmpdir, filenamesOnly=True))))
-    assertEq(['a1.txt', 'file.txt', 'other.txt'], sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt']))))
-    assertEq(['a1.txt', 'file.txt', 'other.txt'], sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d:True))))
-    assertEq(['a1.txt'], sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d:False))))
-    assertEq(['a1.txt', 'other.txt'], sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir:getname(dir)!='s1'))))
-    assertEq(['a1.txt', 'file.txt'], sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir:getname(dir)!='s2'))))
+    assertEq([(s,getname(s)) for s in filestomake],
+        sorted(list(recursefiles(tmpdir))))
+    assertEq([getname(s) for s in filestomake],
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True))))
+    assertEq(['a1.txt', 'file.txt', 'other.txt'],
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt']))))
+    assertEq(['a1.txt', 'file.txt', 'other.txt'],
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d:True))))
+    assertEq(['a1.txt'],
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d:False))))
+    assertEq(['a1.txt', 'other.txt'],
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir:getname(dir)!='s1'))))
+    assertEq(['a1.txt', 'file.txt'],
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir:getname(dir)!='s2'))))
     
     # test recursedirs
     assertEq(sorted([(s,getname(s)) for s in dirstomake]), sorted(list(recursedirs(tmpdir))))

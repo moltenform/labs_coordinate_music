@@ -138,7 +138,8 @@ def tools_outsideMp3sToSpotifyPlaylist():
         parsed = []
         for tag in tags:
             if not tag.get_or_default('tracknumber', None):
-                num = getInputInt('%s\nenter tracknum for "%s" (%d files missing tracknum)'%(fullpathdir, tag.short, countFilesWithMissingNumber))
+                num = getInputInt('%s\nenter tracknum for "%s" (%d files missing tracknum)'%
+                    (fullpathdir, tag.short, countFilesWithMissingNumber))
                 tag.set('tracknumber', num)
                 tag.save()
             parsed.append(Bucket(short=tag.short, tracknumber=int(tag.get('tracknumber')), 
@@ -146,7 +147,8 @@ def tools_outsideMp3sToSpotifyPlaylist():
                 album=shortdir, discnumber=int(tag.get_or_default('discnumber', 1))))
         
         alreadyAll = all(('spotify:' in tag.getLink() for tag in tags))
-        recurring_linkspotify.linkspotify(len(tags) > 0 and not alreadyAll, fullpathdir, tags, parsed, True, getSpotifyGeographicMarketName())
+        recurring_linkspotify.linkspotify(
+            len(tags) > 0 and not alreadyAll, fullpathdir, tags, parsed, True, getSpotifyGeographicMarketName())
     
     # check that all files have a spotify link
     for fullpath, short in files.recursefiles(dir):
@@ -347,7 +349,8 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchS
                     '\n'.join(uri+','+mapUriToExtendedSongInfo[uri].filename
                         for uri in mapUriToExtendedSongInfo)))
         
-        urlsNoMarket = '\n'.join(item.info['filename'] for item in arrayAll if item.info['isMarketWarn'] and item.info['filename'].endswith('.url'))
+        urlsNoMarket = '\n'.join(item.info['filename'] for item in arrayAll if 
+            item.info['isMarketWarn'] and item.info['filename'].endswith('.url'))
         delUrlsNoMarket = urlsNoMarket and getInputBool('no market -- delete these urls?'+urlsNoMarket)
         for songInfo in arrayAll:
             fout.write(unicode(songInfo))

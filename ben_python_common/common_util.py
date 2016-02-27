@@ -206,14 +206,16 @@ def assertException(fn, excType, excTypeExpectedString=None, msg='', regexp=Fals
     
     assertTrue(e != None, 'did not throw '+msg)
     if excType:
-        assertTrue(isinstance(e, excType), 'exception type check failed '+msg+ ' \ngot \n'+pprint.pformat(e)+'\n not \n'+pprint.pformat(excType))
+        assertTrue(isinstance(e, excType), 'exception type check failed ' + msg + 
+            ' \ngot \n' + pprint.pformat(e) + '\n not \n' + pprint.pformat(excType))
     if excTypeExpectedString:
         if regexp:
             import re
             passed = re.search(excTypeExpectedString, str(e))
         else:
             passed = excTypeExpectedString in str(e)
-        assertTrue(passed, 'exception string check failed '+msg+'\ngot exception string:\n'+ str(e))
+        assertTrue(passed, 'exception string check failed '+ msg +
+            '\ngot exception string:\n' + str(e))
         
         
 if __name__=='__main__':

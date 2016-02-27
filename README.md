@@ -1,4 +1,5 @@
 ### Introduction
+
 Coordinate\_music's "local music library" is a specific directory structure that contains audio files like mp3s. There's a later section that explains the structure more fully. This project is a set of scripts that can:
 
 * check that every directory and filename is formatted correctly.
@@ -23,6 +24,7 @@ Other features include, if enabled:
 
 
 ### Installation
+
 To run coordinate\_music,
 
 1. Install Python 2.7.x

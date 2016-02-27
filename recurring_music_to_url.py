@@ -76,17 +76,20 @@ class SaveDiskSpaceMusicToUrl(object):
         if not self.enabled:
             return
         
-        tags = [tag for tag in tags if not tag.short.endswith('.url') and not tag.short.endswith('.3.mp3') and not '.sv.' in tag.short and 'spotify:track:' in tag.getLink()]
+        tags = [tag for tag in tags if not tag.short.endswith('.url') and not tag.short.endswith('.3.mp3')
+            and not '.sv.' in tag.short and 'spotify:track:' in tag.getLink()]
         if not tags:
             return
         
         popularitiesList = getPopularitiesList(fullpathdir, tags)
-        nothingMeetsCutoff = all((not popularity or isinstance(popularity, str) or popularity<getPopularityCutoff()) for popularity in popularitiesList)
+        nothingMeetsCutoff = all((not popularity or isinstance(popularity, str) or 
+            popularity<getPopularityCutoff()) for popularity in popularitiesList)
         if not showAllAlbumsRegardlessOfPopularity and nothingMeetsCutoff:
             return
         
         # if it's an album, show the entire album, for context
-        trace('looking to save disk space in %s (%.1fMb)\n'%(fullpathdir, sum(files.getsize(files.join(fullpathdir, tag.short)) for tag in tags)/(1024.0*1024)))
+        trace('looking to save disk space in %s (%.1fMb)\n'%(
+            fullpathdir, sum(files.getsize(files.join(fullpathdir, tag.short)) for tag in tags)/(1024.0*1024)))
         for tag, popularity in zip(tags, popularitiesList):
             trace(getStringTrackAndPopularity(fullpathdir, tag, popularity))
         

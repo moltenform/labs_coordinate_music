@@ -280,7 +280,8 @@ def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
         elif choice[0] == -1:
             break
         else:
-            if linkspotifyperalbumtracks(market, fullpathdir, tags, parsedNames, results[choice[0]]['uri'], estimatedalbumartists[choice[0]]):
+            if linkspotifyperalbumtracks(market, fullpathdir, tags, parsedNames,
+                results[choice[0]]['uri'], estimatedalbumartists[choice[0]]):
                 break
     
 def linkspotifyperalbumtracks(market, fullpathdir, tags, parsedNames, albumid, estimatedalbumartist):

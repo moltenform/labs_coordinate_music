@@ -12,31 +12,34 @@ def createOrClearDirectory(d):
     assertTrue(files.isemptydir(d))
 
 def testsCoordinate():
-    from recurring_coordinate import parseAFilename, getNewnameFromTag, bnsplitext, renderAFilename, doStringsMatchForField, \
-    fillFieldsFromContext, checkDeleteUrlsInTheWayOfM4as, checkForLowBitratesFile, checkFilenameIrregularitiesLookForInconsistency,\
-    checkUrlContents, CheckFileExtensions, checkDuplicatedTrackNumbers, NameStyle, checkStyleConsistency, checkRequiredFieldsSet
+    from recurring_coordinate import (
+        parseAFilename, getNewnameFromTag, bnsplitext, renderAFilename, doStringsMatchForField,
+        fillFieldsFromContext, checkDeleteUrlsInTheWayOfM4as, checkForLowBitratesFile,
+        checkFilenameIrregularitiesLookForInconsistency, checkUrlContents, CheckFileExtensions,
+        checkDuplicatedTrackNumbers, NameStyle, checkStyleConsistency, checkRequiredFieldsSet)
+    
     def resToString(obj):
-        return ';'.join(key+'='+str(object.__getattribute__(obj, key)) 
-            for key in dir(obj) if (not key.startswith('_') and key!='short' and key!='album'))
+        return ';'.join(key + '=' + str(object.__getattribute__(obj, key))
+            for key in dir(obj) if (not key.startswith('_') and key != 'short' and key != 'album'))
 
     # test parseAFilename
-    assertEq('artist=testart;discnumber=1;style=DiscTrackArtistTitle;title=testtitle;tracknumber=2', 
+    assertEq('artist=testart;discnumber=1;style=DiscTrackArtistTitle;title=testtitle;tracknumber=2',
         resToString(parseAFilename('01 02 testart - testtitle.m4a')))
-    assertEq('artist=test-art 01;discnumber=1;style=DiscTrackArtistTitle;title=testtitle 01;tracknumber=2', 
+    assertEq('artist=test-art 01;discnumber=1;style=DiscTrackArtistTitle;title=testtitle 01;tracknumber=2',
         resToString(parseAFilename('01 02 test-art 01 - testtitle 01 (^).m4a')))
-    assertEq('artist=None;discnumber=1;style=DiscTrackTitle;title=j-ust name;tracknumber=2', 
+    assertEq('artist=None;discnumber=1;style=DiscTrackTitle;title=j-ust name;tracknumber=2',
         resToString(parseAFilename('01 02 j-ust name.m4a')))
-    assertEq('artist=art art;discnumber=None;style=TrackArtistTitle;title=title title;tracknumber=12', 
+    assertEq('artist=art art;discnumber=None;style=TrackArtistTitle;title=title title;tracknumber=12',
         resToString(parseAFilename('12 art art - title title.m4a')))
-    assertEq('artist=None;discnumber=None;style=TrackTitle;title=title title;tracknumber=12', 
+    assertEq('artist=None;discnumber=None;style=TrackTitle;title=title title;tracknumber=12',
         resToString(parseAFilename('12 title title.m4a')))
-    assertEq('artist=art art;discnumber=None;style=ArtistTitle;title=title title;tracknumber=None', 
+    assertEq('artist=art art;discnumber=None;style=ArtistTitle;title=title title;tracknumber=None',
         resToString(parseAFilename('art art - title title.m4a')))
-    assertEq('artist=None;discnumber=None;style=Title;title=title title;tracknumber=None', 
+    assertEq('artist=None;discnumber=None;style=Title;title=title title;tracknumber=None',
         resToString(parseAFilename('title title.m4a')))
         
     # test parseAFilename round trip
-    tests = ['01 02 testart - testtitle.m4a', '01 02 test-art 01 - testtitle 01 (^).m4a','01 02 j-ust name.m4a',
+    tests = ['01 02 testart - testtitle.m4a', '01 02 test-art 01 - testtitle 01 (^).m4a', '01 02 j-ust name.m4a',
         '12 art art - title title.m4a', '12 title title.m4a', 'art art - title title.m4a', 'title title.m4a']
     for test in tests:
         parsed = parseAFilename(test)
@@ -45,13 +48,20 @@ def testsCoordinate():
         
     # test getNewnameFromTag
     parsed = parseAFilename('01 02 testart - testtitle.sv.m4a')
-    assertEq('01 02 testart changed - testtitle.sv.m4a', getNewnameFromTag(parsed, 'artist', parsed.artist, 'testart changed'))
-    assertEq('01 02 testart - testtitle changed.sv.m4a', getNewnameFromTag(parsed, 'title', parsed.title, 'testtitle changed'))
-    assertEq('01 09 testart - testtitle.sv.m4a', getNewnameFromTag(parsed, 'tracknumber', parsed.tracknumber, 9))
-    assertEq('01 09 testart - testtitle.sv.m4a', getNewnameFromTag(parsed, 'tracknumber', parsed.tracknumber, '9'))
-    assertEq('01 09 testart - testtitle.sv.m4a', getNewnameFromTag(parsed, 'tracknumber', parsed.tracknumber, '9/9'))
-    assertEq('01 02 (None) - testtitle.sv.m4a', getNewnameFromTag(parsed, 'artist', parsed.artist, None))
-    assertEq('01 02 bad-char - testtitle.sv.m4a', getNewnameFromTag(parsed, 'artist', parsed.artist, 'bad:char'))
+    assertEq('01 02 testart changed - testtitle.sv.m4a',
+        getNewnameFromTag(parsed, 'artist', parsed.artist, 'testart changed'))
+    assertEq('01 02 testart - testtitle changed.sv.m4a',
+        getNewnameFromTag(parsed, 'title', parsed.title, 'testtitle changed'))
+    assertEq('01 09 testart - testtitle.sv.m4a',
+        getNewnameFromTag(parsed, 'tracknumber', parsed.tracknumber, 9))
+    assertEq('01 09 testart - testtitle.sv.m4a',
+        getNewnameFromTag(parsed, 'tracknumber', parsed.tracknumber, '9'))
+    assertEq('01 09 testart - testtitle.sv.m4a',
+        getNewnameFromTag(parsed, 'tracknumber', parsed.tracknumber, '9/9'))
+    assertEq('01 02 (None) - testtitle.sv.m4a',
+        getNewnameFromTag(parsed, 'artist', parsed.artist, None))
+    assertEq('01 02 bad-char - testtitle.sv.m4a',
+        getNewnameFromTag(parsed, 'artist', parsed.artist, 'bad:char'))
         
     # test bnsplitext
     assertEq(('test', '.mp3'), bnsplitext('test.mp3'))
@@ -98,8 +108,8 @@ def testsCoordinate():
         
     # test fillFieldsFromContext artist
     helpers = Bucket(splroot='c:/music'.split('/'))
-    assertException(lambda: testFillFieldsFromContextArtist('','c:/music'), AssertionError, 'not within artist directory')
-    assertException(lambda: testFillFieldsFromContextArtist('','c:/music/genre'), AssertionError, 'not within artist directory')
+    assertException(lambda: testFillFieldsFromContextArtist('', 'c:/music'), AssertionError, 'not within artist directory')
+    assertException(lambda: testFillFieldsFromContextArtist('', 'c:/music/genre'), AssertionError, 'not within artist directory')
     testFillFieldsFromContextArtist('Artist Name', 'c:/music/genre/Artist Name')
     testFillFieldsFromContextArtist('Artist Name', 'c:/music/genre/Artist Name/1999, The Album')
     testFillFieldsFromContextArtist('Artist Name', 'c:/music/genre/Other Artist/1999, Artist Name - The Album')
@@ -127,7 +137,7 @@ def testsCoordinate():
 
     # test filename checks.
     if not files.exists(tmpdir):
-        files.makedirs(tmpdir)	
+        files.makedirs(tmpdir)
 
     def getShorts():
         return sorted([file[1] for file in files.listfiles(tmpdir)])
@@ -154,13 +164,16 @@ def testsCoordinate():
     
     # test checkFilenameIrregularities
     assertEq((False, False), checkFilenameIrregularitiesLookForInconsistency(tmpdir, []))
-    assertEq((False, False), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['title1.m4a','title-2.m4a']))
-    assertEq((False, False), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a - title1.m4a','b - title 2.m4a']))
-    assertEq((False, True), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a title1.m4a','b - title 2.m4a']))
-    assertEq((False, True), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a - title1.m4a','b title 2.m4a', 'c 3.m4a']))
-    assertException(lambda: checkFilenameIrregularitiesLookForInconsistency('c:/dir - toomany - dashes', []), AssertionError, 'too many')
-    assertException(lambda: checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a - a - b.m4a']), AssertionError, 'too many')
-    assertException(lambda: checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a'*300+'m4a']), AssertionError, 'dangerously long')
+    assertEq((False, False), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['title1.m4a', 'title-2.m4a']))
+    assertEq((False, False), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a - title1.m4a', 'b - title 2.m4a']))
+    assertEq((False, True), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a title1.m4a', 'b - title 2.m4a']))
+    assertEq((False, True), checkFilenameIrregularitiesLookForInconsistency(tmpdir, ['a - title1.m4a', 'b title 2.m4a', 'c 3.m4a']))
+    assertException(lambda: checkFilenameIrregularitiesLookForInconsistency(
+        'c:/dir - toomany - dashes', []), AssertionError, 'too many')
+    assertException(lambda: checkFilenameIrregularitiesLookForInconsistency(
+        tmpdir, ['a - a - b.m4a']), AssertionError, 'too many')
+    assertException(lambda: checkFilenameIrregularitiesLookForInconsistency(
+        tmpdir, ['a' * 300 + 'm4a']), AssertionError, 'dangerously long')
     
     # test checkUrlContents
     createOrClearDirectory(tmpdir)
@@ -191,34 +204,46 @@ def testsCoordinate():
     def makeMockParsed(discnumber, tracknumber, artist=None, title=None):
         return Bucket(style=NameStyle.TrackTitle, short=0,discnumber=discnumber, tracknumber=tracknumber, 
             artist=artist if artist else getRandomString(), title=title if title else getRandomString())
-    checkDuplicatedTrackNumbers(d, [makeMockParsed(1,1)])
-    checkDuplicatedTrackNumbers(d, [makeMockParsed(1,1), makeMockParsed(2,1)])
-    checkDuplicatedTrackNumbers(d, [makeMockParsed(1,5), makeMockParsed(1,6)])
-    assertException(lambda: checkDuplicatedTrackNumbers(d,[makeMockParsed(1,0)]), AssertionError, 'not be 0')
-    assertException(lambda: checkDuplicatedTrackNumbers(d,[makeMockParsed(0,1)]), AssertionError, 'not be 0')
-    assertException(lambda: checkDuplicatedTrackNumbers(d,[makeMockParsed(1,1), makeMockParsed(2,4), makeMockParsed(2,4)]), AssertionError, 'duplicate')
-    assertException(lambda: checkDuplicatedTrackNumbers(d,[makeMockParsed(1,1), makeMockParsed(2,4), makeMockParsed(1,1)]), AssertionError, 'duplicate')
-    assertException(lambda: checkDuplicatedTrackNumbers(d,[makeMockParsed(1,1,'a','t'), makeMockParsed(1,2,'a','t')]), AssertionError, 'duplicate artist+title')
+    checkDuplicatedTrackNumbers(d, [makeMockParsed(1, 1)])
+    checkDuplicatedTrackNumbers(d, [makeMockParsed(1, 1), makeMockParsed(2, 1)])
+    checkDuplicatedTrackNumbers(d, [makeMockParsed(1, 5), makeMockParsed(1, 6)])
+    assertException(lambda: checkDuplicatedTrackNumbers(d,
+        [makeMockParsed(1, 0)]), AssertionError, 'not be 0')
+    assertException(lambda: checkDuplicatedTrackNumbers(d,
+        [makeMockParsed(0, 1)]), AssertionError, 'not be 0')
+    assertException(lambda: checkDuplicatedTrackNumbers(d,
+        [makeMockParsed(1, 1), makeMockParsed(2,4), makeMockParsed(2, 4)]), AssertionError, 'duplicate')
+    assertException(lambda: checkDuplicatedTrackNumbers(d,
+        [makeMockParsed(1, 1), makeMockParsed(2,4), makeMockParsed(1, 1)]), AssertionError, 'duplicate')
+    assertException(lambda: checkDuplicatedTrackNumbers(d,
+        [makeMockParsed(1, 1, 'a', 't'), makeMockParsed(1, 2, 'a', 't')]), AssertionError, 'duplicate artist+title')
     
     # test checkStyleConsistency
-    checkStyleConsistency(d,[Bucket(short=0,style='style1')])
-    checkStyleConsistency(d,[Bucket(short=0,style='style1'), Bucket(short=0,style='style1')])
-    assertException(lambda: checkStyleConsistency(d,[Bucket(short=0,style='style1'), Bucket(short=0,style='style2')]), AssertionError)
-    assertException(lambda: checkStyleConsistency(d,[Bucket(short=0,style='style1'), Bucket(short=0,style='style1'), Bucket(short=0,style='style2')]), AssertionError)
+    checkStyleConsistency(d, [Bucket(short=0, style='style1')])
+    checkStyleConsistency(d, [Bucket(short=0, style='style1'), Bucket(short=0, style='style1')])
+    assertException(lambda: checkStyleConsistency(
+        d, [Bucket(short=0, style='style1'), Bucket(short=0, style='style2')]), AssertionError)
+    assertException(lambda: checkStyleConsistency(
+        d, [Bucket(short=0, style='style1'), Bucket(short=0, style='style1'), Bucket(short=0, style='style2')]), AssertionError)
     
     # test checkRequiredFieldsSet
     class MockTag(object):
         def __init__(self, short, keysmissing=None):
             self.short = short
-            self.fields = dict(album='sampledata', style = 'sampledata', discnumber = '1', tracknumber = '1', artist = 'sampledata', title = 'sampledata')
+            self.fields = dict(album='sampledata', style = 'sampledata', discnumber = '1',
+                tracknumber = '1', artist = 'sampledata', title = 'sampledata')
             for key in keysmissing if keysmissing else []:
                 self.fields[key] = None
+        
         def get(self, key):
             return self.fields[key]
+        
         def get_or_default(self, key, default):
             return self.fields.get(key, default)
+            
         def getLink(self):
             return 'spotify:track:0Svkvt5I79wficMFgaqEQJ'
+            
     def testCheckRequiredFieldsSet(dir, short, fieldsmissing, parsedstyle=''):
         checkRequiredFieldsSet(dir, dir.split('/'), [MockTag(short, fieldsmissing)], [Bucket(style=parsedstyle)])
     
@@ -227,11 +252,16 @@ def testsCoordinate():
     testCheckRequiredFieldsSet('c:/test/1999, The Album Selections', 'test test.m4a', fieldsmissing=[])
     testCheckRequiredFieldsSet('c:/test', 'test test.m4a', fieldsmissing=['tracknumber'])
     testCheckRequiredFieldsSet('c:/test', '1234 test test.m4a', fieldsmissing=['tracknumber'])
-    assertException(lambda: testCheckRequiredFieldsSet('c:/test', '01 test test.m4a', []), AssertionError, 'outside of album')
-    assertException(lambda: testCheckRequiredFieldsSet('c:/test', '01 test test.url', []), AssertionError, 'outside of album')
-    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', '01 test test.m4a', ['tracknumber'], 'TrackTitle'), AssertionError, 'required field tracknumber')
-    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['artist']), AssertionError, 'required field artist')
-    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['discnumber']), AssertionError, 'required field discnumber')
+    assertException(lambda: testCheckRequiredFieldsSet('c:/test', '01 test test.m4a', []),
+        AssertionError, 'outside of album')
+    assertException(lambda: testCheckRequiredFieldsSet('c:/test', '01 test test.url', []),
+        AssertionError, 'outside of album')
+    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', '01 test test.m4a', ['tracknumber'], 'TrackTitle'),
+        AssertionError, 'required field tracknumber')
+    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['artist']),
+        AssertionError, 'required field artist')
+    assertException(lambda: testCheckRequiredFieldsSet('c:/test/1999, The Album', 'test test.m4a', ['discnumber']),
+        AssertionError, 'required field discnumber')
     
 def setupEasyPythonMutagenTest(copyFiles = True):
     createOrClearDirectory(tmpdir)
@@ -252,32 +282,32 @@ def testsEasyPythonMutagenLengthAndBitrate():
     setupEasyPythonMutagenTest()
     
     # get duration; no tag object provided
-    assertEq(1023, int(1000*get_audio_duration(tmpdirsl+'flac.flac')))
-    assertEq(1160, int(1000*get_audio_duration(tmpdirsl+'m4a16.m4a')))
-    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a128.m4a')))
-    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a224.m4a')))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb16.mp3')))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb128.mp3')))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb224.mp3')))
-    assertEq(2873, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3')))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3')))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3')))
-    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_01.ogg')))
-    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_10.ogg')))
+    assertEq(1023, int(1000 * get_audio_duration(tmpdirsl+'flac.flac')))
+    assertEq(1160, int(1000 * get_audio_duration(tmpdirsl+'m4a16.m4a')))
+    assertEq(1091, int(1000 * get_audio_duration(tmpdirsl+'m4a128.m4a')))
+    assertEq(1091, int(1000 * get_audio_duration(tmpdirsl+'m4a224.m4a')))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_avgb16.mp3')))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_avgb128.mp3')))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_avgb224.mp3')))
+    assertEq(2873, int(1000 * get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3')))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3')))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3')))
+    assertEq(1591, int(1000 * get_audio_duration(tmpdirsl+'ogg_01.ogg')))
+    assertEq(1591, int(1000 * get_audio_duration(tmpdirsl+'ogg_10.ogg')))
     
     # get duration; tag object provided
-    assertEq(1023, int(1000*get_audio_duration(tmpdirsl+'flac.flac', EasyPythonMutagen(tmpdirsl+'flac.flac'))))
-    assertEq(1160, int(1000*get_audio_duration(tmpdirsl+'m4a16.m4a', EasyPythonMutagen(tmpdirsl+'m4a16.m4a'))))
-    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a128.m4a', EasyPythonMutagen(tmpdirsl+'m4a128.m4a'))))
-    assertEq(1091, int(1000*get_audio_duration(tmpdirsl+'m4a224.m4a', EasyPythonMutagen(tmpdirsl+'m4a224.m4a'))))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb16.mp3'))))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb128.mp3'))))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_avgb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb224.mp3'))))
-    assertEq(2873, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb16.mp3'))))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb128.mp3'))))
-    assertEq(2773, int(1000*get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb224.mp3'))))
-    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_01.ogg', EasyPythonMutagen(tmpdirsl+'ogg_01.ogg'))))
-    assertEq(1591, int(1000*get_audio_duration(tmpdirsl+'ogg_10.ogg', EasyPythonMutagen(tmpdirsl+'ogg_10.ogg'))))
+    assertEq(1023, int(1000 * get_audio_duration(tmpdirsl+'flac.flac', EasyPythonMutagen(tmpdirsl+'flac.flac'))))
+    assertEq(1160, int(1000 * get_audio_duration(tmpdirsl+'m4a16.m4a', EasyPythonMutagen(tmpdirsl+'m4a16.m4a'))))
+    assertEq(1091, int(1000 * get_audio_duration(tmpdirsl+'m4a128.m4a', EasyPythonMutagen(tmpdirsl+'m4a128.m4a'))))
+    assertEq(1091, int(1000 * get_audio_duration(tmpdirsl+'m4a224.m4a', EasyPythonMutagen(tmpdirsl+'m4a224.m4a'))))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_avgb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb16.mp3'))))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_avgb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb128.mp3'))))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_avgb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_avgb224.mp3'))))
+    assertEq(2873, int(1000 * get_audio_duration(tmpdirsl+'mp3_cnsb16.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb16.mp3'))))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_cnsb128.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb128.mp3'))))
+    assertEq(2773, int(1000 * get_audio_duration(tmpdirsl+'mp3_cnsb224.mp3', EasyPythonMutagen(tmpdirsl+'mp3_cnsb224.mp3'))))
+    assertEq(1591, int(1000 * get_audio_duration(tmpdirsl+'ogg_01.ogg', EasyPythonMutagen(tmpdirsl+'ogg_01.ogg'))))
+    assertEq(1591, int(1000 * get_audio_duration(tmpdirsl+'ogg_10.ogg', EasyPythonMutagen(tmpdirsl+'ogg_10.ogg'))))
     
     # get empirical bitrate
     assertEq(29, int(get_empirical_bitrate(tmpdirsl+'m4a16.m4a')))
@@ -285,10 +315,10 @@ def testsEasyPythonMutagenLengthAndBitrate():
     assertEq(233, int(get_empirical_bitrate(tmpdirsl+'mp3_cnsb224.mp3')))
     
     # unsupported extensions
-    assertException(lambda:get_audio_duration('missing_extension'), ValueError, 'unsupported')
-    assertException(lambda:get_audio_duration('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
-    assertException(lambda:get_empirical_bitrate('missing_extension'), ValueError, 'unsupported')
-    assertException(lambda:get_empirical_bitrate('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
+    assertException(lambda: get_audio_duration('missing_extension'), ValueError, 'unsupported')
+    assertException(lambda: get_audio_duration('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
+    assertException(lambda: get_empirical_bitrate('missing_extension'), ValueError, 'unsupported')
+    assertException(lambda: get_empirical_bitrate('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
 
 def testsEasyPythonMutagenMetadataTags():
     setupEasyPythonMutagenTest()
@@ -298,16 +328,16 @@ def testsEasyPythonMutagenMetadataTags():
     import filecmp
     import os
     import shutil
-    shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_23.mp3')
-    shutil.copy(tmpdirsl+'mp3_avgb128.mp3', tmpdirsl+'mp3_id3_24.mp3')
-    assertTrue(filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
-    o23 = EasyPythonMutagen(tmpdirsl+'mp3_id3_23.mp3', True)
+    shutil.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_23.mp3')
+    shutil.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_24.mp3')
+    assertTrue(filecmp.cmp(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3', shallow=False))
+    o23 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_23.mp3', True)
     o23.set('title', 'test')
     o23.save()
-    o24 = EasyPythonMutagen(tmpdirsl+'mp3_id3_24.mp3', False)
+    o24 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_24.mp3', False)
     o24.set('title', 'test')
     o24.save()
-    assertTrue(not filecmp.cmp(tmpdirsl+'mp3_id3_23.mp3', tmpdirsl+'mp3_id3_24.mp3', shallow=False))
+    assertTrue(not filecmp.cmp(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3', shallow=False))
     
     # unsupported extensions
     assertException(lambda:EasyPythonMutagen('missing_extension'), ValueError, 'unsupported')
@@ -327,7 +357,8 @@ def testsEasyPythonMutagenMetadataTags():
         
         # we shouldn't be able to set invalid fields
         if '.m4a' in file:
-            # workaround for mutagen bug easymp4.py, line 183,  __getitem__ when it fails to raise EasyMP4KeyError("%r is not a valid key" % key)
+            # workaround for mutagen bug easymp4.py, line 183,
+            # __getitem__ when it fails to raise EasyMP4KeyError("%r is not a valid key" % key)
             assertException(lambda: obj.set('aartist', 'test'), Exception, '(not a valid key)|(object is not callable)', '', True)
             assertException(lambda: obj.get('aartist'), Exception, '(not a valid key)|(object is not callable)', '', True)
         else:
@@ -473,19 +504,24 @@ def testsLinkSpotify():
     
     # test getChoiceString 
     assertEq('(02:00)  (a1;; a2) title1 same lngth',
-        getChoiceString(dict(duration_ms=120000,name='title1', artists=[dict(name='a1'),dict(name='a2')], track_number=2,disc_number=2), 120))
+        getChoiceString(dict(
+            duration_ms=120000, name='title1', artists=[dict(name='a1'), dict(name='a2')], track_number=2, disc_number=2), 120))
     assertEq('(02:05)  (a1) title1 same lngth',
-        getChoiceString(dict(duration_ms=125000,name='title1', artists=[dict(name='a1')], track_number=2,disc_number=2), 120))
+        getChoiceString(dict(duration_ms=125000, name='title1', artists=[dict(name='a1')], track_number=2, disc_number=2), 120))
     assertEq('(02:09)  (a1) title1 lnger(9s)',
-        getChoiceString(dict(duration_ms=129000,name='title1', artists=[dict(name='a1')], track_number=2,disc_number=2), 120))
+        getChoiceString(dict(duration_ms=129000, name='title1', artists=[dict(name='a1')], track_number=2, disc_number=2), 120))
     assertEq('(01:52)  (a1) title1 shrter(8s)',
-        getChoiceString(dict(duration_ms=112000,name='title1', artists=[dict(name='a1')], track_number=2,disc_number=2), 120))
+        getChoiceString(dict(duration_ms=112000, name='title1', artists=[dict(name='a1')], track_number=2, disc_number=2), 120))
     
     # test getStrRemoteAudio
-    assertEq('(00:00)  (a1) title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, False, ''))
-    assertEq('(00:00) 01 (a1) title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, True, ''))
-    assertEq('(00:00) 02 01 (a1) title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), True, True, ''))
-    assertEq('(00:00)   title1', getStrRemoteAudio(dict(duration_ms=0,name='title1', artists=[dict(name='a1')], track_number=1,disc_number=2), False, False, 'a1'))
+    assertEq('(00:00)  (a1) title1', getStrRemoteAudio(dict(duration_ms=0, name='title1', artists=[dict(name='a1')],
+        track_number=1, disc_number=2), False, False, ''))
+    assertEq('(00:00) 01 (a1) title1', getStrRemoteAudio(dict(duration_ms=0, name='title1', artists=[dict(name='a1')],
+        track_number=1, disc_number=2), False, True, ''))
+    assertEq('(00:00) 02 01 (a1) title1', getStrRemoteAudio(dict(duration_ms=0, name='title1', artists=[dict(name='a1')],
+        track_number=1, disc_number=2), True, True, ''))
+    assertEq('(00:00)   title1', getStrRemoteAudio(dict(duration_ms=0, name='title1', artists=[dict(name='a1')],
+        track_number=1, disc_number=2), False, False, 'a1'))
     
     
 def testsLinkSpotifyInteractive():
@@ -497,8 +533,10 @@ def testsLinkSpotifyInteractive():
     trace('testing files outside of an album')
     createOrClearDirectory(tmpdir)
     files.makedirs(tmpdir+'/classic rock/collection')
-    files.copy(dirtestmedia+'/test_02_52.m4a', tmpdir+'/classic rock/collection/Queen - You\'re My Best Friend.m4a', False)
-    parsedNames = [Bucket(short='Queen - You\'re My Best Friend.m4a', artist='Queen', title='You\'re My Best Friend', discnumber=1,tracknumber=None)]
+    files.copy(dirtestmedia+'/test_02_52.m4a',
+        tmpdir+'/classic rock/collection/Queen - You\'re My Best Friend.m4a', False)
+    parsedNames = [Bucket(short='Queen - You\'re My Best Friend.m4a',
+        artist='Queen', title='You\'re My Best Friend', discnumber=1,tracknumber=None)]
     tags = [CoordMusicAudioMetadata(tmpdir+'/classic rock/collection/'+parsed.short) for parsed in parsedNames]
     for tag, parsed in zip(tags, parsedNames): tag.short = parsed.short
         
@@ -514,10 +552,15 @@ def testsLinkSpotifyInteractive():
     createOrClearDirectory(tmpdir)
     files.makedirs(tmpdir+'/classic rock/Queen/1975, A Night At The Opera')
     parsedNames = []
-    files.copy(dirtestmedia+'/test_02_52.m4a', tmpdir+'/classic rock/Queen/1975, A Night At The Opera/04 You\'re My Best Friend.m4a', False)
-    parsedNames.append(Bucket(short='04 You\'re My Best Friend.m4a', artist='Queen', album='A Night At The Opera', title='You\'re My Best Friend', discnumber=1,tracknumber=4))
-    files.copy(dirtestmedia+'/test_03_31.m4a', tmpdir+'/classic rock/Queen/1975, A Night At The Opera/05 \'39.m4a', False)
-    parsedNames.append(Bucket(short='05 \'39.m4a', artist='Queen', title='\'39', discnumber=1,tracknumber=5))
+    files.copy(dirtestmedia + '/test_02_52.m4a',
+        tmpdir + '/classic rock/Queen/1975, A Night At The Opera/04 You\'re My Best Friend.m4a', False)
+    parsedNames.append(Bucket(short='04 You\'re My Best Friend.m4a',
+        artist='Queen', album='A Night At The Opera', title='You\'re My Best Friend', discnumber=1,tracknumber=4))
+    files.copy(dirtestmedia + '/test_03_31.m4a',
+        tmpdir + '/classic rock/Queen/1975, A Night At The Opera/05 \'39.m4a', False)
+    parsedNames.append(Bucket(short='05 \'39.m4a',
+        artist='Queen', title='\'39', discnumber=1,tracknumber=5))
+        
     tags = [CoordMusicAudioMetadata(tmpdir+'/classic rock/Queen/1975, A Night At The Opera/'+parsed.short) for parsed in parsedNames]
     for tag, parsed in zip(tags, parsedNames): tag.short = parsed.short
     
@@ -536,12 +579,22 @@ def testsLinkSpotifyInteractive():
     createOrClearDirectory(tmpdir)
     files.makedirs(tmpdir+'/classic rock/Queen/2002, The Platinum Collection')
     parsedNames = []
-    files.copy(dirtestmedia+'/test_02_52.m4a', tmpdir+'/classic rock/Queen/2002, The Platinum Collection/01 06 You\'re My Best Friend.m4a', False)
-    parsedNames.append(Bucket(short='01 06 You\'re My Best Friend.m4a', artist='Queen', album='The Platinum Collection', title='You\'re My Best Friend', discnumber=1,tracknumber=6))
-    files.copy(dirtestmedia+'/test_04_19.m4a', tmpdir+'/classic rock/Queen/2002, The Platinum Collection/04 09 I Want to Break Free.m4a', False)
-    parsedNames.append(Bucket(short='04 09 I Want to Break Free.m4a', artist='Queen', title='I Want to Break Free', discnumber=4,tracknumber=9))
-    files.copy(dirtestmedia+'/test_03_31.m4a', tmpdir+'/classic rock/Queen/2002, The Platinum Collection/03 03 Barcelona.m4a', False)
-    parsedNames.append(Bucket(short='03 03 Barcelona.m4a', artist='Queen', title='Barcelona', discnumber=3,tracknumber=3))
+    
+    files.copy(dirtestmedia + '/test_02_52.m4a', 
+        tmpdir + '/classic rock/Queen/2002, The Platinum Collection/01 06 You\'re My Best Friend.m4a', False)
+    parsedNames.append(Bucket(short='01 06 You\'re My Best Friend.m4a', 
+        artist='Queen', album='The Platinum Collection', title='You\'re My Best Friend', discnumber=1,tracknumber=6))
+        
+    files.copy(dirtestmedia + '/test_04_19.m4a',
+        tmpdir + '/classic rock/Queen/2002, The Platinum Collection/04 09 I Want to Break Free.m4a', False)
+    parsedNames.append(Bucket(short='04 09 I Want to Break Free.m4a',
+        artist='Queen', title='I Want to Break Free', discnumber=4,tracknumber=9))
+        
+    files.copy(dirtestmedia + '/test_03_31.m4a',
+        tmpdir + '/classic rock/Queen/2002, The Platinum Collection/03 03 Barcelona.m4a', False)
+    parsedNames.append(Bucket(short='03 03 Barcelona.m4a',
+        artist='Queen', title='Barcelona', discnumber=3,tracknumber=3))
+        
     tags = [CoordMusicAudioMetadata(tmpdir+'/classic rock/Queen/2002, The Platinum Collection/'+parsed.short) for parsed in parsedNames]
     for tag, parsed in zip(tags, parsedNames): tag.short = parsed.short
         
@@ -563,9 +616,12 @@ def testsMusicToUrlInteractive():
     files.copy(dirtestmedia+'/mp3_avgb128.mp3', tmpdirsl+'Qua - Ritmo Giallo.mp3', False)
     files.copy(dirtestmedia+'/mp3_avgb128.mp3', tmpdirsl+'Masato Nakamura - Green Hill Zone.mp3', False)
     
-    assertEq('p01p Carly Rae Jepsen - Run Away With Me.m4a 0.0Mb 134k 00:01', getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a'), 1))
-    assertEq('p12p Qua - Ritmo Giallo.mp3 0.0Mb 136k 00:02', getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Qua - Ritmo Giallo.mp3'), 12))
-    assertEq('p00p Masato Nakamura - Green Hill Zone.mp3 0.0Mb 136k 00:02', getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Masato Nakamura - Green Hill Zone.mp3'), 0))
+    assertEq('p01p Carly Rae Jepsen - Run Away With Me.m4a 0.0Mb 134k 00:01', 
+        getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a'), 1))
+    assertEq('p12p Qua - Ritmo Giallo.mp3 0.0Mb 136k 00:02', 
+        getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Qua - Ritmo Giallo.mp3'), 12))
+    assertEq('p00p Masato Nakamura - Green Hill Zone.mp3 0.0Mb 136k 00:02', 
+        getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl+'Masato Nakamura - Green Hill Zone.mp3'), 0))
     
     stampM4a(tmpdirsl+'Carly Rae Jepsen - Run Away With Me.m4a', 'spotify:track:5e0vgBWfwToyphURwynSXa')
     stampM4a(tmpdirsl+'Qua - Ritmo Giallo.mp3', 'spotify:track:5fAV6bhApK00urMyz4ceit')
