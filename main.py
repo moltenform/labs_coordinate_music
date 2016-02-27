@@ -6,11 +6,11 @@ import recurring_linkspotify
 import sys
 
 def showCmdOptions():
-    coordmusictools.trace('main.py'+
+    coordmusictools.trace('\nmain.py'+
     '\n\tInteractive mode: organization and more.'+
-    'main.py startspotify /path/to/song.mp3'+
+    '\n\nmain.py startspotify /path/to/song.mp3'+
     '\n\tStarts playing the Spotify track that this mp3\'s metadata points to.'+
-    'main.py viewspotify /path/to/song.mp3'+
+    '\n\nmain.py viewspotify /path/to/song.mp3'+
     '\n\tShow the Spotify track that this mp3\'s metadata points to.')
 
 def main():

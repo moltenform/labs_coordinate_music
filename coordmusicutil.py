@@ -156,8 +156,7 @@ def getTracksFromPlaylist(sp, plid):
     s = u''
     tracksRet = []
     tracks = []
-    username = 'boinjyboing'
-    results = sp.user_playlist(username, plid, fields="tracks,next")
+    results = sp.user_playlist(getSpotifyUsername(), plid, fields="tracks,next")
     tracks = results['tracks']
     tracksRet.extend(tracks['items'])
     while tracks['next']:
