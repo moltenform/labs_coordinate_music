@@ -35,8 +35,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from ctypes import c_void_p, POINTER, sizeof, Structure, windll, WinError, WINFUNCTYPE
-from ctypes.wintypes import BOOL, BYTE, DWORD, HANDLE, LPCWSTR, LPWSTR, UINT, WORD, \
-                            c_buffer, c_ulong, byref
+from ctypes.wintypes import BOOL, BYTE, DWORD, HANDLE, LPCWSTR, LPWSTR, UINT, WORD
 
 LPVOID = c_void_p
 LPBYTE = POINTER(BYTE)
@@ -116,17 +115,17 @@ class STARTUPINFO(Structure):
                 ]
 LPSTARTUPINFO = POINTER(STARTUPINFO)
 
-SW_HIDE                 = 0
+SW_HIDE = 0
 
-STARTF_USESHOWWINDOW    = 0x01
-STARTF_USESIZE          = 0x02
-STARTF_USEPOSITION      = 0x04
-STARTF_USECOUNTCHARS    = 0x08
+STARTF_USESHOWWINDOW = 0x01
+STARTF_USESIZE = 0x02
+STARTF_USEPOSITION = 0x04
+STARTF_USECOUNTCHARS = 0x08
 STARTF_USEFILLATTRIBUTE = 0x10
-STARTF_RUNFULLSCREEN    = 0x20
-STARTF_FORCEONFEEDBACK  = 0x40
+STARTF_RUNFULLSCREEN = 0x20
+STARTF_FORCEONFEEDBACK = 0x40
 STARTF_FORCEOFFFEEDBACK = 0x80
-STARTF_USESTDHANDLES    = 0x100
+STARTF_USESTDHANDLES = 0x100
 
 # EnvironmentBlock
 
@@ -248,7 +247,7 @@ try:
     IsProcessInJob = IsProcessInJobProto(
         ("IsProcessInJob", windll.kernel32),
         IsProcessInJobFlags)
-    IsProcessInJob.errcheck = ErrCheckBool 
+    IsProcessInJob.errcheck = ErrCheckBool
 except AttributeError:
     # windows 2k doesn't have this API
     def IsProcessInJob(process):
@@ -274,7 +273,7 @@ ResumeThread.errcheck = ErrCheckResumeThread
 # TerminateProcess()
 
 TerminateProcessProto = WINFUNCTYPE(BOOL,   # Return type
-                                    HANDLE, # hProcess
+                                    HANDLE,  # hProcess
                                     UINT    # uExitCode
                                     )
 TerminateProcessFlags = ((1, "hProcess"),
@@ -287,7 +286,7 @@ TerminateProcess.errcheck = ErrCheckBool
 # TerminateJobObject()
 
 TerminateJobObjectProto = WINFUNCTYPE(BOOL,   # Return type
-                                      HANDLE, # hJob
+                                      HANDLE,  # hJob
                                       UINT    # uExitCode
                                       )
 TerminateJobObjectFlags = ((1, "hJob"),
@@ -300,7 +299,7 @@ TerminateJobObject.errcheck = ErrCheckBool
 # WaitForSingleObject()
 
 WaitForSingleObjectProto = WINFUNCTYPE(DWORD,  # Return type
-                                       HANDLE, # hHandle
+                                       HANDLE,  # hHandle
                                        DWORD,  # dwMilliseconds
                                        )
 WaitForSingleObjectFlags = ((1, "hHandle"),
@@ -319,7 +318,7 @@ WAIT_FAILED = 0xFFFFFFFF
 
 GetExitCodeProcessProto = WINFUNCTYPE(BOOL,    # Return type
                                       HANDLE,  # hProcess
-                                      LPDWORD, # lpExitCode
+                                      LPDWORD,  # lpExitCode
                                       )
 GetExitCodeProcessFlags = ((1, "hProcess"),
                            (2, "lpExitCode"))
@@ -333,7 +332,7 @@ def CanCreateJobObject():
     # so job creation is turned off for now. (see Bug 768651).
     return False
 
-### testing functions
+# testing functions
 
 def parent():
     print 'Starting parent'

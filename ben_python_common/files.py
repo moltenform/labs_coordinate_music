@@ -3,6 +3,8 @@
 
 import os as os_hide
 import shutil as shutil_hide
+from common_util import *
+
 rename = os_hide.rename
 delete = os_hide.unlink
 exists = os_hide.path.exists
@@ -21,8 +23,6 @@ linesep = os_hide.linesep
 abspath = shutil_hide.abspath
 rmtree = shutil_hide.rmtree
 
-from common_util import *	
-
 # simple wrappers
 def getparent(s):
     return os_hide.path.split(s)[0]
@@ -37,14 +37,15 @@ def createdtime(s):
     return os_hide.stat(s).ST_CTIME
     
 def getext(s):
-    a,b = splitext(s)
-    if len(b)>0 and b[0]=='.':
+    a, b = splitext(s)
+    if len(b) > 0 and b[0] == '.':
         return b[1:].lower()
     else:
         return b.lower()
     
 def deletesure(s):
-    if files.exists(s): files.delete(s)
+    if files.exists(s):
+        files.delete(s)
     assert not files.exists(s)
     
 # copy and move
@@ -53,7 +54,7 @@ def copy(a, b, bOverwrite):
     if not exists(a):
         raise IOError('source path does not exist')
         
-    if sys.platform=='win32':
+    if sys.platform == 'win32':
         from ctypes import windll, c_wchar_p, c_int
         failIfExists = c_int(0) if bOverwrite else c_int(1)
         res = windll.kernel32.CopyFileW(c_wchar_p(a), c_wchar_p(b), failIfExists)
@@ -61,7 +62,7 @@ def copy(a, b, bOverwrite):
             raise IOError('CopyFileW failed (maybe dest already exists?)')
     else:
         if bOverwrite:
-            shutil_hide.copy(a,b)
+            shutil_hide.copy(a, b)
         else:
             # raises OSError on failure
             os.link(a, b)
@@ -72,16 +73,16 @@ def move(a, b, bOverwrite):
     import sys
     if not exists(a):
         raise IOError('source path does not exist')
-    if a==b:
+    if a == b:
         return
-    if sys.platform=='win32':
+    if sys.platform == 'win32':
         from ctypes import windll, c_wchar_p, c_int
         replaceexisting = c_int(1) if bOverwrite else c_int(0)
         res = windll.kernel32.MoveFileExW(c_wchar_p(a), c_wchar_p(b), replaceexisting)
         if not res:
             raise IOError('MoveFileExW failed (maybe dest already exists?)')
     elif sys.platform.startswith('linux') and bOverwrite:
-        os.rename(a,b)
+        os.rename(a, b)
     else:
         copy(a, b, bOverwrite)
         assertTrue(exists(b))
@@ -93,9 +94,9 @@ def move(a, b, bOverwrite):
 def readall(s, mode='r', unicodetype=None):
     if unicodetype:
         import codecs
-        f=codecs.open(s, mode, unicodetype)
+        f = codecs.open(s, mode, unicodetype)
     else:
-        f=open(s,mode)
+        f = open(s, mode)
     txt = f.read()
     f.close()
     return txt
@@ -104,13 +105,13 @@ def readall(s, mode='r', unicodetype=None):
 def writeall(s, txt, mode='w', unicodetype=None):
     if unicodetype:
         import codecs
-        f=codecs.open(s, mode, unicodetype)
+        f = codecs.open(s, mode, unicodetype)
     else:
-        f=open(s,mode)
+        f = open(s, mode)
     f.write(txt)
     f.close()
 
-# use this to make the caller pass argument names, 
+# use this to make the caller pass argument names,
 # allowing foo(param=False) but preventing foo(False)
 _enforceExplicitlyNamedParameters = object()
 
@@ -123,7 +124,7 @@ def listchildren(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fals
     _checkNamedParameters(_ind)
     for filename in os_hide.listdir(dir):
         if not allowedexts or getext(filename) in allowedexts:
-            yield filename if filenamesOnly else (dir+os_hide.path.sep+filename, filename)
+            yield filename if filenamesOnly else (dir + os_hide.path.sep + filename, filename)
     
 def listfiles(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
@@ -138,13 +139,13 @@ def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fal
     
     for (dirpath, dirnames, filenames) in os_hide.walk(root, topdown=topdown):
         if fnFilterDirs:
-            newdirs = [dir for dir in dirnames if fnFilterDirs(join(dirpath,dir))]
+            newdirs = [dir for dir in dirnames if fnFilterDirs(join(dirpath, dir))]
             dirnames[:] = newdirs
         
         if includeFiles:
             for filename in filenames:
                 if not allowedexts or getext(filename) in allowedexts:
-                    yield filename if filenamesOnly else (dirpath+os_hide.path.sep+filename, filename)
+                    yield filename if filenamesOnly else (dirpath + os_hide.path.sep + filename, filename)
         
         if includeDirs:
             yield getname(dirpath) if filenamesOnly else (dirpath, getname(dirpath))
@@ -154,30 +155,29 @@ def recursedirs(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fals
     return recursefiles(root, filenamesOnly=filenamesOnly, fnFilterDirs=fnFilterDirs, includeFiles=False, includeDirs=True, topdown=topdown)
     
 def isemptydir(dir):
-    return len(os_hide.listdir(dir))==0
+    return len(os_hide.listdir(dir)) == 0
     
-#processes
+# processes
 def openDirectoryInExplorer(dir):
-    import os
-    assert isdir(dir), 'not a dir? '+dir
-    assert not '^' in dir and not '"' in dir, 'dir cannot contain ^ or "'
+    assert isdir(dir), 'not a dir? ' + dir
+    assert '^' not in dir and '"' not in dir, 'dir cannot contain ^ or "'
     runWithoutWaitUnicode([u'cmd', u'/c', u'start', u'explorer.exe', dir])
 
 def openUrl(s):
     assert s.startswith('http:') or s.startswith('https:')
-    assert not '^' in s and not '"' in s, 'url cannot contain ^ or "'
+    assert '^' not in s and '"' not in s, 'url cannot contain ^ or "'
     import webbrowser
     webbrowser.open(s, new=2)
 
 # returns tuple (returncode, stdout, stderr)
-def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True, 
-    throwOnFailure=RuntimeError, stripText=True, captureoutput=True, silenceoutput=False):
+def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True,
+        throwOnFailure=RuntimeError, stripText=True, captureoutput=True, silenceoutput=False):
     import sys
     import subprocess
     _checkNamedParameters(_ind)
     kwargs = {}
     
-    if sys.platform=='win32' and createNoWindow:
+    if sys.platform == 'win32' and createNoWindow:
         kwargs['creationflags'] = 0x08000000
     
     if not captureoutput:
@@ -198,9 +198,10 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
             stdout = stdout.rstrip()
             stderr = stderr.rstrip()
         
-    if throwOnFailure and retcode!=0:
-        if throwOnFailure is True: throwOnFailure = RuntimeError
-        exceptionText = 'retcode is not 0 for process '+str(listArgs)+'\nstdout was '+str(stdout)+'\nstderr was '+str(stderr)
+    if throwOnFailure and retcode != 0:
+        if throwOnFailure is True:
+            throwOnFailure = RuntimeError
+        exceptionText = 'retcode is not 0 for process ' + str(listArgs) + '\nstdout was ' + str(stdout) + '\nstderr was ' + str(stderr)
         raise throwOnFailure(getPrintable(exceptionText))
     
     return retcode, stdout, stderr
@@ -209,12 +210,12 @@ def runWithoutWaitUnicode(listArgs):
     # in Windows, non-ascii characters cause subprocess.Popen to fail.
     # https://bugs.python.org/issue1759845
     import sys
-    if sys.platform!='win32' or all(isinstance(arg, str) for arg in listArgs):
+    if sys.platform != 'win32' or all(isinstance(arg, str) for arg in listArgs):
         import subprocess
         p = subprocess.Popen(listArgs, shell=False)
         return p.pid
     else:
-        import winprocess, subprocess, _subprocess, types
+        import winprocess, subprocess, types
         if isinstance(listArgs, types.StringTypes):
             combinedArgs = listArgs
         else:
@@ -228,23 +229,24 @@ def runWithoutWaitUnicode(listArgs):
         cwd = None
         startupinfo = winprocess.STARTUPINFO()
         handle, ht, pid, tid = winprocess.CreateProcess(executable, combinedArgs,
-             None, None,
-             int(not close_fds),
-             creationflags,
-             env,
-             cwd,
-             startupinfo)
+            None, None,
+            int(not close_fds),
+            creationflags,
+            env,
+            cwd,
+            startupinfo)
         ht.Close()
         handle.Close()
         return pid
         
 
-if __name__=='__main__':
+if __name__ == '__main__':
     import tempfile
-    tmpdir = tempfile.gettempdir()+sep+'pytest'
-    tmpdirsl = tmpdir+sep
+    tmpdir = tempfile.gettempdir() + sep + 'pytest'
+    tmpdirsl = tmpdir + sep
     if not os_hide.path.exists(tmpdir):
         os_hide.mkdir(tmpdir)
+
     def cleardirectoryfiles(d):
         shutil_hide.rmtree(d)
         os_hide.mkdir(d)
@@ -252,87 +254,87 @@ if __name__=='__main__':
     
     # test copy_overwrite, source not exist
     cleardirectoryfiles(tmpdir)
-    assertException(lambda: copy(tmpdirsl+'src.txt', tmpdirsl+'srccopy.txt', True), IOError)
+    assertException(lambda: copy(tmpdirsl + 'src.txt', tmpdirsl + 'srccopy.txt', True), IOError)
     
     # test copy_overwrite, simple copy
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    copy(tmpdirsl+'src.txt', tmpdirsl+'srccopy.txt', True)
-    assertEq('src', readall(tmpdirsl+'srccopy.txt'))
-    assertTrue(exists(tmpdirsl+'src.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    copy(tmpdirsl + 'src.txt', tmpdirsl + 'srccopy.txt', True)
+    assertEq('src', readall(tmpdirsl + 'srccopy.txt'))
+    assertTrue(exists(tmpdirsl + 'src.txt'))
     
     # test copy_overwrite, overwrite
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    assertEq('src', readall(tmpdirsl+'src.txt'))
-    writeall(tmpdirsl+'dest.txt', 'dest')
-    assertEq('dest', readall(tmpdirsl+'dest.txt'))
-    copy(tmpdirsl+'src.txt', tmpdirsl+'dest.txt', True)
-    assertEq('src', readall(tmpdirsl+'dest.txt'))
-    assertTrue(exists(tmpdirsl+'src.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    assertEq('src', readall(tmpdirsl + 'src.txt'))
+    writeall(tmpdirsl + 'dest.txt', 'dest')
+    assertEq('dest', readall(tmpdirsl + 'dest.txt'))
+    copy(tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt', True)
+    assertEq('src', readall(tmpdirsl + 'dest.txt'))
+    assertTrue(exists(tmpdirsl + 'src.txt'))
     
     # test copy_nooverwrite, source not exist
     cleardirectoryfiles(tmpdir)
-    assertException(lambda: copy(tmpdirsl+'src.txt', tmpdirsl+'srccopy.txt', False), IOError)
+    assertException(lambda: copy(tmpdirsl + 'src.txt', tmpdirsl + 'srccopy.txt', False), IOError)
     
     # test copy_nooverwrite, simple copy
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    copy(tmpdirsl+'src.txt', tmpdirsl+'srccopy.txt', False)
-    assertEq('src', readall(tmpdirsl+'srccopy.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    copy(tmpdirsl + 'src.txt', tmpdirsl + 'srccopy.txt', False)
+    assertEq('src', readall(tmpdirsl + 'srccopy.txt'))
     
     # test copy_nooverwrite, simple overwrite should fail
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    assertEq('src', readall(tmpdirsl+'src.txt'))
-    writeall(tmpdirsl+'dest.txt', 'dest')
-    assertEq('dest', readall(tmpdirsl+'dest.txt'))
-    assertException(lambda: copy(tmpdirsl+'src.txt', tmpdirsl+'dest.txt', False), IOError, 'CopyFileW failed')
-    assertEq('dest', readall(tmpdirsl+'dest.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    assertEq('src', readall(tmpdirsl + 'src.txt'))
+    writeall(tmpdirsl + 'dest.txt', 'dest')
+    assertEq('dest', readall(tmpdirsl + 'dest.txt'))
+    assertException(lambda: copy(tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt', False), IOError, 'CopyFileW failed')
+    assertEq('dest', readall(tmpdirsl + 'dest.txt'))
     
     # test move_overwrite, source not exist
     cleardirectoryfiles(tmpdir)
-    assertException(lambda: move(tmpdirsl+'src.txt', tmpdirsl+'srcmove.txt', True), IOError)
-    assertTrue(not exists(tmpdirsl+'src.txt'))
+    assertException(lambda: move(tmpdirsl + 'src.txt', tmpdirsl + 'srcmove.txt', True), IOError)
+    assertTrue(not exists(tmpdirsl + 'src.txt'))
     
     # test move_overwrite, simple move
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    move(tmpdirsl+'src.txt', tmpdirsl+'srcmove.txt', True)
-    assertEq('src', readall(tmpdirsl+'srcmove.txt'))
-    assertTrue(not exists(tmpdirsl+'src.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    move(tmpdirsl + 'src.txt', tmpdirsl + 'srcmove.txt', True)
+    assertEq('src', readall(tmpdirsl + 'srcmove.txt'))
+    assertTrue(not exists(tmpdirsl + 'src.txt'))
     
     # test move_overwrite, overwrite
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    assertEq('src', readall(tmpdirsl+'src.txt'))
-    writeall(tmpdirsl+'dest.txt', 'dest')
-    assertEq('dest', readall(tmpdirsl+'dest.txt'))
-    move(tmpdirsl+'src.txt', tmpdirsl+'dest.txt', True)
-    assertEq('src', readall(tmpdirsl+'dest.txt'))
-    assertTrue(not exists(tmpdirsl+'src.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    assertEq('src', readall(tmpdirsl + 'src.txt'))
+    writeall(tmpdirsl + 'dest.txt', 'dest')
+    assertEq('dest', readall(tmpdirsl + 'dest.txt'))
+    move(tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt', True)
+    assertEq('src', readall(tmpdirsl + 'dest.txt'))
+    assertTrue(not exists(tmpdirsl + 'src.txt'))
     
     # test move_nooverwrite, source not exist
     cleardirectoryfiles(tmpdir)
-    assertException(lambda: move(tmpdirsl+'src.txt', tmpdirsl+'srcmove.txt', False), IOError)
-    assertTrue(not exists(tmpdirsl+'src.txt'))
+    assertException(lambda: move(tmpdirsl + 'src.txt', tmpdirsl + 'srcmove.txt', False), IOError)
+    assertTrue(not exists(tmpdirsl + 'src.txt'))
     
     # test move_nooverwrite, simple move
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    move(tmpdirsl+'src.txt', tmpdirsl+'srcmove.txt', False)
-    assertEq('src', readall(tmpdirsl+'srcmove.txt'))
-    assertTrue(not exists(tmpdirsl+'src.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    move(tmpdirsl + 'src.txt', tmpdirsl + 'srcmove.txt', False)
+    assertEq('src', readall(tmpdirsl + 'srcmove.txt'))
+    assertTrue(not exists(tmpdirsl + 'src.txt'))
     
     # test move_nooverwrite, simple overwrite should fail
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    assertEq('src', readall(tmpdirsl+'src.txt'))
-    writeall(tmpdirsl+'dest.txt', 'dest')
-    assertEq('dest', readall(tmpdirsl+'dest.txt'))
-    assertException(lambda: move(tmpdirsl+'src.txt', tmpdirsl+'dest.txt', False), IOError, 'MoveFileExW failed')
-    assertEq('dest', readall(tmpdirsl+'dest.txt'))
-    assertTrue(exists(tmpdirsl+'src.txt'))
+    writeall(tmpdirsl + 'src.txt', 'src')
+    assertEq('src', readall(tmpdirsl + 'src.txt'))
+    writeall(tmpdirsl + 'dest.txt', 'dest')
+    assertEq('dest', readall(tmpdirsl + 'dest.txt'))
+    assertException(lambda: move(tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt', False), IOError, 'MoveFileExW failed')
+    assertEq('dest', readall(tmpdirsl + 'dest.txt'))
+    assertTrue(exists(tmpdirsl + 'src.txt'))
     
     # test _checkNamedParameters
     assertException(lambda: list(listchildren(tmpdir, True)), ValueError, 'please name parameters')
@@ -342,9 +344,9 @@ if __name__=='__main__':
     # tmpdir/s1/ss1 has files, no dirs
     # tmpdir/s1/ss2 has no files, dirs
     cleardirectoryfiles(tmpdir)
-    dirstomake = [tmpdir, tmpdirsl+'s1', tmpdirsl+'s1'+sep+'ss1', tmpdirsl+'s1'+sep+'ss2', tmpdirsl+'s2']
-    filestomake = [tmpdirsl+'P1.PNG', tmpdirsl+'a1.txt', tmpdirsl+'a2png',
-        tmpdirsl+'s1'+sep+'ss1'+sep+'file.txt', tmpdirsl+'s2'+sep+'other.txt']
+    dirstomake = [tmpdir, tmpdirsl + 's1', tmpdirsl + 's1' + sep + 'ss1', tmpdirsl + 's1' + sep + 'ss2', tmpdirsl + 's2']
+    filestomake = [tmpdirsl + 'P1.PNG', tmpdirsl + 'a1.txt', tmpdirsl + 'a2png',
+        tmpdirsl + 's1' + sep + 'ss1' + sep + 'file.txt', tmpdirsl + 's2' + sep + 'other.txt']
     for dir in dirstomake:
         if dir != tmpdir:
             makedir(dir)
@@ -353,118 +355,117 @@ if __name__=='__main__':
     
     # test listchildren
     expected = ['P1.PNG', 'a1.txt', 'a2png', 's1', 's2']
-    assertEq([(tmpdirsl+s,s) for s in expected], sorted(list(listchildren(tmpdir))))
+    assertEq([(tmpdirsl + s, s) for s in expected], sorted(list(listchildren(tmpdir))))
     assertEq(expected, sorted(list(listchildren(tmpdir, filenamesOnly=True))))
-    assertEq(['P1.PNG', 'a1.txt'], sorted(list(listchildren(tmpdir, filenamesOnly=True, allowedexts=['png','txt']))))
+    assertEq(['P1.PNG', 'a1.txt'], sorted(list(listchildren(tmpdir, filenamesOnly=True, allowedexts=['png', 'txt']))))
     
     # test listfiles
     expected = ['P1.PNG', 'a1.txt', 'a2png']
-    assertEq([(tmpdirsl+s,s) for s in expected], sorted(list(listfiles(tmpdir))))
+    assertEq([(tmpdirsl + s, s) for s in expected], sorted(list(listfiles(tmpdir))))
     assertEq(expected, sorted(list(listfiles(tmpdir, filenamesOnly=True))))
-    assertEq(['P1.PNG', 'a1.txt'], sorted(list(listfiles(tmpdir, filenamesOnly=True, allowedexts=['png','txt']))))
+    assertEq(['P1.PNG', 'a1.txt'], sorted(list(listfiles(tmpdir, filenamesOnly=True, allowedexts=['png', 'txt']))))
     
     # test recursefiles
-    assertEq([(s,getname(s)) for s in filestomake],
+    assertEq([(s, getname(s)) for s in filestomake],
         sorted(list(recursefiles(tmpdir))))
     assertEq([getname(s) for s in filestomake],
         sorted(list(recursefiles(tmpdir, filenamesOnly=True))))
     assertEq(['a1.txt', 'file.txt', 'other.txt'],
         sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt']))))
     assertEq(['a1.txt', 'file.txt', 'other.txt'],
-        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d:True))))
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d: True))))
     assertEq(['a1.txt'],
-        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d:False))))
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d: False))))
     assertEq(['a1.txt', 'other.txt'],
-        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir:getname(dir)!='s1'))))
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir: getname(dir) != 's1'))))
     assertEq(['a1.txt', 'file.txt'],
-        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir:getname(dir)!='s2'))))
+        sorted(list(recursefiles(tmpdir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda dir: getname(dir) != 's2'))))
     
     # test recursedirs
-    assertEq(sorted([(s,getname(s)) for s in dirstomake]), sorted(list(recursedirs(tmpdir))))
+    assertEq(sorted([(s, getname(s)) for s in dirstomake]), sorted(list(recursedirs(tmpdir))))
     assertEq(sorted([getname(s) for s in dirstomake]), sorted(list(recursedirs(tmpdir, filenamesOnly=True))))
-    assertEq(['pytest', 's2'], sorted(list(recursedirs(tmpdir, filenamesOnly=True, fnFilterDirs=lambda dir:getname(dir)!='s1'))))
+    assertEq(['pytest', 's2'], sorted(list(recursedirs(tmpdir, filenamesOnly=True, fnFilterDirs=lambda dir: getname(dir) != 's1'))))
     
     # test run process, simple batch script
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
-    writeall(tmpdirsl+'script.bat', 'copy "%ssrc.txt" "%sdest.txt"'%(tmpdirsl,tmpdirsl))
-    assertTrue(not exists(tmpdirsl+'dest.txt'))
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'])
+    writeall(tmpdirsl + 'src.txt', 'src')
+    writeall(tmpdirsl + 'script.bat', 'copy "%ssrc.txt" "%sdest.txt"'%(tmpdirsl, tmpdirsl))
+    assertTrue(not exists(tmpdirsl + 'dest.txt'))
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'])
     assertEq(0, returncode)
-    assertTrue(exists(tmpdirsl+'dest.txt'))
+    assertTrue(exists(tmpdirsl + 'dest.txt'))
     
     # specify no capture and run again
-    delete(tmpdirsl+'dest.txt')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'], captureoutput=False)
+    delete(tmpdirsl + 'dest.txt')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'], captureoutput=False)
     assertEq(0, returncode)
-    assertTrue(exists(tmpdirsl+'dest.txt'))
+    assertTrue(exists(tmpdirsl + 'dest.txt'))
     
     # run process with unicode characters
-    delete(tmpdirsl+'dest.txt')
-    unicodepath = tmpdirsl+u'scr#1pt#2.bat'.replace('#1', u'\u012B').replace('#2', u'\u013C')
-    writeall(unicodepath, 'copy "%ssrc.txt" "%sdest.txt"'%(tmpdirsl,tmpdirsl))
+    delete(tmpdirsl + 'dest.txt')
+    unicodepath = tmpdirsl + u'scr#1pt#2.bat'.replace('#1', u'\u012B').replace('#2', u'\u013C')
+    writeall(unicodepath, 'copy "%ssrc.txt" "%sdest.txt"'%(tmpdirsl, tmpdirsl))
     try:
         import time
         runWithoutWaitUnicode([unicodepath])
         time.sleep(0.5)
-        assertTrue(exists(tmpdirsl+'dest.txt'))
+        assertTrue(exists(tmpdirsl + 'dest.txt'))
     finally:
         delete(unicodepath)
     
     # test run process, batch script returns failure
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'script.bat', '\nexit /b 123')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'], throwOnFailure=False)
+    writeall(tmpdirsl + 'script.bat', '\nexit /b 123')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'], throwOnFailure=False)
     assertEq(123, returncode)
     # specify no capture and run again
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'], throwOnFailure=False, captureoutput=False)
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'], throwOnFailure=False, captureoutput=False)
     assertEq(123, returncode)
     # except exception
-    assertException(lambda: run([tmpdirsl+'script.bat']), RuntimeError, 'retcode is not 0')
+    assertException(lambda: run([tmpdirsl + 'script.bat']), RuntimeError, 'retcode is not 0')
     # specify no capture, except exception
-    assertException(lambda: run([tmpdirsl+'script.bat'], captureoutput=False), RuntimeError, 'retcode is not 0')
+    assertException(lambda: run([tmpdirsl + 'script.bat'], captureoutput=False), RuntimeError, 'retcode is not 0')
     
     # test run process, get stdout
-    writeall(tmpdirsl+'script.bat', '\n@echo off\necho testecho')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'])
+    writeall(tmpdirsl + 'script.bat', '\n@echo off\necho testecho')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'])
     assertEq(0, returncode)
     assertEq('testecho', stdout)
     assertEq('', stderr)
     
     # test run process, get stderr
-    writeall(tmpdirsl+'script.bat', '\n@echo off\necho testechoerr 1>&2')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'])
+    writeall(tmpdirsl + 'script.bat', '\n@echo off\necho testechoerr 1>&2')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'])
     assertEq(0, returncode)
     assertEq('', stdout)
     assertEq('testechoerr', stderr)
     
     # test run process, get both. (this deadlocks if done naively, but it looks like subprocess correctly uses 2 threads.)
-    writeall(tmpdirsl+'script.bat', '\n@echo off\necho testecho\necho testechoerr 1>&2')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat'])
+    writeall(tmpdirsl + 'script.bat', '\n@echo off\necho testecho\necho testechoerr 1>&2')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat'])
     assertEq(0, returncode)
     assertEq('testecho', stdout)
     assertEq('testechoerr', stderr)
     
     # test run process, send argument without spaces
-    writeall(tmpdirsl+'script.bat', '\n@echo off\necho %1')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat', 'testarg'])
+    writeall(tmpdirsl + 'script.bat', '\n@echo off\necho %1')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat', 'testarg'])
     assertEq(0, returncode)
     assertEq('testarg', stdout)
     
     # test run process, send argument with spaces (subprocess will quote the args)
-    writeall(tmpdirsl+'script.bat', '\n@echo off\necho %1')
-    returncode, stdout, stderr = run([tmpdirsl+'script.bat', 'test arg'])
+    writeall(tmpdirsl + 'script.bat', '\n@echo off\necho %1')
+    returncode, stdout, stderr = run([tmpdirsl + 'script.bat', 'test arg'])
     assertEq(0, returncode)
     assertEq('"test arg"', stdout)
     
     # test run process, run without shell
     cleardirectoryfiles(tmpdir)
-    writeall(tmpdirsl+'src.txt', 'src')
+    writeall(tmpdirsl + 'src.txt', 'src')
     # won't work without the shell:
-    assertException(lambda:run(['copy', tmpdirsl+'src.txt', tmpdirsl+'dest.txt']), OSError)
-    assertTrue(not exists(tmpdirsl+'dest.txt'))
+    assertException(lambda: run(['copy', tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt']), OSError)
+    assertTrue(not exists(tmpdirsl + 'dest.txt'))
     # will work with the shell
-    returncode, stdout, stderr = run(['copy', tmpdirsl+'src.txt', tmpdirsl+'dest.txt'], shell=True)
+    returncode, stdout, stderr = run(['copy', tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt'], shell=True)
     assertEq(0, returncode)
-    assertTrue(exists(tmpdirsl+'dest.txt'))
-    
+    assertTrue(exists(tmpdirsl + 'dest.txt'))

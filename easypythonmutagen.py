@@ -168,7 +168,7 @@ class EasyPythonMutagenId3(object):
             'discsubtitle': 'TSST',
             'language': 'TLAN',
             # handled separately
-            'website': None, 
+            'website': None,
             # aliases
             'description': 'TSST',
             'comment': 'TIT3',
@@ -211,20 +211,20 @@ class EasyPythonMutagenId3(object):
                 self.obj.add(mutagen.id3.WOAR(url=v))
         
     def __getitem__(self, key):
-        if key=='website':
+        if key == 'website':
             return self.getWebsite()
         else:
             frameid = self.map[key]
             return list(self.obj[frameid])
             
     def __setitem__(self, key, val):
-        if key=='website':
+        if key == 'website':
             return self.setWebsite(val)
         else:
             assert isinstance(val, basestring), 'val must be a string'
             val = [val]
             frameid = self.map[key]
-            encoding = 3 #Encoding.UTF8; mutagen apparently converts to UTF16 when needed
+            encoding = 3  # Encoding.UTF8; mutagen apparently converts to UTF16 when needed
             try:
                 frame = self.obj[frameid]
             except KeyError:
@@ -237,7 +237,7 @@ class EasyPythonMutagenId3(object):
         try:
             self[key]
             return True
-        except KeyError: 
+        except KeyError:
             return False
 
 def get_audio_duration(filename, alreadyobj=None):
@@ -280,5 +280,4 @@ def get_empirical_bitrate(filename, alreadyobj=None):
     """returns the "empirical" bitrate, as opposed to the "stated" bitrate that can be inaccurate"""
     
     duration = get_audio_duration(filename, alreadyobj)
-    return (8.0*os.path.getsize(filename)/1000.0) / duration
-
+    return (8.0 * os.path.getsize(filename) / 1000.0) / duration
