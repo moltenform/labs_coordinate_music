@@ -118,7 +118,7 @@ def getInputStringGui(prompt, initialvalue=None, title=' '):
     s = tkSimpleDialog.askstring(title, prompt, **options)
     return '' if s is None else s
 
-def _findUnusedLetter(dictUsed, newWord):
+def findUnusedLetter(dictUsed, newWord):
     for i, c in enumerate(newWord):
         if c.isalnum() and c.lower() not in dictUsed:
             dictUsed[c] = True
@@ -239,7 +239,8 @@ def registerDebughook(b=True):
         sys.excepthook = sys.__excepthook__
     
 def softDeleteFile(s):
-    trashdir = u'~/local/less_important/trash'
+    import os
+    trashdir = os.path.expanduser('~') + u'/local/less_important/trash'
     if not files.exists(trashdir):
         trashdir = ur'C:\data\local\less_important\trash'
         if not files.exists(trashdir):
@@ -249,48 +250,3 @@ def softDeleteFile(s):
     newname = trashdir + files.sep + files.split(s)[1] + getRandomString()
     files.move(s, newname, False)
     return newname
-
-if __name__ == '__main__':
-    # test softDeleteFile
-    import tempfile
-    tmpdir = tempfile.gettempdir() + files.sep + 'pytest'
-    if not files.exists(tmpdir):
-        files.mkdir(tmpdir)
-    movedname = None
-    srcfile = tmpdir + files.sep + 'tmp.txt'
-    files.writeall(srcfile, 'test')
-    try:
-        assertTrue(files.exists(srcfile))
-        movedname = softDeleteFile(srcfile)
-        assertTrue(not files.exists(srcfile))
-        assertTrue(files.exists(movedname))
-        assertTrue(movedname != srcfile)
-        assertTrue(files.split(movedname)[1] != files.split(srcfile)[1])
-    finally:
-        if files.exists(srcfile):
-            files.delete(srcfile)
-        if files.exists(movedname):
-            files.delete(movedname)
-    
-    # test isdigit
-    assertTrue(not ''.isdigit())
-    assertTrue('0'.isdigit())
-    assertTrue('123'.isdigit())
-    assertTrue(not '123 '.isdigit())
-    assertTrue(not '123a'.isdigit())
-    assertTrue(not 'a123'.isdigit())
-    
-    # test _findUnusedLetter
-    d = dict()
-    assertEq(0, _findUnusedLetter(d, 'abc'))
-    assertEq(1, _findUnusedLetter(d, 'abc'))
-    assertEq(2, _findUnusedLetter(d, 'abc'))
-    assertEq(None, _findUnusedLetter(d, 'abc'))
-    assertEq(None, _findUnusedLetter(d, 'ABC'))
-    assertEq(None, _findUnusedLetter(d, 'a b c!@#'))
-    
-    # print getInputFromChoicesGui('test:', ['a', 'b', 'c c c'])
-    # print getRawInputStringGui('test')
-    # print warnGui('test')
-    # print getOpenFileGui('test')
-    # print getSaveFileGui(None, ['.bmp|Windows Bitmap','.gif|Gif image'], 'test' )
