@@ -639,11 +639,103 @@ def testsMusicToUrlInteractive():
     trace('Resulting filenames:\n' + '\n'.join(short for fullfile, short in files.listfiles(tmpdir)))
 
 def testsFromOutsideMp3Interactive():
+    import coordmusictools
     if not getInputBool('Run interactive OutsideMp3 test?'):
         return
         
+    # create "outside" files, mocking input files
     createOrClearDirectory(tmpdir)
+    files.makedirs(tmpdirsl + 'outside')
+    files.makedirs(tmpdirsl + 'outside/Space Oddity')
+    files.makedirs(tmpdirsl + 'outside/The Essential Fifth Dimension')
+    mp3 = dirtestmedia + '/mp3_avgb128.mp3'
+    files.copy(mp3, tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione__MARKAS__128.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/Space Oddity/05 Janine__MARKAS__24.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/Space Oddity/96 Nonexistent song 1__MARKAS__24.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/Space Oddity/97 Nonexistent song 2__MARKAS__24.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/Space Oddity/98 Nonexistent song 3__MARKAS__128.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4__MARKAS__128.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing__MARKAS__144.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/02 19 No Love In The Room__MARKAS__24.mp3', False)
+    artists = {'Space Oddity': 'David Bowie', 'The Essential Fifth Dimension': 'The Fifth Dimension'}
+    for file, short in files.recursefiles(tmpdirsl + 'outside'):
+        album = files.getname(files.getparent(file))
+        name = short.split('__')[0]
+        if name[3:5].isdigit():
+            discnumber = int(name[0:2])
+            tracknumber = int(name[3:5])
+            title = name[6:]
+        else:
+            discnumber = 1
+            tracknumber = int(name[0:2])
+            title = name[3:]
+       
+        obj = CoordMusicAudioMetadata(file)
+        obj.set('album', album)
+        obj.set('artist', artists[album])
+        obj.set('title', title)
+        obj.set('discnumber', discnumber)
+        obj.set('tracknumber', tracknumber)
+        
+        # intentionally remove some information
+        if tracknumber == 98 or tracknumber == 99:
+            obj.set('tracknumber', '')
 
+        obj.save()
+        
+    coordmusictools.tools_outsideMp3sToSpotifyPlaylist(tmpdirsl + 'outside')
+    
+    # get resulting spotify links
+    link1 = CoordMusicAudioMetadata(tmpdirsl +
+        'outside/Space Oddity/03 Letter To Hermione__MARKAS__128.mp3').getLink()
+    link2 = CoordMusicAudioMetadata(tmpdirsl +
+        'outside/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing__MARKAS__144.mp3').getLink()
+    assert 'spotify:track:' in link1
+    assert 'spotify:track:' in link2
+    link1 = link1.replace('spotify:track:', '')
+    link2 = link2.replace('spotify:track:', '')
+    
+    # mock incoming files
+    wav = dirtestmedia + '/wav.wav'
+    files.makedirs(tmpdirsl + 'incoming')
+    files.copy(wav, tmpdirsl + 'incoming/0001 Space Oddity' +
+        '$David Bowie$03$Letter To Hermione$%s.wav' % link1, False)
+    files.copy(wav, tmpdirsl + 'incoming/0002 The Essential Fifth Dimension' +
+        '$The Fifth Dimension$12$Workin\' on a Groovy Thing$%s.wav' % link2, False)
+    
+    coordmusictools.tools_newFilesBackToReplaceOutsideMp3s(tmpdirsl + 'outside', tmpdirsl + 'incoming')
+    
+    # see if the result is right
+    all = sorted([filepath.replace(tmpdirsl + 'outside', '').replace(files.sep, '/')
+        for filepath, short in files.recursefiles(tmpdirsl + 'outside')])
+    assertEq(['/Space Oddity/03 Letter To Hermione.m4a',
+        '/Space Oddity/05 Janine.url',
+        '/Space Oddity/97 Nonexistent song 2.mp3',
+        '/Space Oddity/98 Nonexistent song 3 (12).mp3',
+        '/Space Oddity/99 Nonexistent song 4.mp3',
+        '/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing.m4a',
+        '/The Essential Fifth Dimension/02 19 No Love In The Room.url'], all)
+    
+    # see if id3 info looks right
+    obj = CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione.m4a')
+    assertEq('Space Oddity', obj.get('album'))
+    assertEq('David Bowie', obj.get('artist'))
+    assertEq('Letter To Hermione', obj.get('title'))
+    assertEq('1', str(obj.get('discnumber')))
+    assertEq('3', obj.get('tracknumber'))
+    assertEq('97', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/97 Nonexistent song 2.mp3').get('tracknumber'))
+    assertEq('98', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/98 Nonexistent song 3 (12).mp3').get('tracknumber'))
+    assertEq('99', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').get('tracknumber'))
+    assertEq('spotify:notfound', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').getLink())
+    
+    # use a set to check that all spotify links are different
+    setOfLinks = set([CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione.m4a').getLink(),
+        getFromUrlFile(tmpdirsl + 'outside/Space Oddity/05 Janine.url'),
+        CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').getLink(),
+        CoordMusicAudioMetadata(tmpdirsl + 'outside/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing.m4a').getLink(),
+        getFromUrlFile(tmpdirsl + 'outside/The Essential Fifth Dimension/02 19 No Love In The Room.url')])
+    assertEq(5, len(setOfLinks))
+        
 
 if __name__ == '__main__':
     testsEasyPythonMutagenLengthAndBitrate()

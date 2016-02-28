@@ -118,12 +118,13 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None):
             else:
                 trace('saved tags for', short)
 
-def tools_outsideMp3sToSpotifyPlaylist():
-    clipboardText = getClipboardText()
-    defaultDir = clipboardText if (files.exists(clipboardText)) else getDefaultDirectorySpotifyToFilenames()
-    dir = getInputStringGui('choose input directory:', defaultDir)
+def tools_outsideMp3sToSpotifyPlaylist(dir=None):
     if not dir:
-        return
+        clipboardText = getClipboardText()
+        defaultDir = clipboardText if (files.exists(clipboardText)) else getDefaultDirectorySpotifyToFilenames()
+        dir = getInputStringGui('choose input directory:', defaultDir)
+        if not dir:
+            return
     
     # first, associate all files with Spotify
     for fullpathdir, shortdir in files.recursedirs(dir):
@@ -172,17 +173,19 @@ def tools_outsideMp3sToSpotifyPlaylist():
             spotipyconn().user_playlist_add_tracks(getSpotifyUsername(), playlistId, [item for item in batch])
             time.sleep(0.2)
     
-def tools_newFilesBackToReplaceOutsideMp3s():
-    trace('where are the old files to be replaced?')
-    clipboardText = getClipboardText()
-    defaultDir = clipboardText if (files.exists(clipboardText)) else getDefaultDirectorySpotifyToFilenames()
-    dir = getInputStringGui('old files to be replaced:', defaultDir)
+def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
     if not dir:
-        return
+        trace('where are the old files to be replaced?')
+        clipboardText = getClipboardText()
+        defaultDir = clipboardText if (files.exists(clipboardText)) else getDefaultDirectorySpotifyToFilenames()
+        dir = getInputStringGui('old files to be replaced:', defaultDir)
+        if not dir:
+            return
         
     # make mapSpotifyIdToNewFile
     mapSpotifyIdToNewFile = dict()
-    dirNewFiles = getDirChoice(getDefaultDirectorySpotifyToFilenames(), 'where are incoming files?')
+    if not dirNewFiles:
+        dirNewFiles = getDirChoice(getDefaultDirectorySpotifyToFilenames(), 'where are incoming files?')
     for newfilepath, newfileshort in files.listfiles(dirNewFiles):
         if newfileshort.endswith('.wav') and '__MARKAS' not in newfileshort:
             parts = newfileshort.split('$')

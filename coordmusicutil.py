@@ -1,7 +1,7 @@
 import sys
 from ben_python_common import *
 from coordmusicuserconfig import *
-from easypythonmutagen import EasyPythonMutagen
+from easypythonmutagen import EasyPythonMutagen, get_empirical_bitrate
    
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
