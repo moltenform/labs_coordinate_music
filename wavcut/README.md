@@ -24,4 +24,6 @@ There are three methods for splitting a wav file.
 
 Output will be saved to the current directory. 
 
+New feature: split a wav file based on Audacity's "label track". File->Export Labels in Audacity, and then run wavcut input.wav labels.txt.
+
 Supports input wav files that are larger than 4 gigabytes, as saved by Audacity.

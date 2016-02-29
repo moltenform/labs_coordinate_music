@@ -93,11 +93,26 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 	if (elems.size() == 0)
 		return std::vector<int64>();
 
+	int expectedParts = 2;
+	char delim = '|';
+	bool cumulative = false;
+	{
+		std::vector<std::string> parts1 = splitString(elems[0], '|');
+		std::vector<std::string> parts2 = splitString(elems[0], '\t');
+		if (parts2.size() == 3 && parts1.size() == 1 && 
+			getBoolFromUser("this looks like an audacity Label track. import as such?"))
+		{
+			expectedParts = 3;
+			delim = '\t';
+			cumulative = true;
+		}
+	}
+
 	result.resize(elems.size());
 	for (uint32 i = 0; i < size_t_to32(elems.size()); i++)
 	{
-		std::vector<std::string> parts = splitString(elems[i], '|');
-		if (parts.size() != 2)
+		std::vector<std::string> parts = splitString(elems[i], delim);
+		if (parts.size() != expectedParts)
 		{
 			printf("Error: expected one line of text per cut point,"
 				"every line in the form seconds|trackname but got\n%s",
@@ -113,6 +128,18 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 		}
 
 		result[i] = sampleAtWhichToCut;
+	}
+
+	if (cumulative)
+	{
+		std::vector<int64> resultDifferences;
+		resultDifferences.resize(result.size());
+		resultDifferences[0] = result[0];
+		for (uint32 i = 1; i < size_t_to32(result.size()); i++)
+		{
+			resultDifferences[i] = result[i] - result[i - 1];
+		}
+		return resultDifferences;
 	}
 
 	return result;
