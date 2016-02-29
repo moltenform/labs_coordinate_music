@@ -40,6 +40,23 @@ def main():
     elif choice == 6:
         showCmdOptions()
     
+def checkForMetadataTags(dir):
+    import coordmusicutil
+    import sys
+    from ben_python_common import files
+    assert files.exists(dir)
+    countWithTags = 0
+    countWithoutTags = 0
+    for file, short in files.listfiles(dir):
+        if coordmusicutil.getFieldForFile(file, False):
+            obj = coordmusicutil.CoordMusicAudioMetadata(file)
+            if obj.get_or_default('artist', None) and obj.get_or_default('title', None):
+                countWithTags += 1
+            else:
+                countWithoutTags += 1
+                
+    sys.stderr.write('saw %d audio files with tags and %d audio files without tags'%(countWithTags, countWithoutTags))
+    
 if __name__ == '__main__':
     if len(sys.argv) > 1 and (sys.argv[1] == '-?' or sys.argv[1] == '-h' or sys.argv[1] == '/?'):
         showCmdOptions()
@@ -47,6 +64,8 @@ if __name__ == '__main__':
         recurring_linkspotify.startSpotifyFromM4aArgs(sys.argv)
     elif len(sys.argv) > 2 and sys.argv[1] == 'viewspotify':
         recurring_linkspotify.viewTagsFromM4aOrDirectory(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == 'checkformetadatatags':
+        checkForMetadataTags(sys.argv[2])
     elif len(sys.argv) == 1:
         main()
     else:

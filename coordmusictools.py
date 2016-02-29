@@ -48,7 +48,7 @@ def tools_spotifyPlaylistToFilenames(playlistId=None):
     tracks = tracks[startInPlaylist:]
     
     potentialRenames = []
-    localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames())))
+    localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
     for i, track in enumerate(tracks):
         if i >= len(localfiles):
             trace('reached end of available files, %d files needed but got %d'%(len(tracks), len(localfiles)))
@@ -102,7 +102,7 @@ def setMetadataFromFilename(fullpath):
     
 def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None):
     if localfiles is None:
-        localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames())))
+        localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
     for fullpath, short in localfiles:
         if short.endswith('.wav'):
             warn('why is there still a wav here? ' + short)

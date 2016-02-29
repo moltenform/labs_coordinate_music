@@ -319,6 +319,7 @@ def testsEasyPythonMutagenLengthAndBitrate():
     assertException(lambda: get_audio_duration('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
     assertException(lambda: get_empirical_bitrate('missing_extension'), ValueError, 'unsupported')
     assertException(lambda: get_empirical_bitrate('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
+    print tmpdirsl
 
 def testsEasyPythonMutagenMetadataTags():
     setupEasyPythonMutagenTest()
@@ -655,7 +656,7 @@ def testsFromOutsideMp3Interactive():
     files.copy(mp3, tmpdirsl + 'outside/Space Oddity/97 Nonexistent song 2__MARKAS__24.mp3', False)
     files.copy(mp3, tmpdirsl + 'outside/Space Oddity/98 Nonexistent song 3__MARKAS__128.mp3', False)
     files.copy(mp3, tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4__MARKAS__128.mp3', False)
-    files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing__MARKAS__144.mp3', False)
+    files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing__MARKAS__144.mp3', False)
     files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/02 19 No Love In The Room__MARKAS__24.mp3', False)
     artists = {'Space Oddity': 'David Bowie', 'The Essential Fifth Dimension': 'The Fifth Dimension'}
     for file, short in files.recursefiles(tmpdirsl + 'outside'):
@@ -689,7 +690,7 @@ def testsFromOutsideMp3Interactive():
     link1 = CoordMusicAudioMetadata(tmpdirsl +
         'outside/Space Oddity/03 Letter To Hermione__MARKAS__128.mp3').getLink()
     link2 = CoordMusicAudioMetadata(tmpdirsl +
-        'outside/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing__MARKAS__144.mp3').getLink()
+        'outside/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing__MARKAS__144.mp3').getLink()
     assert 'spotify:track:' in link1
     assert 'spotify:track:' in link2
     link1 = link1.replace('spotify:track:', '')
@@ -713,7 +714,7 @@ def testsFromOutsideMp3Interactive():
         '/Space Oddity/97 Nonexistent song 2.mp3',
         '/Space Oddity/98 Nonexistent song 3 (12).mp3',
         '/Space Oddity/99 Nonexistent song 4.mp3',
-        '/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing.m4a',
+        '/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing.m4a',
         '/The Essential Fifth Dimension/02 19 No Love In The Room.url'], all)
     
     # see if id3 info looks right
@@ -732,7 +733,7 @@ def testsFromOutsideMp3Interactive():
     setOfLinks = set([CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione.m4a').getLink(),
         getFromUrlFile(tmpdirsl + 'outside/Space Oddity/05 Janine.url'),
         CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').getLink(),
-        CoordMusicAudioMetadata(tmpdirsl + 'outside/The Essential Fifth Dimension/01 12 Workin\' on a Groovy Thing.m4a').getLink(),
+        CoordMusicAudioMetadata(tmpdirsl + 'outside/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing.m4a').getLink(),
         getFromUrlFile(tmpdirsl + 'outside/The Essential Fifth Dimension/02 19 No Love In The Room.url')])
     assertEq(5, len(setOfLinks))
         

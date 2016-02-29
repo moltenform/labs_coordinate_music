@@ -1,6 +1,7 @@
 # BenPythonCommon,
 # 2015 Ben Fisher, released under the GPLv3 license.
 
+import sys
 import os as os_hide
 import shutil as shutil_hide
 from common_util import *
@@ -47,51 +48,66 @@ def deletesure(s):
     if files.exists(s):
         files.delete(s)
     assert not files.exists(s)
-    
-# copy and move
-def copy(a, b, bOverwrite):
-    import sys
-    if not exists(a):
+   
+def copy(srcfile, destfile, overwrite):
+    if not exists(srcfile):
         raise IOError('source path does not exist')
         
-    if sys.platform == 'win32':
-        from ctypes import windll, c_wchar_p, c_int
-        failIfExists = c_int(0) if bOverwrite else c_int(1)
-        res = windll.kernel32.CopyFileW(c_wchar_p(a), c_wchar_p(b), failIfExists)
-        if not res:
-            raise IOError('CopyFileW failed (maybe dest already exists?)')
-    else:
-        if bOverwrite:
-            shutil_hide.copy(a, b)
-        else:
-            # raises OSError on failure
-            import os
-            os.link(a, b)
-    
-    assertTrue(exists(b))
-        
-def move(a, b, bOverwrite):
-    import sys
-    if not exists(a):
-        raise IOError('source path does not exist')
-    if a == b:
+    if srcfile == destfile:
         return
     if sys.platform == 'win32':
         from ctypes import windll, c_wchar_p, c_int
-        replaceexisting = c_int(1) if bOverwrite else c_int(0)
-        res = windll.kernel32.MoveFileExW(c_wchar_p(a), c_wchar_p(b), replaceexisting)
+        failIfExists = c_int(0) if overwrite else c_int(1)
+        res = windll.kernel32.CopyFileW(c_wchar_p(srcfile), c_wchar_p(destfile), failIfExists)
+        if not res:
+            raise IOError('CopyFileW failed (maybe dest already exists?)')
+    else:
+        if overwrite:
+            shutil_hide.copy(srcfile, destfile)
+        else:
+            copyFilePosixWithoutOverwrite(srcfile, destfile)
+
+    assertTrue(exists(destfile))
+        
+def move(srcfile, destfile, overwrite):
+    if not exists(srcfile):
+        raise IOError('source path does not exist')
+        
+    if srcfile == destfile:
+        return
+    if sys.platform == 'win32':
+        from ctypes import windll, c_wchar_p, c_int
+        replaceexisting = c_int(1) if overwrite else c_int(0)
+        res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), replaceexisting)
         if not res:
             raise IOError('MoveFileExW failed (maybe dest already exists?)')
-    elif sys.platform.startswith('linux') and bOverwrite:
+    elif sys.platform.startswith('linux') and overwrite:
         import os
-        os.rename(a, b)
+        os.rename(srcfile, destfile)
     else:
         import os
-        copy(a, b, bOverwrite)
-        assertTrue(exists(b))
-        os.unlink(a)
+        copy(srcfile, destfile, overwrite)
+        assertTrue(exists(destfile))
+        os.unlink(srcfile)
     
-    assertTrue(exists(b))
+    assertTrue(exists(destfile))
+    
+def copyFilePosixWithoutOverwrite(srcfile, destfile):
+    import os
+    if not exists(srcfile):
+        raise IOError('source path does not exist')
+    
+    # fails if destination already exist. O_EXCL prevents other files from writing to location.
+    # raises OSError on failure.
+    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
+    file_handle = os.open(destfile, flags)
+    with os.fdopen(file_handle, 'wb') as fdest:
+        with open(srcfile, 'rb') as fsrc:
+            while True:
+                buffer = fsrc.read(64 * 1024)
+                if not buffer:
+                    break
+                fdest.write(buffer)
     
 # unicodetype can be utf-8, utf-8-sig, etc.
 def readall(s, mode='r', unicodetype=None):
@@ -123,11 +139,17 @@ def _checkNamedParameters(o):
         raise ValueError('please name parameters for this function or method')
 
 # allowedexts in the form ['png', 'gif']
-def listchildren(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
+def listchildrenUnsorted(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
     for filename in os_hide.listdir(dir):
         if not allowedexts or getext(filename) in allowedexts:
             yield filename if filenamesOnly else (dir + os_hide.path.sep + filename, filename)
+    
+if sys.platform == 'win32':
+    listchildren = listchildrenUnsorted
+else:
+    def listchildren(*args, **kwargs):
+        return sorted(listchildrenUnsorted(*args, **kwargs))
     
 def listfiles(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
@@ -146,7 +168,7 @@ def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fal
             dirnames[:] = newdirs
         
         if includeFiles:
-            for filename in filenames:
+            for filename in (filenames if sys.platform == 'win32' else sorted(filenames)):
                 if not allowedexts or getext(filename) in allowedexts:
                     yield filename if filenamesOnly else (dirpath + os_hide.path.sep + filename, filename)
         
@@ -175,7 +197,6 @@ def openUrl(s):
 # returns tuple (returncode, stdout, stderr)
 def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True,
         throwOnFailure=RuntimeError, stripText=True, captureoutput=True, silenceoutput=False):
-    import sys
     import subprocess
     _checkNamedParameters(_ind)
     kwargs = {}
@@ -212,7 +233,6 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
 def runWithoutWaitUnicode(listArgs):
     # in Windows, non-ascii characters cause subprocess.Popen to fail.
     # https://bugs.python.org/issue1759845
-    import sys
     if sys.platform != 'win32' or all(isinstance(arg, str) for arg in listArgs):
         import subprocess
         p = subprocess.Popen(listArgs, shell=False)
