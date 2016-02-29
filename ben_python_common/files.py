@@ -32,10 +32,10 @@ def getname(s):
     return os_hide.path.split(s)[1]
     
 def modtime(s):
-    return os_hide.stat(s).ST_MTIME
+    return os_hide.stat(s).st_mtime
     
 def createdtime(s):
-    return os_hide.stat(s).ST_CTIME
+    return os_hide.stat(s).st_ctime
     
 def getext(s):
     a, b = splitext(s)
@@ -134,8 +134,8 @@ def writeall(s, txt, mode='w', unicodetype=None):
 # allowing foo(param=False) but preventing foo(False)
 _enforceExplicitlyNamedParameters = object()
 
-def _checkNamedParameters(o):
-    if o is not _enforceExplicitlyNamedParameters:
+def _checkNamedParameters(obj):
+    if obj is not _enforceExplicitlyNamedParameters:
         raise ValueError('please name parameters for this function or method')
 
 # allowedexts in the form ['png', 'gif']
