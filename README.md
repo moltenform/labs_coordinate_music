@@ -1,12 +1,22 @@
 ### Introduction
 
-Coordinate\_music's "local music library" is a specific directory structure that contains audio files like mp3s. There's a later section that explains the structure more fully. This project is a set of scripts that can:
+This is a set of tools to keep a local music library "coordinated", to have perfect consistency between filename, id3 tag, and Spotify's metadata. Audio files like .mp3 are kept in a specific directory structure. As streaming music is becoming prevalent, coordinate\_music also supports .url files that link to a song online, or link directly to Spotify Desktop. Coordinate\_music can:
 
 * check that every directory and filename is formatted correctly.
 * check for consistency between filename, id3 tag, and Spotify's metadata. set tags from name and vice versa.
 * create .url files that open directly to Spotify Desktop.
 * search Spotify interactively by artist, title, album to find a corresponding Spotify track.
 * save all metadata to a utf-8 text file, which can be useful for backup.
+
+When importing music, coordinate\_music will walk through audio files and use the Spotify API to search for the associated track. This can either be done one album at a time, or on a track by track basis. It will present you with a list of candidates, then you can then confirm, or type "hear0" to hear the original, or type "hear1" to hear the first candidate. Here's what it looks like when searching by track:
+
+![Demo search by track](http://2.bp.blogspot.com/-YeRX7dbJaeA/VtXodld_4lI/AAAAAAAABCc/_V-EHgqcn8Q/s1600/fromtracklgc.png)
+
+Here's what it looks like when searching by album:
+
+![Demo search by album](http://1.bp.blogspot.com/-ruydPiiYdE0/VtXnuf_bGOI/AAAAAAAABCU/rA9CvQoQ45o/s1600/fromalbumlgc.png)
+
+This association is saved in the website ID3 tag in the audio file (mp3, m4a, or flac).
 
 Other features include, if enabled:
 
@@ -20,7 +30,6 @@ Other features include, if enabled:
 * saving disk space, by interactively walking through directories, and
 	* if low bitrate and Spotify's 'popularity' data indicates high popularity,
 	* replace the file with a .url linking to Spotify, after asking the user.
-
 
 
 ### Installation
@@ -40,7 +49,7 @@ To run coordinate\_music,
 	* you can sign up for this at https://developer.spotify.com/my-applications/
 1. Run main.py, it will run interactively.
 
-Optional: build the c++ program wavcut to enable splitting wav files based on length metadata.
+Optional: the c++ program wavcut can split wav files based on length metadata, which can be useful for splitting a long mixtape into tracks.
 
 Optional: install pywinauto to enable the "type into Spotify window" feature.
 
@@ -92,5 +101,6 @@ The directory structure is essentially genre/artist/album/tracks.
 	' Compilation': allow tracks to have id3 tag for a different album
 	' Selections': allow tracks to have id3 tag for a different album, and do not require track numbers
 	
-Spotify associations are stored in id3 metadata. You can add allowed file extensions in the CheckFileExtensions class of recurring_coordinate.py. As music, url, mp3, m4a, and flac are supported. (You will have to rename your .mp4 and .aac files to .m4a). To enable support for ogg, add two lines of code to getFieldForFile() in coordmusicutil.py.
+You can add allowed file extensions in the CheckFileExtensions class of recurring_coordinate.py. By default, url, mp3, m4a, and flac are supported. (You will have to rename .mp4 and .aac files to .m4a). Enabling ogg is easily added with two lines of code to getFieldForFile() in coordmusicutil.py.
 
+Tests pass on Linux (latest Linux Mint) and Windows (7 and later supported). 
