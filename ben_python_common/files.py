@@ -2,40 +2,40 @@
 # 2015 Ben Fisher, released under the GPLv3 license.
 
 import sys
-import os as os_hide
-import shutil as shutil_hide
+import os as _os
+import shutil as _shutil_hide
 from common_util import *
 
-rename = os_hide.rename
-delete = os_hide.unlink
-exists = os_hide.path.exists
-join = os_hide.path.join
-split = os_hide.path.split
-splitext = os_hide.path.splitext
-isdir = os_hide.path.isdir
-isfile = os_hide.path.isfile
-getsize = os_hide.path.getsize
-rmdir = os_hide.rmdir
-chdir = os_hide.chdir
-makedir = os_hide.mkdir
-makedirs = os_hide.makedirs
-sep = os_hide.path.sep
-linesep = os_hide.linesep
-abspath = shutil_hide.abspath
-rmtree = shutil_hide.rmtree
+rename = _os.rename
+delete = _os.unlink
+exists = _os.path.exists
+join = _os.path.join
+split = _os.path.split
+splitext = _os.path.splitext
+isdir = _os.path.isdir
+isfile = _os.path.isfile
+getsize = _os.path.getsize
+rmdir = _os.rmdir
+chdir = _os.chdir
+makedir = _os.mkdir
+makedirs = _os.makedirs
+sep = _os.path.sep
+linesep = _os.linesep
+abspath = _shutil_hide.abspath
+rmtree = _shutil_hide.rmtree
 
 # simple wrappers
 def getparent(s):
-    return os_hide.path.split(s)[0]
+    return _os.path.split(s)[0]
     
 def getname(s):
-    return os_hide.path.split(s)[1]
+    return _os.path.split(s)[1]
     
 def modtime(s):
-    return os_hide.stat(s).st_mtime
+    return _os.stat(s).st_mtime
     
 def createdtime(s):
-    return os_hide.stat(s).st_ctime
+    return _os.stat(s).st_ctime
     
 def getext(s):
     a, b = splitext(s)
@@ -54,8 +54,8 @@ def copy(srcfile, destfile, overwrite):
         raise IOError('source path does not exist')
         
     if srcfile == destfile:
-        return
-    if sys.platform == 'win32':
+        pass
+    elif sys.platform == 'win32':
         from ctypes import windll, c_wchar_p, c_int
         failIfExists = c_int(0) if overwrite else c_int(1)
         res = windll.kernel32.CopyFileW(c_wchar_p(srcfile), c_wchar_p(destfile), failIfExists)
@@ -63,7 +63,7 @@ def copy(srcfile, destfile, overwrite):
             raise IOError('CopyFileW failed (maybe dest already exists?)')
     else:
         if overwrite:
-            shutil_hide.copy(srcfile, destfile)
+            _shutil_hide.copy(srcfile, destfile)
         else:
             copyFilePosixWithoutOverwrite(srcfile, destfile)
 
@@ -74,34 +74,27 @@ def move(srcfile, destfile, overwrite):
         raise IOError('source path does not exist')
         
     if srcfile == destfile:
-        return
-    if sys.platform == 'win32':
+        pass
+    elif sys.platform == 'win32':
         from ctypes import windll, c_wchar_p, c_int
-        replaceexisting = c_int(1) if overwrite else c_int(0)
-        res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), replaceexisting)
+        replaceExisting = c_int(1) if overwrite else c_int(0)
+        res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), replaceExisting)
         if not res:
             raise IOError('MoveFileExW failed (maybe dest already exists?)')
     elif sys.platform.startswith('linux') and overwrite:
-        import os
-        os.rename(srcfile, destfile)
+        _os.rename(srcfile, destfile)
     else:
-        import os
         copy(srcfile, destfile, overwrite)
-        assertTrue(exists(destfile))
-        os.unlink(srcfile)
+        _os.unlink(srcfile)
     
     assertTrue(exists(destfile))
     
 def copyFilePosixWithoutOverwrite(srcfile, destfile):
-    import os
-    if not exists(srcfile):
-        raise IOError('source path does not exist')
-    
     # fails if destination already exist. O_EXCL prevents other files from writing to location.
     # raises OSError on failure.
-    flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
-    file_handle = os.open(destfile, flags)
-    with os.fdopen(file_handle, 'wb') as fdest:
+    flags = _os.O_CREAT | _os.O_EXCL | _os.O_WRONLY
+    file_handle = _os.open(destfile, flags)
+    with _os.fdopen(file_handle, 'wb') as fdest:
         with open(srcfile, 'rb') as fsrc:
             while True:
                 buffer = fsrc.read(64 * 1024)
@@ -141,9 +134,9 @@ def _checkNamedParameters(obj):
 # allowedexts in the form ['png', 'gif']
 def listchildrenUnsorted(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
-    for filename in os_hide.listdir(dir):
+    for filename in _os.listdir(dir):
         if not allowedexts or getext(filename) in allowedexts:
-            yield filename if filenamesOnly else (dir + os_hide.path.sep + filename, filename)
+            yield filename if filenamesOnly else (dir + _os.path.sep + filename, filename)
     
 if sys.platform == 'win32':
     listchildren = listchildrenUnsorted
@@ -154,7 +147,7 @@ else:
 def listfiles(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
     for full, name in listchildren(dir, allowedexts=allowedexts):
-        if not os_hide.path.isdir(full):
+        if not _os.path.isdir(full):
             yield name if filenamesOnly else (full, name)
 
 def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None,
@@ -162,7 +155,7 @@ def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fal
     _checkNamedParameters(_ind)
     assert isdir(root)
     
-    for (dirpath, dirnames, filenames) in os_hide.walk(root, topdown=topdown):
+    for (dirpath, dirnames, filenames) in _os.walk(root, topdown=topdown):
         if fnFilterDirs:
             newdirs = [dir for dir in dirnames if fnFilterDirs(join(dirpath, dir))]
             dirnames[:] = newdirs
@@ -170,7 +163,7 @@ def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fal
         if includeFiles:
             for filename in (filenames if sys.platform == 'win32' else sorted(filenames)):
                 if not allowedexts or getext(filename) in allowedexts:
-                    yield filename if filenamesOnly else (dirpath + os_hide.path.sep + filename, filename)
+                    yield filename if filenamesOnly else (dirpath + _os.path.sep + filename, filename)
         
         if includeDirs:
             yield getname(dirpath) if filenamesOnly else (dirpath, getname(dirpath))
@@ -180,7 +173,7 @@ def recursedirs(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fals
     return recursefiles(root, filenamesOnly=filenamesOnly, fnFilterDirs=fnFilterDirs, includeFiles=False, includeDirs=True, topdown=topdown)
     
 def isemptydir(dir):
-    return len(os_hide.listdir(dir)) == 0
+    return len(_os.listdir(dir)) == 0
     
 # processes
 def openDirectoryInExplorer(dir):
@@ -207,8 +200,8 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
     if not captureoutput:
         retcode = subprocess.call(listArgs, shell=shell, **kwargs)
         if silenceoutput:
-            stdout = open(os.devnull, 'wb')
-            stderr = open(os.devnull, 'wb')
+            stdout = open(_os.devnull, 'wb')
+            stderr = open(_os.devnull, 'wb')
         else:
             stdout = None
             stderr = None
@@ -233,12 +226,13 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
 def runWithoutWaitUnicode(listArgs):
     # in Windows, non-ascii characters cause subprocess.Popen to fail.
     # https://bugs.python.org/issue1759845
+    import subprocess
     if sys.platform != 'win32' or all(isinstance(arg, str) for arg in listArgs):
-        import subprocess
         p = subprocess.Popen(listArgs, shell=False)
         return p.pid
     else:
-        import winprocess, subprocess, types
+        import winprocess
+        import types
         if isinstance(listArgs, types.StringTypes):
             combinedArgs = listArgs
         else:
