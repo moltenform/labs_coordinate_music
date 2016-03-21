@@ -247,6 +247,9 @@ def softDeleteFile(s):
             raise Exception('please edit softDeleteFile() in common_ui.py ' +
                 'and specify a directory for removed files.')
             
-    newname = trashdir + files.sep + files.split(s)[1] + getRandomString()
+    # as a prefix, the first 2 chars of the parent directory
+    prefix = files.getname(files.getparent(s))[0:2] + '_'
+    newname = trashdir + files.sep + prefix + files.split(s)[1] + getRandomString()
     files.move(s, newname, False)
     return newname
+

@@ -319,7 +319,6 @@ def testsEasyPythonMutagenLengthAndBitrate():
     assertException(lambda: get_audio_duration('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
     assertException(lambda: get_empirical_bitrate('missing_extension'), ValueError, 'unsupported')
     assertException(lambda: get_empirical_bitrate('unsupported.mp3.extension.mp5'), ValueError, 'unsupported')
-    print tmpdirsl
 
 def testsEasyPythonMutagenMetadataTags():
     setupEasyPythonMutagenTest()

@@ -32,19 +32,14 @@ typedef uint8_t byte;
 
 class StringNumberHolder
 {
-	static const int buffersize = 256;
 	std::string _str;
 public:
-	StringNumberHolder(int64 n)
+	StringNumberHolder(Int64 n, int zerofill=0)
 	{
 		std::ostringstream ss;
+		if (zerofill)
+			ss << std::setw(zerofill) << std::setfill('0');
 		ss << n;
-		_str = ss.str();
-	}
-	StringNumberHolder(int n, int zerofill)
-	{
-		std::ostringstream ss;
-		ss << std::setw(zerofill) << std::setfill('0') << n;
 		_str = ss.str();
 	}
 	StringNumberHolder(double d)
