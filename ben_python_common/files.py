@@ -45,9 +45,9 @@ def getext(s):
         return b.lower()
     
 def deletesure(s):
-    if files.exists(s):
-        files.delete(s)
-    assert not files.exists(s)
+    if exists(s):
+        delete(s)
+    assert not exists(s)
    
 def copy(srcfile, destfile, overwrite):
     if not exists(srcfile):
