@@ -3,7 +3,7 @@
 
 import sys
 import os as _os
-import shutil as _shutil_hide
+import shutil as _shutil
 from common_util import *
 
 rename = _os.rename
@@ -21,8 +21,8 @@ makedir = _os.mkdir
 makedirs = _os.makedirs
 sep = _os.path.sep
 linesep = _os.linesep
-abspath = _shutil_hide.abspath
-rmtree = _shutil_hide.rmtree
+abspath = _shutil.abspath
+rmtree = _shutil.rmtree
 
 # simple wrappers
 def getparent(s):
@@ -63,7 +63,7 @@ def copy(srcfile, destfile, overwrite):
             raise IOError('CopyFileW failed (maybe dest already exists?)')
     else:
         if overwrite:
-            _shutil_hide.copy(srcfile, destfile)
+            _shutil.copy(srcfile, destfile)
         else:
             copyFilePosixWithoutOverwrite(srcfile, destfile)
 
@@ -174,6 +174,10 @@ def recursedirs(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fals
     
 def isemptydir(dir):
     return len(_os.listdir(dir)) == 0
+    
+def fileContentsEqual(f1, f2):
+    import filecmp
+    return filecmp.cmp(f1, f2, shallow=False)
     
 # processes
 def openDirectoryInExplorer(dir):

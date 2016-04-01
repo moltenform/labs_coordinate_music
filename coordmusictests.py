@@ -325,19 +325,17 @@ def testsEasyPythonMutagenMetadataTags():
     
     # saving in id3_23 should be different than saving in id3_24
     from easypythonmutagen import EasyPythonMutagen
-    import filecmp
     import os
-    import shutil
-    shutil.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_23.mp3')
-    shutil.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_24.mp3')
-    assertTrue(filecmp.cmp(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3', shallow=False))
+    files.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_23.mp3', False)
+    files.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_24.mp3', False)
+    assertTrue(files.fileContentsEqual(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3'))
     o23 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_23.mp3', True)
     o23.set('title', 'test')
     o23.save()
     o24 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_24.mp3', False)
     o24.set('title', 'test')
     o24.save()
-    assertTrue(not filecmp.cmp(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3', shallow=False))
+    assertTrue(not files.fileContentsEqual(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3'))
     
     # unsupported extensions
     assertException(lambda: EasyPythonMutagen('missing_extension'), ValueError, 'unsupported')
