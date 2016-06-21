@@ -60,7 +60,8 @@ def copy(srcfile, destfile, overwrite):
         failIfExists = c_int(0) if overwrite else c_int(1)
         res = windll.kernel32.CopyFileW(c_wchar_p(srcfile), c_wchar_p(destfile), failIfExists)
         if not res:
-            raise IOError('CopyFileW failed (maybe dest already exists?)')
+            raise IOError('CopyFileW failed (maybe dest already exists?) '+
+                getPrintable(srcfile + '->' + destfile))
     else:
         if overwrite:
             _shutil.copy(srcfile, destfile)
@@ -80,7 +81,8 @@ def move(srcfile, destfile, overwrite):
         replaceExisting = c_int(1) if overwrite else c_int(0)
         res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), replaceExisting)
         if not res:
-            raise IOError('MoveFileExW failed (maybe dest already exists?)')
+            raise IOError('MoveFileExW failed (maybe dest already exists?) '+
+                getPrintable(srcfile + '->' + destfile))
     elif sys.platform.startswith('linux') and overwrite:
         _os.rename(srcfile, destfile)
     else:
@@ -186,9 +188,26 @@ def openDirectoryInExplorer(dir):
     runWithoutWaitUnicode([u'cmd', u'/c', u'start', u'explorer.exe', dir])
 
 def openUrl(s):
-    assert s.startswith('http:') or s.startswith('https:')
-    assert '^' not in s and '"' not in s, 'url cannot contain ^ or "'
     import webbrowser
+    if s.startswith('http://'):
+        prefix = 'http://'
+    elif s.startswith('https://'):
+        prefix = 'https://'
+    else:
+        assertTrue(False, 'url did not start with http')
+    
+    s = s[len(prefix):]
+    s = s.replace('%', '%25')
+    s = s.replace('&', '%26')
+    s = s.replace('|', '%7C')
+    s = s.replace('\\', '%5C')
+    s = s.replace('^', '%5E')
+    s = s.replace('"', '%22')
+    s = s.replace("'", '%27')
+    s = s.replace('>', '%3E')
+    s = s.replace('<', '%3C')
+    s = s.replace(' ', '%20')
+    s = prefix + s
     webbrowser.open(s, new=2)
 
 # returns tuple (returncode, stdout, stderr)
