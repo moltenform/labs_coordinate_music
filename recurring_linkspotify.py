@@ -55,9 +55,12 @@ def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknum
     if not getSpotifyClientID():
         trace('Connecting to Spotify has been disabled, provide a clientID in coordmusicuserconfig.py to enable.')
         return
-        
+    
+    # for each non-url file, show whether has a link or not.
+    tracksAndLinks = (tag.short + (' (HASLINK)' 
+        if (not tag.short.endswith('.url') and 'spotify:' in tag.getLink()) else '') for tag in tags)
     trace('\n\n\n\nAssociate with Spotify, for directory\n' + fullpathdir + '\n\n')
-    trace('containing\n', '\n\t'.join(tag.short for tag in tags), '\n\n')
+    trace('containing\n', '\n\t'.join(tracksAndLinks), '\n\n')
     choices = ['associate with Spotify, each track individually']
     if seenTracknumber:
         choices.append('associate with Spotify, whole album')
