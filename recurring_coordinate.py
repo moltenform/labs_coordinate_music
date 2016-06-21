@@ -322,8 +322,8 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
             assertTrue(False, 'file', fullpathdir, tag.short, 'could not infer value for field', field)
         if not doStringsMatchForField(fromFilename, fromTag, field):
             # the Compilation/Selections keyword allows files with different album tags to coexist in the same directory.
-            if field == 'album' and fromTag is not None and dirsplit[-1].endswith(' Compilation') or \
-                    dirsplit[-1].endswith(' Selections'):
+            if field == 'album' and fromTag is not None and (dirsplit[-1].endswith(' Compilation') or \
+                    dirsplit[-1].endswith(' Selections')):
                 continue
                 
             bulkSetValue = userAllowsBulkSet.get((field, fromTag, fromFilename), None)

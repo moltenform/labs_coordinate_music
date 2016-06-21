@@ -16,6 +16,7 @@ def showCmdOptions():
 def main():
     choices = ['organize music',
         'organize + save disk space (replace with Spotify shortcuts)',
+        'Spotify playlist to text',
         'Spotify playlist to song lengths',
         'Spotify playlist to filenames',
         'filenames to id3 tags, remove low bitrate',
@@ -30,14 +31,16 @@ def main():
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=True)
         coordmusicuserconfig.runAfterCoordinate()
     elif choice == 2:
-        coordmusictools.tools_spotifyPlaylistToSongLengths()
+        coordmusictools.tools_viewSpotifyPlaylist()
     elif choice == 3:
-        coordmusictools.tools_spotifyPlaylistToFilenames()
+        coordmusictools.tools_spotifyPlaylistToSongLengths()
     elif choice == 4:
-        coordmusictools.tools_filenamesToMetadataAndRemoveLowBitrate()
+        coordmusictools.tools_spotifyPlaylistToFilenames()
     elif choice == 5:
-        coordmusictools.tools_saveFilenamesMetadataToText()
+        coordmusictools.tools_filenamesToMetadataAndRemoveLowBitrate()
     elif choice == 6:
+        coordmusictools.tools_saveFilenamesMetadataToText()
+    elif choice == 7:
         showCmdOptions()
     
 def checkForMetadataTags(dir):
