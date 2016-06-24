@@ -34,7 +34,7 @@ class StringNumberHolder
 {
 	std::string _str;
 public:
-	StringNumberHolder(Int64 n, int zerofill=0)
+	StringNumberHolder(int64 n, int zerofill=0)
 	{
 		std::ostringstream ss;
 		if (zerofill)

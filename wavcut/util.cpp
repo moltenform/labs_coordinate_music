@@ -89,10 +89,6 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 	if (elems.size() == 0)
 		return std::vector<int64>();
 
-	elems.pop_back(); // the empty one
-	if (elems.size() == 0)
-		return std::vector<int64>();
-
 	int expectedParts = 2;
 	char delim = '|';
 	bool cumulative = false;
@@ -105,6 +101,12 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 			expectedParts = 3;
 			delim = '\t';
 			cumulative = true;
+		}
+		else
+		{
+			elems.pop_back(); // the empty one
+			if (elems.size() == 0)
+				return std::vector<int64>();
 		}
 	}
 
