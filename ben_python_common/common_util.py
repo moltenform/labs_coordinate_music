@@ -67,15 +67,6 @@ def warnWithOptionToContinue(s):
     if not common_ui.getInputBool('continue?'):
         raise RuntimeError()
 
-def re_replacewholeword(starget, sin, srep):
-    import re
-    sin = '\\b' + re.escape(sin) + '\\b'
-    return re.sub(sin, srep, starget)
-
-def re_replace(starget, sre, srep):
-    import re
-    return re.sub(sre, srep, starget)
-
 '''
 re.search(pattern, string, flags=0)
     look for at most one match starting anywhere
@@ -88,8 +79,17 @@ re.finditer(pattern, string, flags=0)
     
 re.IGNORECASE, re.MULTILINE, re.DOTALL
 '''
- 
-def getClipboardText():
+
+def re_replacewholeword(starget, sin, srep):
+    import re
+    sin = '\\b' + re.escape(sin) + '\\b'
+    return re.sub(sin, srep, starget)
+
+def re_replace(starget, sre, srep):
+    import re
+    return re.sub(sre, srep, starget)
+
+def getClipboardTextTk():
     from Tkinter import Tk
     try:
         r = Tk()
@@ -103,8 +103,8 @@ def getClipboardText():
     finally:
         r.destroy()
     return s
-    
-def setClipboardText(s):
+
+def setClipboardTextTk(s):
     from Tkinter import Tk
     text = unicode(s)
     try:
@@ -114,6 +114,26 @@ def setClipboardText(s):
         r.clipboard_append(text)
     finally:
         r.destroy()
+
+def getClipboardTextPyperclip():
+    import pyperclip
+    return pyperclip.paste()
+
+def setClipboardTextPyperclip(s):
+    import pyperclip
+    pyperclip.copy(s)
+    
+def getClipboardText():
+    try:
+        return getClipboardTextPyperclip()
+    except ImportError:
+        return getClipboardTextTk()
+    
+def setClipboardText(s):
+    try:
+        setClipboardTextPyperclip(s)
+    except ImportError:
+        setClipboardTextTk(s)
 
 def takeBatchOnArbitraryIterable(iterable, size):
     import itertools
