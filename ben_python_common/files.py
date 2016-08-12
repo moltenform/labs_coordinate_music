@@ -60,7 +60,7 @@ def copy(srcfile, destfile, overwrite):
         failIfExists = c_int(0) if overwrite else c_int(1)
         res = windll.kernel32.CopyFileW(c_wchar_p(srcfile), c_wchar_p(destfile), failIfExists)
         if not res:
-            raise IOError('CopyFileW failed (maybe dest already exists?) '+
+            raise IOError('CopyFileW failed (maybe dest already exists?) ' +
                 getPrintable(srcfile + '->' + destfile))
     else:
         if overwrite:
@@ -81,7 +81,7 @@ def move(srcfile, destfile, overwrite):
         replaceExisting = c_int(1) if overwrite else c_int(0)
         res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), replaceExisting)
         if not res:
-            raise IOError('MoveFileExW failed (maybe dest already exists?) '+
+            raise IOError('MoveFileExW failed (maybe dest already exists?) ' +
                 getPrintable(srcfile + '->' + destfile))
     elif sys.platform.startswith('linux') and overwrite:
         _os.rename(srcfile, destfile)
@@ -184,8 +184,17 @@ def fileContentsEqual(f1, f2):
 # processes
 def openDirectoryInExplorer(dir):
     assert isdir(dir), 'not a dir? ' + dir
-    assert '^' not in dir and '"' not in dir, 'dir cannot contain ^ or "'
-    runWithoutWaitUnicode([u'cmd', u'/c', u'start', u'explorer.exe', dir])
+    if sys.platform.startswith('win'):
+        assert '^' not in dir and '"' not in dir, 'dir cannot contain ^ or "'
+        runWithoutWaitUnicode([u'cmd', u'/c', u'start', u'explorer.exe', dir])
+    else:
+        for candidate in ['xdg-open', 'nautilus']:
+            path = findBinaryOnPath(candidate)
+            if path:
+                args = [path, dir]
+                run(args, shell=False, createNoWindow=False, throwOnFailure=False, captureoutput=False, wait=False)
+                return
+        raise RuntimeError('unable to open directory.')
 
 def openUrl(s):
     import webbrowser
@@ -209,6 +218,24 @@ def openUrl(s):
     s = s.replace(' ', '%20')
     s = prefix + s
     webbrowser.open(s, new=2)
+
+def findBinaryOnPath(binaryName):
+    def is_exe(fpath):
+        return _os.path.isfile(fpath) and _os.access(fpath, _os.X_OK)
+
+    if _os.sep in binaryName:
+        return binaryName if is_exe(binaryName) else None
+
+    if sys.platform == 'win32' and not binaryName.lower().endswith('.exe'):
+        binaryName += '.exe'
+
+    for path in _os.environ["PATH"].split(_os.pathsep):
+        path = path.strip('"')
+        exe_file = _os.path.join(path, binaryName)
+        if is_exe(exe_file):
+            return exe_file
+
+    return None
 
 # returns tuple (returncode, stdout, stderr)
 def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True,
