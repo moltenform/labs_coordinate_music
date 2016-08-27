@@ -155,7 +155,7 @@ def common_util_tests():
     
 def files_tests():
     from files import (readall, writeall, exists, copy, move, sep, run, isemptydir, listchildren, makedir,
-        getname, listfiles, recursedirs, recursefiles, delete, runWithoutWaitUnicode)
+        getname, listfiles, recursedirs, recursefiles, delete, computeHash, runWithoutWaitUnicode)
     import tempfile
     import os
     import shutil
@@ -179,7 +179,7 @@ def files_tests():
     copy(tmpdirsl + 'src.txt', tmpdirsl + 'srccopy.txt', True)
     assertEq('src', readall(tmpdirsl + 'srccopy.txt'))
     assertTrue(exists(tmpdirsl + 'src.txt'))
-    
+        
     # test copy_overwrite, overwrite
     cleardirectoryfiles(tmpdir)
     writeall(tmpdirsl + 'src.txt', 'src')
@@ -258,6 +258,9 @@ def files_tests():
         assertException(lambda: move(tmpdirsl + 'src.txt', tmpdirsl + 'dest.txt', False), OSError, 'File exists')
     assertEq('dest', readall(tmpdirsl + 'dest.txt'))
     assertTrue(exists(tmpdirsl + 'src.txt'))
+    
+    # test computeHash
+    assertEq('f27fede2220bcd326aee3e86ddfd4ebd0fe58cb9', computeHash(tmpdirsl + 'src.txt'))
     
     # test _checkNamedParameters
     assertException(lambda: list(listchildren(tmpdir, True)), ValueError, 'please name parameters')

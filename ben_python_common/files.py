@@ -237,6 +237,19 @@ def findBinaryOnPath(binaryName):
 
     return None
 
+def computeHash(path, hasher=None):
+    import hashlib
+    hasher = hasher or hashlib.sha1()
+    f = open(path, 'rb')
+    while True:
+        # update the hash with the contents of the file, 256k at a time
+        buffer = f.read(0x40000)
+        if not buffer:
+            break
+        hasher.update(buffer)
+
+    return hasher.hexdigest()
+
 # returns tuple (returncode, stdout, stderr)
 def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True,
         throwOnFailure=RuntimeError, stripText=True, captureoutput=True, silenceoutput=False,
