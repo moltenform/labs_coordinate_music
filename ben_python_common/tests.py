@@ -55,6 +55,19 @@ def common_util_tests():
     assertEq('and A fad pineapple A da', re_replacewholeword('and a fad pineapple a da', 'a', 'A'))
     assertEq('and a GAd pinGApple a GA', re_replace('and a fad pineapple a da', '[abcdef]a', 'GA'))
     
+    # test truncateWithEllipsis
+    assertEq('', truncateWithEllipsis('', 2))
+    assertEq('a', truncateWithEllipsis('a', 2))
+    assertEq('ab', truncateWithEllipsis('ab', 2))
+    assertEq('ab', truncateWithEllipsis('abc', 2))
+    assertEq('ab', truncateWithEllipsis('abcd', 2))
+    assertEq('', truncateWithEllipsis('', 4))
+    assertEq('a', truncateWithEllipsis('a', 4))
+    assertEq('ab', truncateWithEllipsis('ab', 4))
+    assertEq('abcd', truncateWithEllipsis('abcd', 4))
+    assertEq('a...', truncateWithEllipsis('abcde', 4))
+    assertEq('a...', truncateWithEllipsis('abcdef', 4))
+    
     # test getClipboardText
     prev = getClipboardText()
     try:
