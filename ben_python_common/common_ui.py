@@ -4,10 +4,10 @@
 from .common_util import *
 from . import files
 
-def getInputBool(sPrompt):
-    sPrompt += ' '
+def getInputBool(prompt, flushOutput=True):
+    prompt += ' '
     while True:
-        s = getRawInput(sPrompt).strip()
+        s = getRawInput(prompt, flushOutput).strip()
         if s == 'y':
             return True
         if s == 'n':
@@ -19,10 +19,10 @@ def getInputBool(sPrompt):
         if s == 'BRK':
             raise KeyboardInterrupt()
             
-def getInputYesNoCancel(sPrompt):
-    sPrompt += ' y/n/cancel '
+def getInputYesNoCancel(prompt, flushOutput=True):
+    prompt += ' y/n/cancel '
     while True:
-        s = getRawInput(sPrompt).strip()
+        s = getRawInput(prompt, flushOutput).strip()
         if s == 'y':
             return 'Yes'
         if s == 'n':
@@ -32,32 +32,32 @@ def getInputYesNoCancel(sPrompt):
         if s == 'BRK':
             raise KeyboardInterrupt()
 
-def getInputInt(sPrompt, min=0, max=0xffffffff):
-    sPrompt += ' between %d and %d ' % (min, max)
+def getInputInt(prompt, min=0, max=0xffffffff, flushOutput=True):
+    prompt += ' between %d and %d ' % (min, max)
     while True:
-        s = getRawInput(sPrompt).strip()
+        s = getRawInput(prompt, flushOutput).strip()
         if s.isdigit() and min <= int(s) <= max:
             return int(s)
         if s == 'BRK':
             raise KeyboardInterrupt()
 
-def getInputString(sPrompt, bConfirm=True):
-    sPrompt += ' '
+def getInputString(prompt, bConfirm=True, flushOutput=True):
+    prompt += ' '
     while True:
-        s = getRawInput(sPrompt).strip()
+        s = getRawInput(prompt, flushOutput).strip()
         if s == 'BRK':
             raise KeyboardInterrupt()
         if s:
             if not bConfirm or getInputBool('you intended to write: ' + s):
-                return unicode(s)
+                return unicodestringtype(s)
 
 # returns -1, 'Cancel' on cancel
-def getInputFromChoices(sPrompt, arrChoices, fnOtherCommands=None, otherCommandsContext=None):
+def getInputFromChoices(prompt, arrChoices, fnOtherCommands=None, otherCommandsContext=None, flushOutput=True):
     trace('0) cancel')
     for i, choice in enumerate(arrChoices):
         trace('%d) %s'%(i + 1, choice))
     while True:
-        s = getRawInput(sPrompt).strip()
+        s = getRawInput(prompt, flushOutput).strip()
         if s == '0':
             return -1, 'Cancel'
         if s == 'BRK':
@@ -74,32 +74,35 @@ def getInputFromChoices(sPrompt, arrChoices, fnOtherCommands=None, otherCommands
             if breakLoop:
                 return (-1, breakLoop)
 
-def getRawInput(prompt):
+def getRawInput(prompt, flushOutput=True):
     import sys
+    print(getPrintable(prompt))
+    if flushOutput:
+        sys.stdout.flush()
     if sys.version_info[0] <= 2:
-        return raw_input(getPrintable(prompt))
+        return raw_input(getPrintable(''))
     else:
-        return input(getPrintable(prompt))
+        return input(getPrintable(''))
 
 def err(s=''):
     raise RuntimeError('fatal error\n' + getPrintable(s))
     
-def alert(s):
+def alert(s, flushOutput=True):
     trace(s)
-    getRawInput('press Enter to continue')
+    getRawInput('press Enter to continue', flushOutput)
     
-def warn(s):
+def warn(s, flushOutput=True):
     trace('warning\n' + getPrintable(s))
-    if not getInputBool('continue?'):
+    if not getInputBool('continue?', flushOutput):
         raise RuntimeError('user chose not to continue after warning')
     
-def getInputBoolGui(sPrompt):
+def getInputBoolGui(prompt):
     "Ask yes or no. Returns True on yes and False on no."
     import tkMessageBox
-    return tkMessageBox.askyesno(title=' ', message=sPrompt)
+    return tkMessageBox.askyesno(title=' ', message=prompt)
     
-def getInputYesNoCancelGui(sPrompt):
-    choice, choiceText = getInputFromChoicesGui(sPrompt, ['Yes', 'No', 'Cancel'])
+def getInputYesNoCancelGui(prompt):
+    choice, choiceText = getInputFromChoicesGui(prompt, ['Yes', 'No', 'Cancel'])
     if choice == -1:
         return 'Cancel'
     elif choice == 0:
@@ -109,11 +112,11 @@ def getInputYesNoCancelGui(sPrompt):
     else:
         return 'Cancel'
     
-def getInputFloatGui(sPrompt, default=None, min=0.0, max=100.0, title=''):
+def getInputFloatGui(prompt, default=None, min=0.0, max=100.0, title=''):
     "validated to be an float (decimal number). Returns None on cancel."
     import tkSimpleDialog
     kwargs = dict(initialvalue=default) if default is not None else dict()
-    return tkSimpleDialog.askfloat(' ', sPrompt, minvalue=min, maxvalue=max, **kwargs)
+    return tkSimpleDialog.askfloat(' ', prompt, minvalue=min, maxvalue=max, **kwargs)
     
 # returns '' on cancel
 def getInputStringGui(prompt, initialvalue=None, title=' '):
@@ -133,7 +136,7 @@ def findUnusedLetter(dictUsed, newWord):
     return None
 
 # returns -1, 'Cancel' on cancel
-def getInputFromChoicesGui(sPrompt, arOptions):
+def getInputFromChoicesGui(prompt, arOptions):
     import Tkinter
     assert len(arOptions) > 0
     retval = [None]
@@ -145,7 +148,7 @@ def getInputFromChoicesGui(sPrompt, arOptions):
     class ChoiceDialog(object):
         def __init__(self, parent):
             top = self.top = Tkinter.Toplevel(parent)
-            Tkinter.Label(top, text=sPrompt).pack()
+            Tkinter.Label(top, text=prompt).pack()
             top.title('Choice')
 
             lettersUsed = dict()
@@ -247,12 +250,14 @@ def registerDebughook(b=True):
     
 def softDeleteFile(s):
     import os
-    trashdir = os.path.expanduser('~') + u'/local/less_important/trash'
+    trashdir = os.path.expanduser('~') + u'/.local/less_important/trash'
     if not files.exists(trashdir):
         trashdir = u'C:\\data\\local\\less_important\\trash'
         if not files.exists(trashdir):
-            raise Exception('please edit softDeleteFile() in common_ui.py ' +
-                'and specify a directory for removed files.')
+            import tempfile
+            trashdir = tempfile.gettempdir() + files.sep + 'ben_python_common_trash'
+            if not files.exists(trashdir):
+                os.makedirs(trashdir)
             
     # as a prefix, the first 2 chars of the parent directory
     prefix = files.getname(files.getparent(s))[0:2] + '_'
