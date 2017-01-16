@@ -17,7 +17,6 @@ isfile = _os.path.isfile
 getsize = _os.path.getsize
 rmdir = _os.rmdir
 chdir = _os.chdir
-makedir = _os.mkdir
 makedirs = _os.makedirs
 sep = _os.path.sep
 linesep = _os.linesep
@@ -48,6 +47,15 @@ def deletesure(s):
     if exists(s):
         delete(s)
     assert not exists(s)
+    
+def makedir(s):
+    try:
+        _os.mkdir(s)
+    except OSError:
+        if isdir(s):
+            return
+        else:
+            raise
    
 def copy(srcfile, destfile, overwrite):
     if not exists(srcfile):
@@ -237,18 +245,29 @@ def findBinaryOnPath(binaryName):
 
     return None
 
-def computeHash(path, hasher=None):
-    import hashlib
-    hasher = hasher or hashlib.sha1()
-    f = open(path, 'rb')
-    while True:
-        # update the hash with the contents of the file, 256k at a time
-        buffer = f.read(0x40000)
-        if not buffer:
-            break
-        hasher.update(buffer)
-
-    return hasher.hexdigest()
+def computeHash(path, hasher=None, buffersize=0x40000):
+    if hasher == 'crc32':
+        import zlib
+        crc = zlib.crc32(bytes(), 0)
+        with open(path, 'rb') as f:
+            while True:
+                # update the hash with the contents of the file
+                buffer = f.read(buffersize)
+                if not buffer:
+                    break
+                crc = zlib.crc32(buffer, crc)
+        return '%08x' % crc
+    else:
+        import hashlib
+        hasher = hasher or hashlib.sha1()
+        with open(path, 'rb') as f:
+            while True:
+                # update the hash with the contents of the file
+                buffer = f.read(buffersize)
+                if not buffer:
+                    break
+                hasher.update(buffer)
+        return hasher.hexdigest()
 
 # returns tuple (returncode, stdout, stderr)
 def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True,

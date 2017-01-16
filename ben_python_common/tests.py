@@ -271,8 +271,16 @@ def files_tests():
     assertEq('dest', readall(tmpdirsl + 'dest.txt'))
     assertTrue(exists(tmpdirsl + 'src.txt'))
     
-    # test computeHash
+    # test computeHash with default hash
     assertEq('f27fede2220bcd326aee3e86ddfd4ebd0fe58cb9', computeHash(tmpdirsl + 'src.txt'))
+    
+    # test computeHash with crc
+    assertEq('6044248d', computeHash(tmpdirsl + 'src.txt', 'crc32'))
+    
+    # test computeHash with md5
+    import hashlib
+    hasher = hashlib.md5()
+    assertEq('25d902c24283ab8cfbac54dfa101ad31', computeHash(tmpdirsl + 'src.txt', hasher))
     
     # test _checkNamedParameters
     assertException(lambda: list(listchildren(tmpdir, True)), ValueError, 'please name parameters')
@@ -323,6 +331,10 @@ def files_tests():
     assertEq(sorted([(s, getname(s)) for s in dirstomake]), sorted(list(recursedirs(tmpdir))))
     assertEq(sorted([getname(s) for s in dirstomake]), sorted(list(recursedirs(tmpdir, filenamesOnly=True))))
     assertEq(['pytest', 's2'], sorted(list(recursedirs(tmpdir, filenamesOnly=True, fnFilterDirs=lambda dir: getname(dir) != 's1'))))
+    
+    # our version of makedir doesn't throw if the directory already exists
+    makedir(tmpdir)
+    makedir(tmpdirsl + 's1')
     
     # test run process, simple batch script
     if sys.platform == 'win32':
