@@ -470,13 +470,13 @@ def testsCoordMusicUtil():
     files.makedirs(tmpdirsl + '/tmp')
     coordmusictools.saveFilenamesMetadataToText(sorted(
         files.listfiles(tmpdir)), False, tmpdirsl + '/tmp/out.txt', requestBatchSize=15)
-    expected = u'''%dir%m4a24.url00:00:0000test
-%dir%test1.url00:00:0000https://www.youtube.com/watch?v=0OSF
-%dir%test2.url00:00:00000Svkvt5I79wficMFgaqEQJ
-%dir%testflac.flac00:01:0237901234
-%dir%testm4a128.m4a00:01:0911431234
-%dir%testmp3_avgb128.mp300:02:7731361234
-%dir%testmp3_cnsb128.mp300:02:7731341234
+    expected = u'''%dir%m4a24.url00:00:0000test0
+%dir%test1.url00:00:0000https://www.youtube.com/watch?v=0OSF0
+%dir%test2.url00:00:00000Svkvt5I79wficMFgaqEQJ0
+%dir%testflac.flac00:01:02379012340
+%dir%testm4a128.m4a00:01:09114312340
+%dir%testmp3_avgb128.mp300:02:77313612340
+%dir%testmp3_cnsb128.mp300:02:77313412340
 '''.replace('%dir%', tmpdirsl).replace('\r\n', '\n')
     got = files.readall(tmpdirsl + '/tmp/out.txt', 'r', 'utf-8-sig')
     assertEq(expected, got.replace('\r\n', '\n').replace('\t', ''))

@@ -297,12 +297,14 @@ def tools_saveFilenamesMetadataToText():
         
     fileIterator = getScopedRecurseFiles(getMusicRoot(), filterOutLib=True)
     useSpotify = getSpotifyClientID() and getInputBool('retrieve Spotify metadata?')
-    saveFilenamesMetadataToText(fileIterator, useSpotify, outName)
+    warnIfNotInMarket = getInputBool('warn if files are no longer in market?')
+    saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=warnIfNotInMarket)
     
-class ExtendedSongInfo():
+class ExtendedSongInfo(object):
     def __init__(self, filename, short):
         self.info = dict(filename=filename, short=short, localLength=0, localBitrate=0, localAlbum=u'',
-            uri='', spotifyArtist=u'', spotifyTitle=u'', spotifyLength=u'', spotifyAlbum=u'', isMarketWarn=u'')
+            uri='', spotifyArtist=u'', spotifyTitle=u'', spotifyLength=u'', spotifyAlbum=u'', spotifyIsInMarket=u'',
+            spotifyPopularity=0)
         
         if not filename:
             pass
@@ -326,18 +328,27 @@ class ExtendedSongInfo():
         self.info['spotifyTitle'] = track['name']
         self.info['spotifyLength'] = track['duration_ms'] / 1000.0
         self.info['spotifyAlbum'] = track['album']['name']
-        if getSpotifyGeographicMarketName() not in track['available_markets']:
-            self.info['isMarketWarn'] = 'warning: market unavailable'
+        self.info['spotifyPopularity'] = track['popularity']
+        self.info['spotifyIsInMarket'] = '(not in market)' if \
+            getSpotifyGeographicMarketName() not in track['available_markets'] else ''
         
     def __unicode__(self):
-        return u'%s\t%s\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s'%(self.info['filename'],
-            getFormattedDuration(self.info['localLength'], True), int(self.info['localBitrate']), self.info['localAlbum'],
+        fields = [
+            self.info['filename'],
+            getFormattedDuration(self.info['localLength'], True),
+            int(self.info['localBitrate']),
+            self.info['localAlbum'],
             self.info['uri'].replace('spotify:track:', '').replace('spotify:notfound', 'ns').replace('spotify:', ''),
-            self.info['spotifyArtist'], self.info['spotifyTitle'],
+            self.info['spotifyArtist'],
+            self.info['spotifyTitle'],
             getFormattedDuration(self.info['spotifyLength'], True),
-            self.info['spotifyAlbum'], self.info['isMarketWarn'])
+            self.info['spotifyAlbum'],
+            self.info['spotifyPopularity'],
+            self.info['spotifyIsInMarket']]
+        fields = [unicode(field).replace('\t', '') for field in fields]
+        return u'\t'.join(fields)
 
-def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchSize=15):
+def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=False, requestBatchSize=15):
     mapUriToExtendedSongInfo = dict()
     arrayAll = []
 
@@ -354,19 +365,21 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, requestBatchS
                     '\n'.join(uri + ',' + mapUriToExtendedSongInfo[uri].filename
                         for uri in mapUriToExtendedSongInfo)))
         
-        urlsNoMarket = '\n'.join(item.info['filename'] for item in arrayAll if
-            item.info['isMarketWarn'] and item.info['filename'].endswith('.url'))
-        delUrlsNoMarket = urlsNoMarket and getInputBool('no market -- delete these urls?' + urlsNoMarket)
+        filesNotInMarket = [info.info['filename'] for info in arrayAll if len(info.info['spotifyIsInMarket'])]
+        if warnIfNotInMarket and filesNotInMarket:
+            trace('Warning: The Spotify URI for these files is not in market ' + \
+                '(it is likely that they are available in this market under a different URI) \n' + \
+                '\n'.join(filesNotInMarket))
+            if getInputBool('Remove the link for these files?'):
+                for filename in filesNotInMarket:
+                    if not filename.endswith('.url'):
+                        obj = CoordMusicAudioMetadata(filename)
+                        obj.setLink('')
+                        obj.save()
+        
         for songInfo in arrayAll:
             fout.write(unicode(songInfo))
             fout.write(files.linesep)
-            if songInfo.info['isMarketWarn'] and songInfo.info['filename'].endswith('.url') and delUrlsNoMarket:
-                softDeleteFile(songInfo.info['filename'])
-            elif songInfo.info['isMarketWarn'] and not songInfo.info['filename'].endswith('.url'):
-                trace('warning: market unavailable, removing link', songInfo.info['filename'])
-                obj = CoordMusicAudioMetadata(songInfo.info['filename'])
-                obj.setLink('')
-                obj.save()
         
         mapUriToExtendedSongInfo.clear()
         arrayAll[:] = []
