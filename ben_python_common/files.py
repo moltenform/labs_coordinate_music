@@ -331,7 +331,7 @@ def runWithoutWaitUnicode(listArgs):
     # https://bugs.python.org/issue1759845
     
     import subprocess
-    if sys.version_info[0] > 2 or sys.platform != 'win32' or all(isinstance(arg, str) for arg in listArgs):
+    if isPy3OrNewer or sys.platform != 'win32' or all(isinstance(arg, str) for arg in listArgs):
         # no workaround needed in Python3
         p = subprocess.Popen(listArgs, shell=False)
         return p.pid

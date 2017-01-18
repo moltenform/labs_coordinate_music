@@ -35,7 +35,7 @@ class SimpleEnum(object):
         raise RuntimeError
     
 def getPrintable(s, okToIgnore=False):
-    if sys.version_info[0] <= 2:
+    if not isPy3OrNewer:
         if not isinstance(s, unicode):
             return str(s)
 
@@ -46,6 +46,8 @@ def getPrintable(s, okToIgnore=False):
         else:
             return s.encode('ascii', 'replace')
     else:
+        if isinstance(s, bytes):
+            return s.decode('ascii')
         if not isinstance(s, str):
             return str(s)
 
@@ -321,11 +323,62 @@ def assertException(fn, excType, excTypeExpectedString=None, msg='', regexp=Fals
         assertTrue(passed, 'exception string check failed ' + msg +
             '\ngot exception string:\n' + str(e))
 
+# Python 2/3 compat, inspired by mutagen/_compat.py
+
 import sys
 if sys.version_info[0] <= 2:
+    from StringIO import StringIO
+    BytesIO = StringIO
+    from cStringIO import StringIO as cBytesIO
+    from itertools import izip
+    
+    def endswith(a, b):
+        return a.endswith(b)
+    
+    def startswith(a, b):
+        return a.endswith(b)
+    
+    iterbytes = lambda b: iter(b)
+    bytes_to_string = lambda b: b
+    asbytes = lambda s: s
     unicodestringtype = unicode
     anystringtype = basestring
+    bytetype = str
+    xrange = xrange
+    uchr = unichr
+    isPy3OrNewer = False
 else:
+    from io import StringIO
+    StringIO = StringIO
+    from io import BytesIO
+    cBytesIO = BytesIO
+    
+    def endswith(a, b):
+        # use with either str or bytes
+        if isinstance(a, str):
+            if not isinstance(b, str):
+                b = b.decode("ascii")
+        else:
+            if not isinstance(b, bytes):
+                b = b.encode("ascii")
+        return a.endswith(b)
+    
+    def startswith(a, b):
+        # use with either str or bytes
+        if isinstance(a, str):
+            if not isinstance(b, str):
+                b = b.decode("ascii")
+        else:
+            if not isinstance(b, bytes):
+                b = b.encode("ascii")
+        return a.startswith(b)
+    
+    iterbytes = lambda b: (bytes([v]) for v in b)
+    bytes_to_string = lambda b: b.decode('utf-8')
+    asbytes = lambda s, encoding='ascii': bytes(s, encoding)
     unicodestringtype = str
     anystringtype = str
-
+    bytetype = bytes
+    xrange = range
+    uchr = chr
+    isPy3OrNewer = True
