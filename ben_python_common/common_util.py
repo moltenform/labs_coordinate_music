@@ -8,7 +8,7 @@ class Bucket(object):
             object.__setattr__(self, key, kwargs[key])
 
     def __repr__(self):
-        return '\n\n\n'.join(('%s=%s'%(unicodestringtype(key), unicodestringtype(self.__dict__[key])) for key in sorted(self.__dict__)))
+        return '\n\n\n'.join(('%s=%s'%(ustr(key), ustr(self.__dict__[key])) for key in sorted(self.__dict__)))
             
 class SimpleEnum(object):
     "simple enum; prevents modification after creation."
@@ -341,11 +341,11 @@ if sys.version_info[0] <= 2:
     iterbytes = lambda b: iter(b)
     bytes_to_string = lambda b: b
     asbytes = lambda s: s
-    unicodestringtype = unicode
+    ustr = unicode
+    uchr = unichr
     anystringtype = basestring
     bytetype = str
     xrange = xrange
-    uchr = unichr
     isPy3OrNewer = False
 else:
     from io import StringIO
@@ -376,9 +376,9 @@ else:
     iterbytes = lambda b: (bytes([v]) for v in b)
     bytes_to_string = lambda b: b.decode('utf-8')
     asbytes = lambda s, encoding='ascii': bytes(s, encoding)
-    unicodestringtype = str
+    ustr = str
+    uchr = chr
     anystringtype = str
     bytetype = bytes
     xrange = range
-    uchr = chr
     isPy3OrNewer = True

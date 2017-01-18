@@ -49,7 +49,7 @@ def getInputString(prompt, bConfirm=True, flushOutput=True):
             raise KeyboardInterrupt()
         if s:
             if not bConfirm or getInputBool('you intended to write: ' + s):
-                return unicodestringtype(s)
+                return ustr(s)
 
 # returns -1, 'Cancel' on cancel
 def getInputFromChoices(prompt, arrChoices, fnOtherCommands=None, otherCommandsContext=None, flushOutput=True):
