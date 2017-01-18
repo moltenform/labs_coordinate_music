@@ -1,5 +1,6 @@
 
 import os
+import sys
 import mutagen
 from mutagen import easymp4
 
@@ -132,9 +133,9 @@ class _EasyPythonMutagenM4a(easymp4.EasyMP4):
     
     def __init__(self, filename):
         super(_EasyPythonMutagenM4a, self).__init__(filename)
-        easymp4.EasyMP4Tags.RegisterTextKey('composer', b'\xa9wrt')
-        easymp4.EasyMP4Tags.RegisterTextKey('desc', b'desc')
-        easymp4.EasyMP4Tags.RegisterFreeformKey('website', b'WWW')
+        easymp4.EasyMP4Tags.RegisterTextKey('composer', '\xa9wrt')
+        easymp4.EasyMP4Tags.RegisterTextKey('desc', 'desc')
+        easymp4.EasyMP4Tags.RegisterFreeformKey('website', 'WWW')
 
 class EasyPythonMutagenId3(object):
     '''like EasyId3, but supports id3_v23 and handles missing tags more gracefully.'''
@@ -281,3 +282,8 @@ def get_empirical_bitrate(filename, alreadyobj=None):
     
     duration = get_audio_duration(filename, alreadyobj)
     return (8.0 * os.path.getsize(filename) / 1000.0) / duration
+
+if sys.version_info[0] <= 2:
+    anystringtype = basestring
+else:
+    anystringtype = str

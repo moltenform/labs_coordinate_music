@@ -118,7 +118,7 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None):
             else:
                 trace('saved tags for', short)
 
-def tools_outsideMp3sToSpotifyPlaylist(dir=None):
+def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
     if not dir:
         clipboardText = getClipboardText()
         defaultDir = clipboardText if (files.exists(clipboardText)) else getDefaultDirectorySpotifyToFilenames()
@@ -126,8 +126,12 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None):
         if not dir:
             return
     
+    diriter = files.recursedirs(dir)
+    if mustSort:
+        diriter = sorted(diriter, reverse=True)
+    
     # first, associate all files with Spotify
-    for fullpathdir, shortdir in files.recursedirs(dir):
+    for fullpathdir, shortdir in diriter:
         filepaths = [filepath for (filepath, fileshort) in files.listfiles(fullpathdir) if getFieldForFile(filepath, False)]
         for filepath in filepaths:
             if '__MARKAS' not in filepath:

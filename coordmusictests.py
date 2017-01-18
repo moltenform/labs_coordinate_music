@@ -329,10 +329,10 @@ def testsEasyPythonMutagenMetadataTags():
     files.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_23.mp3', False)
     files.copy(tmpdirsl + 'mp3_avgb128.mp3', tmpdirsl + 'mp3_id3_24.mp3', False)
     assertTrue(files.fileContentsEqual(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3'))
-    o23 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_23.mp3', True)
+    o23 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_23.mp3', use_id3_v23=True)
     o23.set('title', 'test')
     o23.save()
-    o24 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_24.mp3', False)
+    o24 = EasyPythonMutagen(tmpdirsl + 'mp3_id3_24.mp3', use_id3_v23=False)
     o24.set('title', 'test')
     o24.save()
     assertTrue(not files.fileContentsEqual(tmpdirsl + 'mp3_id3_23.mp3', tmpdirsl + 'mp3_id3_24.mp3'))
@@ -638,7 +638,7 @@ def testsMusicToUrlInteractive():
 
 def testsFromOutsideMp3Interactive():
     import coordmusictools
-    if not getInputBool('Run interactive OutsideMp3 test?'):
+    if not getInputBool('Run interactive OutsideMp3 test?  (refer to test/walkthrough_interactive_test_from_outside.png)'):
         return
         
     # create "outside" files, mocking input files
@@ -681,7 +681,7 @@ def testsFromOutsideMp3Interactive():
 
         obj.save()
         
-    coordmusictools.tools_outsideMp3sToSpotifyPlaylist(tmpdirsl + 'outside')
+    coordmusictools.tools_outsideMp3sToSpotifyPlaylist(tmpdirsl + 'outside', mustSort=True)
     
     # get resulting spotify links
     link1 = CoordMusicAudioMetadata(tmpdirsl +
