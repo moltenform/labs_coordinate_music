@@ -30,7 +30,7 @@ class EasyPythonMutagen(object):
         
     def get(self, fieldname):
         ret = self.obj[fieldname]
-        if not ret or isinstance(ret, basestring):
+        if not ret or isinstance(ret, anystringtype):
             return ret
         else:
             return ret[0]
@@ -38,14 +38,14 @@ class EasyPythonMutagen(object):
     def get_or_default(self, fieldname, default):
         try:
             return self.get(fieldname)
-        except KeyError, mutagen.easymp4.EasyMP4KeyError:
+        except (KeyError, mutagen.easymp4.EasyMP4KeyError) as exc:
             return default
         
     def set(self, fieldname, val):
         if isinstance(val, int):
             val = str(val)
             
-        assert isinstance(val, basestring), 'val must be a string'
+        assert isinstance(val, anystringtype), 'val must be a string'
         self.obj[fieldname] = val
         
     def save(self):
@@ -204,7 +204,7 @@ class EasyPythonMutagenId3(object):
             
     def setWebsite(self, value):
         self.obj.delall('WOAR')
-        if isinstance(value, basestring):
+        if isinstance(value, anystringtype):
             self.obj.add(mutagen.id3.WOAR(url=value))
         else:
             for v in value:
@@ -221,7 +221,7 @@ class EasyPythonMutagenId3(object):
         if key == 'website':
             return self.setWebsite(val)
         else:
-            assert isinstance(val, basestring), 'val must be a string'
+            assert isinstance(val, anystringtype), 'val must be a string'
             val = [val]
             frameid = self.map[key]
             encoding = 3  # Encoding.UTF8; mutagen apparently converts to UTF16 when needed

@@ -167,8 +167,8 @@ def doStringsMatchForField(a, b, field):
     "a is from filesystem, b is from id3tag"
     if a == b:
         return True
-    a = unicode(a)
-    b = unicode(b)
+    a = ustr(a)
+    b = ustr(b)
     if a == safefilename(b) or a == removeCharsFlavor1(b) or a == removeCharsFlavor2(b):
         return True
     if field == 'tracknumber' or field == 'discnumber':

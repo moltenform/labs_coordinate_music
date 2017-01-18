@@ -29,7 +29,7 @@ def tools_viewSpotifyPlaylist(playlistId=None):
         info = ExtendedSongInfo(None, None)
         info.info['uri'] = track['uri'].replace('spotify:track:', '')
         info.addSpotifyInfo(track)
-        trace(str(i + 1), unicode(info).replace('None	00:00:000	0', ''))
+        trace(str(i + 1), ustr(info).replace('None	00:00:000	0', ''))
 
 def tools_spotifyPlaylistToSongLengths(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
@@ -136,7 +136,7 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None):
                 alert('for file ' + filepath + ' just delete instead of using __MARKAS__16.')
         
         tags = [CoordMusicAudioMetadata(filepath) for filepath in filepaths]
-        countFilesWithMissingNumber = len(filter(lambda tag: tag.get_or_default('tracknumber', None), tags))
+        countFilesWithMissingNumber = len([tag for tag in tags if tag.get_or_default('tracknumber', None)])
         parsed = []
         for tag in tags:
             if not tag.get_or_default('tracknumber', None):
@@ -332,7 +332,7 @@ class ExtendedSongInfo(object):
         self.info['spotifyIsInMarket'] = '(not in market)' if \
             getSpotifyGeographicMarketName() not in track['available_markets'] else ''
         
-    def __unicode__(self):
+    def toString(self):
         fields = [
             self.info['filename'],
             getFormattedDuration(self.info['localLength'], True),
@@ -345,7 +345,7 @@ class ExtendedSongInfo(object):
             self.info['spotifyAlbum'],
             self.info['spotifyPopularity'],
             self.info['spotifyIsInMarket']]
-        fields = [unicode(field).replace('\t', '') for field in fields]
+        fields = [ustr(field).replace('\t', '') for field in fields]
         return u'\t'.join(fields)
 
 def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=False, requestBatchSize=15):
@@ -357,9 +357,9 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMa
         if useSpotify and len(mapUriToExtendedSongInfo):
             tracks = spotipyconn().tracks([uri for uri in mapUriToExtendedSongInfo])
             for track in tracks['tracks']:
-                songInfo = mapUriToExtendedSongInfo[unicode(track['uri'])]
+                songInfo = mapUriToExtendedSongInfo[ustr(track['uri'])]
                 songInfo.addSpotifyInfo(track)
-                del mapUriToExtendedSongInfo[unicode(track['uri'])]
+                del mapUriToExtendedSongInfo[ustr(track['uri'])]
             if len(mapUriToExtendedSongInfo) > 0:
                 warn('did not find a spotify track for %s'%(
                     '\n'.join(uri + ',' + mapUriToExtendedSongInfo[uri].filename
@@ -378,7 +378,7 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMa
                         obj.save()
         
         for songInfo in arrayAll:
-            fout.write(unicode(songInfo))
+            fout.write(songInfo.toString())
             fout.write(files.linesep)
         
         mapUriToExtendedSongInfo.clear()
@@ -389,7 +389,7 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMa
             for filename, short in fileIterator:
                 arrayAll.append(ExtendedSongInfo(filename, short))
                 if 'spotify:track:' in arrayAll[-1].info['uri']:
-                    mapUriToExtendedSongInfo[unicode(arrayAll[-1].info['uri'])] = arrayAll[-1]
+                    mapUriToExtendedSongInfo[ustr(arrayAll[-1].info['uri'])] = arrayAll[-1]
                     takeBatch.append(None)
 
 

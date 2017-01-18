@@ -90,7 +90,7 @@ def runspotifysearch(market, search_str, type, limit, filterCovers):
             resultFiltered.append(res)
             
     # confirm that it is filtered by market
-    resultFiltered = [track for track in resultFiltered if unicode(market) in track[u'available_markets'] and
+    resultFiltered = [track for track in resultFiltered if ustr(market) in track[u'available_markets'] and
         track[u'uri'].startswith('spotify:' + type + ':')]
     return resultFiltered
 
@@ -114,7 +114,7 @@ def getTracksRemoteAlbum(albumid, market):
     while results['next']:
         results = spotipyconn().next(results)
         tracks.extend(results['items'])
-    return [track for track in tracks if unicode(market) in track[u'available_markets']]
+    return [track for track in tracks if ustr(market) in track[u'available_markets']]
 
 def getStrRemoteAlbum(tracks, albumartists):
     ret = []
@@ -227,7 +227,7 @@ def linkspotifypertrack(market, fullpathdir, tag, parsed):
     
     trace('\n\n\nin folder\n', files.getname(fullpathdir), '\n', tag.short)
     trace('\n00 %s\n\n'%getStrLocalAudioFile(path, parsed, tag, localduration))
-    search_str = unicode(artist) + ' ' + title
+    search_str = ustr(artist) + ' ' + title
     results = runspotifysearch(market, search_str, type='track', limit=8, filterCovers=True)
     
     while True:
@@ -267,7 +267,7 @@ def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
     
     album = parsedNames[0].album
     artist = parsedNames[0].artist
-    search_str = unicode(artist + ' ' + album)
+    search_str = ustr(artist + ' ' + album)
     results = runspotifysearch(market, search_str, type='album', limit=10, filterCovers=True)
     
     while True:
@@ -394,7 +394,7 @@ def startSpotifyFromM4aArgs(args):
         startSpotifyFromM4a(args[2])
     except:
         e = sys.exc_info()[1]
-        alertGui(unicode(e))
+        alertGui(ustr(e))
         sys.exit(1)
 
 def viewTagsFromM4aOrDirectory(path):

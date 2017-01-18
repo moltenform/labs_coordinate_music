@@ -10,13 +10,13 @@ def getPopularitiesList(fullpathdir, tags):
     for i in range(len(tags)):
         if 'spotify:track:' in tags[i].getLink():
             trackIds.append(tags[i].getLink())
-            mapUriToListIndex[unicode(tags[i].getLink())] = i
+            mapUriToListIndex[ustr(tags[i].getLink())] = i
         
     # save network traffic by using batches of 20
     for trackIdBatch in takeBatch(trackIds, 20):
         results = spotipyconn().tracks(trackIdBatch)
         for track in results['tracks']:
-            mappedIndex = mapUriToListIndex.get(unicode(track['uri']), -1)
+            mappedIndex = mapUriToListIndex.get(ustr(track['uri']), -1)
             if mappedIndex == -1:
                 trace('unexpected track?', track['name'])
             else:

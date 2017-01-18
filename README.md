@@ -36,13 +36,14 @@ Other features include, if enabled:
 
 To run coordinate\_music,
 
-1. Install Python 2.7.x
+1. Install Python
+	* Should support either Python 2.7 or 3.5.
 1. Install Mutagen, for example by running
 	* pip install mutagen
-	* Tested with Mutagen 1.31.
+	* Tested with Mutagen 1.36.
 1. Install Spotipy, for example by running
 	* pip install spotipy
-	* Tested with Spotipy 2.3.7
+	* Tested with Spotipy 2.4.4
 1. Copy coordmusicuserconfig.py.template to coordmusicuserconfig.py,
 	* fill in missing values, especially getMusicRoot()
 	* to enable linking to spotify, you will need a SpotifyClientID,

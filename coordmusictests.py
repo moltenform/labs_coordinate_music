@@ -378,25 +378,25 @@ def testsEasyPythonMutagenMetadataTags():
                 val = u'test\u0107test\u1101' + field
             fields[field] = val
             obj.set(field, val)
-            assertEq(unicode(fields[field]), obj.get(field))
+            assertEq(ustr(fields[field]), obj.get(field))
         
         # verify data was saved
         obj.save()
         obj = EasyPythonMutagen(tmpdirsl + file)
         for field in fields:
-            assertEq(unicode(fields[field]), obj.get(field))
+            assertEq(ustr(fields[field]), obj.get(field))
             
         # append data to each text field
         for field in fields:
             if not isinstance(fields[field], int):
-                obj.set(field, unicode(fields[field]) + 'appended')
+                obj.set(field, ustr(fields[field]) + 'appended')
         obj.save()
         
         # verify data was saved
         obj = EasyPythonMutagen(tmpdirsl + file)
         for field in fields:
             if not isinstance(fields[field], int):
-                assertEq(unicode(fields[field]) + 'appended', obj.get(field))
+                assertEq(ustr(fields[field]) + 'appended', obj.get(field))
  
 def testsCoordMusicUtil():
     # test getFormattedDuration

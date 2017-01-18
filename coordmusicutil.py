@@ -70,7 +70,7 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         else:
             try:
                 ret = EasyPythonMutagen.get(self, fieldname)
-            except KeyError, mutagen.easymp4.EasyMP4KeyError:
+            except (KeyError, mutagen.easymp4.EasyMP4KeyError) as exc:
                 return default
             
         if fieldname == 'tracknumber' and '/' in ret:
@@ -206,7 +206,7 @@ def typeIntoSpotifySearch(s):
         time.sleep(0.8)
         window.TypeKeys(sEscaped, with_spaces=True)
         time.sleep(0.1)
-    except pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected:
+    except (pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected) as exc:
         trace('exception thrown, ', sys.exc_info()[1])
     
 def launchSpotifyUri(uri):
