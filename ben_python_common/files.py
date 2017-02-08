@@ -17,7 +17,6 @@ isfile = _os.path.isfile
 getsize = _os.path.getsize
 rmdir = _os.rmdir
 chdir = _os.chdir
-makedirs = _os.makedirs
 sep = _os.path.sep
 linesep = _os.linesep
 abspath = _os.path.abspath
@@ -48,15 +47,31 @@ def deletesure(s):
         delete(s)
     assert not exists(s)
     
-def makedir(s):
+def makedirs(s):
     try:
-        _os.mkdir(s)
+        _os.makedirs(s)
     except OSError:
         if isdir(s):
             return
         else:
             raise
-   
+
+def ensure_empty_directory(d):
+    if isfile(d):
+        raise IOError('file exists at this location ' + d)
+    
+    if isdir(d):
+        # delete all existing files in the directory
+        for s in _os.listdir(d):
+            if _os.path.isdir(join(d, s)):
+                _shutil.rmtree(join(d, s))
+            else:
+                _os.unlink(join(d, s))
+        
+        assertTrue(isemptydir(d))
+    else:
+        _os.makedirs(d)
+
 def copy(srcfile, destfile, overwrite):
     if not exists(srcfile):
         raise IOError('source path does not exist')
@@ -153,7 +168,7 @@ if sys.platform == 'win32':
 else:
     def listchildren(*args, **kwargs):
         return sorted(listchildrenUnsorted(*args, **kwargs))
-    
+
 def listfiles(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
     for full, name in listchildren(dir, allowedexts=allowedexts):
@@ -256,6 +271,7 @@ def computeHash(path, hasher=None, buffersize=0x40000):
                 if not buffer:
                     break
                 crc = zlib.crc32(buffer, crc)
+        crc = crc & 0xffffffff
         return '%08x' % crc
     else:
         import hashlib

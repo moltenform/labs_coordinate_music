@@ -188,7 +188,8 @@ class TakeBatch(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         # if exiting normally (not by exception), run the callback
         if not exc_type:
-            self.callback(self.batch)
+            if len(self.batch):
+                self.callback(self.batch)
 
 class RecentlyUsedList(object):
     '''Keep a list of items without storing duplicates'''
