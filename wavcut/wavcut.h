@@ -1,3 +1,7 @@
+// wavcut
+// Ben Fisher, 2015
+// Released under the GNU General Public License version 3
+
 #ifndef WAVCUT_H
 #define WAVCUT_H
 #include "wav.h"
