@@ -1,8 +1,12 @@
+# labs_coordinate_music
+# Ben Fisher, 2016
+# Released under the GNU General Public License version 3
+
 import re
-import recurring_linkspotify
-import recurring_music_to_url
 import copy
-from coordmusicutil import *
+import labs_coordinate_music.recurring_linkspotify
+import labs_coordinate_music.recurring_music_to_url
+from labs_coordinate_music.coordmusicutil import *
     
 # directories with these words in the name have different properties:
 # ' Compilation': within this directory, allow tracks to have tag for a different album

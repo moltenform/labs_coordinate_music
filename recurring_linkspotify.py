@@ -1,5 +1,8 @@
+# labs_coordinate_music
+# Ben Fisher, 2016
+# Released under the GNU General Public License version 3
 
-from coordmusicutil import *
+from labs_coordinate_music.coordmusicutil import *
 import re
 
 def lookupAlbumForFile(path, tag, parsed, spotlink):

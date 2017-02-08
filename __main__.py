@@ -1,9 +1,18 @@
+# labs_coordinate_music
+# Ben Fisher, 2016
+# Released under the GNU General Public License version 3
 
-import coordmusictools
-import coordmusicuserconfig
-import recurring_coordinate
-import recurring_linkspotify
 import sys
+import os
+
+# let this file be started as either a script or as part of the package.
+if __package__ is None and not hasattr(sys, 'frozen'):
+    path = os.path.realpath(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
+
+from labs_coordinate_music import \
+    coordmusictools, coordmusicuserconfig, \
+    recurring_coordinate, recurring_linkspotify
 
 def showCmdOptions():
     coordmusictools.trace('\nmain.py' +

@@ -1,7 +1,12 @@
+# labs_coordinate_music
+# Ben Fisher, 2016
+# Released under the GNU General Public License version 3
+
 import sys
-from ben_python_common import *
-from coordmusicuserconfig import *
-from easypythonmutagen import EasyPythonMutagen, get_empirical_bitrate
+from labs_coordinate_music.ben_python_common import *
+from labs_coordinate_music.coordmusicuserconfig import *
+from labs_coordinate_music.easypythonmutagen import \
+    EasyPythonMutagen, get_empirical_bitrate, mutagen_get_audio_duration
    
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
@@ -93,8 +98,7 @@ def get_audio_duration(filename, obj=None):
         length = sz / freq
         return length
     else:
-        import easypythonmutagen
-        return easypythonmutagen.get_audio_duration(filename, obj)
+        return mutagen_get_audio_duration(filename, obj)
     
 def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
     obj = CoordMusicAudioMetadata(filename)
@@ -231,13 +235,6 @@ def launchGoogleQuery(query):
     assert '/' not in query and '\\' not in query and '^' not in query and '%' not in query and ':' not in query
     files.openUrl('http://google.com/search?q=' + query)
 
-def getTestMediaLocation():
-    return './test'
-
-def getTestTempLocation():
-    import tempfile
-    return tempfile.gettempdir() + '/test_music_coordination'
-    
 def getFormattedDuration(seconds, showMilliseconds=False):
     if not seconds and seconds != 0:
         return ''

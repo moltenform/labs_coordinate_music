@@ -1,3 +1,6 @@
+# labs_coordinate_music
+# Ben Fisher, 2016
+# Released under the GNU General Public License version 3
 
 import os
 import sys
@@ -9,10 +12,11 @@ from mutagen import easymp4
 # o.set('title', 'song title')
 # o.save()
 #
-# by Ben Fisher, https://github.com/downpoured/easypythonmutagen
+# by Ben Fisher
 #
 # tags are intentionally restricted; otherwise a typo like o['aartist'] would succeed silently in some formats.
 # use Mutagen directly if you want to intentionally add rare or custom fields.
+# note that Mutagen's new mutagen.File interface makes much of this obsolete.
 
 class EasyPythonMutagen(object):
     """Wraps interfaces, for convenience, will not return values as list."""
@@ -241,7 +245,7 @@ class EasyPythonMutagenId3(object):
         except KeyError:
             return False
 
-def get_audio_duration(filename, alreadyobj=None):
+def mutagen_get_audio_duration(filename, alreadyobj=None):
     """returns audio duration in seconds"""
     filenamelower = filename.lower()
     if filenamelower.endswith('.mp3'):
@@ -280,7 +284,7 @@ def get_audio_duration(filename, alreadyobj=None):
 def get_empirical_bitrate(filename, alreadyobj=None):
     """returns the "empirical" bitrate, as opposed to the "stated" bitrate that can be inaccurate"""
     
-    duration = get_audio_duration(filename, alreadyobj)
+    duration = mutagen_get_audio_duration(filename, alreadyobj)
     return (8.0 * os.path.getsize(filename) / 1000.0) / duration
 
 if sys.version_info[0] <= 2:

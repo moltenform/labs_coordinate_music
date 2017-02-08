@@ -1,7 +1,19 @@
+# labs_coordinate_music
+# Ben Fisher, 2016
+# Released under the GNU General Public License version 3
+
+import os
+import sys
 import time
-import recurring_linkspotify
 import codecs
-from coordmusicutil import *
+
+# let this file be started as either a script or as part of the package.
+if __package__ is None and not hasattr(sys, 'frozen'):
+    path = os.path.realpath(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
+
+import labs_coordinate_music.recurring_linkspotify as recurring_linkspotify
+from labs_coordinate_music.coordmusicutil import *
 
 def tools_getPlaylistId(playlistId=None):
     if not playlistId:
@@ -29,7 +41,7 @@ def tools_viewSpotifyPlaylist(playlistId=None):
         info = ExtendedSongInfo(None, None)
         info.info['uri'] = track['uri'].replace('spotify:track:', '')
         info.addSpotifyInfo(track)
-        trace(str(i + 1), ustr(info).replace('None	00:00:000	0', ''))
+        trace(str(i + 1), info.toString().replace('None	00:00:000	0', ''))
 
 def tools_spotifyPlaylistToSongLengths(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
@@ -352,50 +364,59 @@ class ExtendedSongInfo(object):
         fields = [ustr(field).replace('\t', '') for field in fields]
         return u'\t'.join(fields)
 
-def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=False, requestBatchSize=15):
-    mapUriToExtendedSongInfo = dict()
-    arrayAll = []
-
-    def callback(batch):
-        time.sleep(0.2)
-        if useSpotify and len(mapUriToExtendedSongInfo):
-            tracks = spotipyconn().tracks([uri for uri in mapUriToExtendedSongInfo])
-            for track in tracks['tracks']:
-                songInfo = mapUriToExtendedSongInfo[ustr(track['uri'])]
-                songInfo.addSpotifyInfo(track)
-                del mapUriToExtendedSongInfo[ustr(track['uri'])]
-            if len(mapUriToExtendedSongInfo) > 0:
-                warn('did not find a spotify track for %s'%(
-                    '\n'.join(uri + ',' + mapUriToExtendedSongInfo[uri].filename
-                        for uri in mapUriToExtendedSongInfo)))
-        
-        filesNotInMarket = [info.info['filename'] for info in arrayAll if len(info.info['spotifyIsInMarket'])]
-        if warnIfNotInMarket and filesNotInMarket:
-            trace('Warning: The Spotify URI for these files is not in market ' + \
-                '(it is likely that they are available in this market under a different URI) \n' + \
-                '\n'.join(filesNotInMarket))
-            if getInputBool('Remove the link for these files?'):
-                for filename in filesNotInMarket:
-                    if not filename.endswith('.url'):
-                        obj = CoordMusicAudioMetadata(filename)
-                        obj.setLink('')
-                        obj.save()
-        
-        for songInfo in arrayAll:
-            fout.write(songInfo.toString())
-            fout.write(files.linesep)
-        
-        mapUriToExtendedSongInfo.clear()
-        arrayAll[:] = []
+def saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, file, listOfSongInfoObjects):
+    time.sleep(0.2)
     
-    with codecs.open(outName, 'a', 'utf-8-sig') as fout:
-        with TakeBatch(requestBatchSize, callback) as takeBatch:
-            for filename, short in fileIterator:
-                arrayAll.append(ExtendedSongInfo(filename, short))
-                if 'spotify:track:' in arrayAll[-1].info['uri']:
-                    mapUriToExtendedSongInfo[ustr(arrayAll[-1].info['uri'])] = arrayAll[-1]
-                    takeBatch.append(None)
+    # find all uris expected
+    uriToSongInfo = dict()
+    for item in listOfSongInfoObjects:
+        uriToSongInfo[ustr(item.info['uri'])] = item
+    
+    if useSpotify and len(uriToSongInfo):
+        tracks = spotipyconn().tracks([uri for uri in uriToSongInfo])
+        for track in tracks['tracks']:
+            songInfo = uriToSongInfo[ustr(track['uri'])]
+            songInfo.addSpotifyInfo(track)
+            del uriToSongInfo[ustr(track['uri'])]
+        if len(uriToSongInfo) > 0:
+            warn('did not find a spotify track for %s'%(
+                '\n'.join(uri + ',' + uriToSongInfo[uri].filename
+                    for uri in uriToSongInfo)))
+    
+    filesNotInMarket = [item.info['filename'] for item in listOfSongInfoObjects if len(item.info['spotifyIsInMarket'])]
+    if warnIfNotInMarket and filesNotInMarket:
+        trace('Warning: The Spotify URI for these files is not in market ' + \
+            '(it is likely that they are available in this market under a different URI) \n' + \
+            '\n'.join(filesNotInMarket))
+        if getInputBool('Remove the link for these files?'):
+            for filename in filesNotInMarket:
+                if not filename.endswith('.url'):
+                    obj = CoordMusicAudioMetadata(filename)
+                    obj.setLink('')
+                    obj.save()
+    
+    for item in listOfSongInfoObjects:
+        file.write(item.toString())
+        file.write(files.linesep)
 
+def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=False, requestBatchSize=15):
+    listOfSongInfoObjects = []
+    countObjectsNeedingHttp = 0
+    with codecs.open(outName, 'a', 'utf-8-sig') as file:
+        for filename, short in fileIterator:
+            listOfSongInfoObjects.append(ExtendedSongInfo(filename, short))
+            if 'spotify:track:' in listOfSongInfoObjects[-1].info['uri']:
+                countObjectsNeedingHttp += 1
+                
+                # send network requests in batches
+                if countObjectsNeedingHttp > requestBatchSize:
+                    saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, file, listOfSongInfoObjects)
+                    listOfSongInfoObjects = []
+                    countObjectsNeedingHttp = 0
+        
+        saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, file, listOfSongInfoObjects)
+        listOfSongInfoObjects = []
+        countObjectsNeedingHttp = 0
 
 if __name__ == '__main__':
     fns = [tools_clearPlaylist,
