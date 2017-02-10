@@ -148,6 +148,7 @@ def writeall(s, txt, mode='w', unicodetype=None):
     f.write(txt)
     f.close()
 
+
 # use this to make the caller pass argument names,
 # allowing foo(param=False) but preventing foo(False)
 _enforceExplicitlyNamedParameters = object()
@@ -162,7 +163,8 @@ def listchildrenUnsorted(dir, _ind=_enforceExplicitlyNamedParameters, filenamesO
     for filename in _os.listdir(dir):
         if not allowedexts or getext(filename) in allowedexts:
             yield filename if filenamesOnly else (dir + _os.path.sep + filename, filename)
-    
+
+
 if sys.platform == 'win32':
     listchildren = listchildrenUnsorted
 else:

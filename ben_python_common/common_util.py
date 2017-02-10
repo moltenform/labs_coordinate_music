@@ -1,6 +1,8 @@
 # BenPythonCommon,
 # 2015 Ben Fisher, released under the GPLv3 license.
 
+import sys
+
 class Bucket(object):
     "simple named-tuple; o.field looks nicer than o['field']. "
     def __init__(self, **kwargs):
@@ -79,6 +81,7 @@ def warnWithOptionToContinue(s):
     trace('WARNING ' + s)
     if not common_ui.getInputBool('continue?'):
         raise RuntimeError()
+
 
 '''
 re.search(pattern, string, flags=0)
@@ -324,9 +327,9 @@ def assertException(fn, excType, excTypeExpectedString=None, msg='', regexp=Fals
         assertTrue(passed, 'exception string check failed ' + msg +
             '\ngot exception string:\n' + str(e))
 
+
 # Python 2/3 compat, inspired by mutagen/_compat.py
 
-import sys
 if sys.version_info[0] <= 2:
     from StringIO import StringIO
     BytesIO = StringIO
@@ -339,9 +342,15 @@ if sys.version_info[0] <= 2:
     def startswith(a, b):
         return a.endswith(b)
     
-    iterbytes = lambda b: iter(b)
-    bytes_to_string = lambda b: b
-    asbytes = lambda s: s
+    def iterbytes(b):
+        return iter(b)
+    
+    def bytes_to_string(b):
+        return b
+    
+    def asbytes(s):
+        return s
+     
     ustr = unicode
     uchr = unichr
     anystringtype = basestring
@@ -374,9 +383,15 @@ else:
                 b = b.encode("ascii")
         return a.startswith(b)
     
-    iterbytes = lambda b: (bytes([v]) for v in b)
-    bytes_to_string = lambda b: b.decode('utf-8')
-    asbytes = lambda s, encoding='ascii': bytes(s, encoding)
+    def iterbytes(b):
+        return (bytes([v]) for v in b)
+    
+    def bytes_to_string(b):
+        return b.decode('utf-8')
+    
+    def asbytes(s, encoding='ascii'):
+        return bytes(s, encoding)
+    
     ustr = str
     uchr = chr
     anystringtype = str

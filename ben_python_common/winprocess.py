@@ -89,6 +89,7 @@ class PROCESS_INFORMATION(Structure):
         
         self.cb = sizeof(self)
 
+
 LPPROCESS_INFORMATION = POINTER(PROCESS_INFORMATION)
 
 # STARTUPINFO structure
@@ -113,6 +114,8 @@ class STARTUPINFO(Structure):
                 ("hStdOutput", HANDLE),
                 ("hStdError", HANDLE)
                 ]
+
+
 LPSTARTUPINFO = POINTER(STARTUPINFO)
 
 SW_HIDE = 0
@@ -141,7 +144,8 @@ class EnvironmentBlock:
                       for (key, value) in dict.iteritems()]
             values.append("")
             self._as_parameter_ = LPCWSTR("\0".join(values))
-        
+
+
 # CreateProcess()
 
 CreateProcessProto = WINFUNCTYPE(BOOL,                  # Return type
@@ -173,6 +177,7 @@ def ErrCheckCreateProcess(result, func, args):
     # return a tuple (hProcess, hThread, dwProcessID, dwThreadID)
     pi = args[9]
     return AutoHANDLE(pi.hProcess), AutoHANDLE(pi.hThread), pi.dwProcessID, pi.dwThreadID
+
 
 CreateProcess = CreateProcessProto(("CreateProcessW", windll.kernel32),
                                    CreateProcessFlags)
@@ -261,6 +266,7 @@ def ErrCheckResumeThread(result, func, args):
         raise WinError()
 
     return args
+
 
 ResumeThreadProto = WINFUNCTYPE(DWORD,      # Return type
                                 HANDLE      # hThread
@@ -365,6 +371,7 @@ def child():
     limitflags = jobinfo['BasicLimitInformation']['LimitFlags']
     print('LimitFlags: %s' % limitflags)
     process.kill()
+
 
 if __name__ == '__main__':
     import sys

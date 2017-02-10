@@ -4,11 +4,9 @@
 import pytest
 import tempfile
 import os
-import sys
-import shutil
 from os.path import join
-from ..files import (readall, writeall, exists, copy, move, sep, run, isemptydir, listchildren,
-    getname, getparent, listfiles, recursedirs, recursefiles, delete, computeHash, runWithoutWaitUnicode,
+from ..files import (readall, writeall, copy, move, sep, run, isemptydir, listchildren,
+    getname, getparent, listfiles, recursedirs, recursefiles, computeHash, runWithoutWaitUnicode,
     ensure_empty_directory, ustr, makedirs, isfile)
     
 class TestComputeHash(object):
@@ -68,15 +66,18 @@ class TestDirectoryList(object):
         
     def test_recurseFilesAcceptAllSubDirs(self, fixture_fulldir):
         expected = ['a1.txt', 'file.txt', 'other.txt']
-        assert expected == sorted(list(recursefiles(fixture_fulldir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d: True)))
+        assert expected == sorted(list(
+            recursefiles(fixture_fulldir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d: True)))
     
     def test_recurseFilesAcceptNoSubDirs(self, fixture_fulldir):
         expected = ['a1.txt']
-        assert expected == sorted(list(recursefiles(fixture_fulldir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d: False)))
+        assert expected == sorted(list(
+            recursefiles(fixture_fulldir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=lambda d: False)))
     
     def test_recurseFilesExcludeOneSubdir(self, fixture_fulldir):
         expected = ['a1.txt', 'other.txt']
-        filter = lambda d: getname(d) != 's1'
+        def filter(d):
+            return getname(d) != 's1'
         assert expected == sorted(list(recursefiles(fixture_fulldir, filenamesOnly=True, allowedexts=['txt'], fnFilterDirs=filter)))
     
     def test_recurseDirs(self, fixture_fulldir):
@@ -90,7 +91,8 @@ class TestDirectoryList(object):
     
     def test_recurseDirsExcludeOneSubdir(self, fixture_fulldir):
         expected = ['full', 's2']
-        filter = lambda d: getname(d) != 's1'
+        def filter(d):
+            return getname(d) != 's1'
         assert expected == sorted(list(recursedirs(fixture_fulldir, filenamesOnly=True, fnFilterDirs=filter)))
     
     def test_checkNamedParameters(self, fixture_dir):
@@ -181,7 +183,7 @@ class TestMakeDirectories(object):
     
     def test_makeDirectoriesTwoLevels(self, fixture_dir):
         makedirs(fixture_dir + sep + 'a' + sep + 'a')
-        assert isemptydir(fixture_dir + sep + 'a'+ sep + 'a')
+        assert isemptydir(fixture_dir + sep + 'a' + sep + 'a')
 
 @pytest.mark.skipif('not sys.platform.startswith("win")')
 class TestRunProcess(object):
@@ -243,8 +245,6 @@ class TestRunProcess(object):
         assert stdout == b'testecho'
         assert stderr == b'testechoerr'
     
-    
-
 @pytest.fixture()
 def fixture_dir():
     basedir = join(tempfile.gettempdir(), 'ben_python_common_test', 'empty')
@@ -275,4 +275,3 @@ def fixture_fulldir():
     
     yield basedir
     ensure_empty_directory(basedir)
-

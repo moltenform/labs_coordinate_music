@@ -3,9 +3,11 @@
 
 import os
 import pytest
+from os.path import join
 from collections import OrderedDict
-from .test_files import fixture_dir, join
 from ..common_ui import *
+from .test_files import fixture_dir as fixture_dir_
+fixture_dir = fixture_dir_
 
 class TestStringHelpers(object):
     # getPrintable
@@ -241,9 +243,9 @@ class TestCommonUI(object):
         assert 0 == findUnusedLetter(d, 'abc')
         assert 1 == findUnusedLetter(d, 'abc')
         assert 2 == findUnusedLetter(d, 'abc')
-        assert None == findUnusedLetter(d, 'abc')
-        assert None == findUnusedLetter(d, 'ABC')
-        assert None == findUnusedLetter(d, 'a b c!@#')
+        assert None is findUnusedLetter(d, 'abc')
+        assert None is findUnusedLetter(d, 'ABC')
+        assert None is findUnusedLetter(d, 'a b c!@#')
 
     def test_softDeleteFileShouldMakeFileNotExist(self, fixture_dir):
         path = join(fixture_dir, 'testdelfile1.txt')
@@ -292,7 +294,7 @@ class TestCustomAsserts(object):
         assertTrue('string')
     
     def test_assertTrueFailsIfFalse(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertTrue(False)
     
     def test_assertTrueFailsIfFalseWithMessage(self):
@@ -307,7 +309,7 @@ class TestCustomAsserts(object):
         assertEq((1, 2, 3), (1, 2, 3))
     
     def test_assertEqFailsIfNotEqual(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertEq(1, 2, 'msg here')
     
     # test assertFloatEq
@@ -320,21 +322,21 @@ class TestCustomAsserts(object):
         assertFloatEq(0.123456788, 0.123456789)
     
     def test_assertFloatNotEqualGreater(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertFloatEq(0.4, 0.1234)
     
     def test_assertFloatNotEqualSmaller(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertFloatEq(0.1234, 0.4)
     
     def test_assertFloatNotEqualBitGreater(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertFloatEq(-0.123457, -0.123456)
     
     def test_assertFloatNotEqualBitSmaller(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertFloatEq(-0.123457, -0.123458)
             
     def test_assertFloatNotEqualNegative(self):
-        with pytest.raises(AssertionError) as exc:
+        with pytest.raises(AssertionError):
             assertFloatEq(0.1234, -0.1234)
