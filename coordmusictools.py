@@ -385,8 +385,8 @@ def saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, fil
     
     filesNotInMarket = [item.info['filename'] for item in listOfSongInfoObjects if len(item.info['spotifyIsInMarket'])]
     if warnIfNotInMarket and filesNotInMarket:
-        trace('Warning: The Spotify URI for these files is not in market ' + \
-            '(it is likely that they are available in this market under a different URI) \n' + \
+        trace('Warning: The Spotify URI for these files is not in market ' +
+            '(it is likely that they are available in this market under a different URI) \n' +
             '\n'.join(filesNotInMarket))
         if getInputBool('Remove the link for these files?'):
             for filename in filesNotInMarket:
@@ -417,6 +417,7 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMa
         saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, file, listOfSongInfoObjects)
         listOfSongInfoObjects = []
         countObjectsNeedingHttp = 0
+
 
 if __name__ == '__main__':
     fns = [tools_clearPlaylist,

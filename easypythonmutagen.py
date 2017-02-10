@@ -287,6 +287,7 @@ def get_empirical_bitrate(filename, alreadyobj=None):
     duration = mutagen_get_audio_duration(filename, alreadyobj)
     return (8.0 * os.path.getsize(filename) / 1000.0) / duration
 
+
 if sys.version_info[0] <= 2:
     anystringtype = basestring
 else:

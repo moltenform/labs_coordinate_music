@@ -334,13 +334,13 @@ if sys.version_info[0] <= 2:
     from StringIO import StringIO
     BytesIO = StringIO
     from cStringIO import StringIO as cBytesIO
-    from itertools import izip
+    from itertools import izip  # noqa: F401
     
     def endswith(a, b):
         return a.endswith(b)
     
     def startswith(a, b):
-        return a.endswith(b)
+        return a.startswith(b)
     
     def iterbytes(b):
         return iter(b)

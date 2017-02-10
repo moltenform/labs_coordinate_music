@@ -4,7 +4,6 @@
 
 import pytest
 from os.path import join
-from labs_coordinate_music import easypythonmutagen
 from labs_coordinate_music import coordmusictools
 from labs_coordinate_music.tests import *
 from labs_coordinate_music.coordmusicutil import *
@@ -140,15 +139,12 @@ class TestFilenamesToText(object):
             False,
             join(fixture_dir, 'out.txt'),
             requestBatchSize=3)
-        expected = u'''%dir%flac.flac	00:01:023	790	Album	0	
-%dir%m4a.m4a	00:01:091	142	abcdefg	0	
-%dir%mp3.mp3	00:02:773	136	0	
-%dir%test1.url	00:00:000	0	https://www.youtube.com/watch?v=0OSF	0	
-%dir%test2.url	00:00:000	0	0Svkvt5I79wficMFgaqEQJ	0	
-'''.replace('%dir%', fixture_dir + files.sep).replace('\r\n', '\n')
+        expected = u'''%dir%flac.flac	00:01:023	790	Album	0
+%dir%m4a.m4a	00:01:091	142	abcdefg	0
+%dir%mp3.mp3	00:02:773	136	0
+%dir%test1.url	00:00:000	0	https://www.youtube.com/watch?v=0OSF	0
+%dir%test2.url	00:00:000	0	0Svkvt5I79wficMFgaqEQJ	0
+'''.replace('%dir%', fixture_dir + files.sep).replace('\r\n', '\n').replace('\n', '\t\n')
         got = files.readall(join(fixture_dir, 'out.txt'), 'r', 'utf-8-sig')
         got = got.replace('\r\n', '\n').replace('\t\t', '\t').replace('\t\t', '\t').replace('\t\t', '\t')
         assert expected == got
-
-
-    

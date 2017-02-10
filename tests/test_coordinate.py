@@ -4,8 +4,6 @@
 
 import pytest
 from os.path import join
-from labs_coordinate_music import easypythonmutagen
-from labs_coordinate_music import coordmusictools
 from labs_coordinate_music.tests import *
 from labs_coordinate_music.coordmusicutil import *
 from labs_coordinate_music.ben_python_common import *
@@ -111,7 +109,7 @@ class TestMusicUtils(object):
         assert '01 02 bad-char - testtitle.sv.m4a' == \
             getNewnameFromTag(parsed, 'artist', parsed.artist, 'bad:char')
     
-    #test split
+    # test split
     def test_splitFilenameSimple(self):
         assert ('test', '.mp3') == bnsplitext('test.mp3')
 
@@ -252,13 +250,13 @@ class TestMusicUtils(object):
         return parsed.album
     
     def test_parseAlbumFromFilename1(self):
-        assert None == self.parseAlbumFromFilename('c:/music')
+        assert None is self.parseAlbumFromFilename('c:/music')
 
     def test_parseAlbumFromFilename2(self):
-        assert None == self.parseAlbumFromFilename('c:/music/genre')
+        assert None is self.parseAlbumFromFilename('c:/music/genre')
 
     def test_parseAlbumFromFilename3(self):
-        assert None == self.parseAlbumFromFilename('c:/music/genre/Artist Name')
+        assert None is self.parseAlbumFromFilename('c:/music/genre/Artist Name')
 
     def test_parseAlbumFromFilename4(self):
         assert 'The Album' == self.parseAlbumFromFilename('c:/music/genre/Artist Name/1999, The Album')
@@ -270,7 +268,7 @@ class TestMusicUtils(object):
         assert 'The Album' == self.parseAlbumFromFilename('c:/music/genre/Other Artist/Artist Name - The Album')
 
     def test_parseAlbumFromFilename7(self):
-        assert None == self.parseAlbumFromFilename('c:/music/genre/Other Artist/Artist Name')
+        assert None is self.parseAlbumFromFilename('c:/music/genre/Other Artist/Artist Name')
 
     def test_parseAlbumFromFilename8(self):
         assert 'The Album' == self.parseAlbumFromFilename('c:/music/genre/Other Artist/Artist Name/1999, The Album')
@@ -342,19 +340,19 @@ class TestMusicUtils(object):
         assert 'makeurl' == checkForLowBitratesFile('c:/', 26, Bucket(short='lowbitrate.m4a'))
 
     def test_checkLowBitrates5(self):
-        assert None == checkForLowBitratesFile('c:/', 64, Bucket(short='mediumbitrate.m4a'))
+        assert None is checkForLowBitratesFile('c:/', 64, Bucket(short='mediumbitrate.m4a'))
 
     def test_checkLowBitrates6(self):
-        assert None == checkForLowBitratesFile('c:/', 64, Bucket(short='mediumbitrate.mp3'))
+        assert None is checkForLowBitratesFile('c:/', 64, Bucket(short='mediumbitrate.mp3'))
 
     def test_checkLowBitrates7(self):
-        assert None == checkForLowBitratesFile('c:/', 16, Bucket(short='saved.movetosv.mp3'))
+        assert None is checkForLowBitratesFile('c:/', 16, Bucket(short='saved.movetosv.mp3'))
 
     def test_checkLowBitrates8(self):
-        assert None == checkForLowBitratesFile('c:/', 16, Bucket(short='saved.sv.mp3'))
+        assert None is checkForLowBitratesFile('c:/', 16, Bucket(short='saved.sv.mp3'))
 
     def test_checkLowBitrates9(self):
-        assert None == checkForLowBitratesFile('c:/', 16, Bucket(short='saved.sv.m4a'))
+        assert None is checkForLowBitratesFile('c:/', 16, Bucket(short='saved.sv.m4a'))
     
     # test checkFilename
     def test_checkFilenameIrreg1(self):
@@ -431,46 +429,53 @@ class TestMusicUtils(object):
     def test_checkStyleConsistency4(self):
         with pytest.raises(AssertionError):
             checkStyleConsistency('c:/', [
-                Bucket(short=0, style='style1'), 
+                Bucket(short=0, style='style1'),
                 Bucket(short=0, style='style1'),
                 Bucket(short=0, style='style2')])
     
     # test checkDuplicateTracks
     def test_checkDuplicatedTrackNumbers1(self):
-        tracks = [Bucket(discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
+        tracks = [Bucket(
+            discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         checkDuplicatedTrackNumbers('c:/', tracks)
         
     def test_checkDuplicatedTrackNumbers2(self):
-        tracks = [Bucket(discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
+        tracks = [Bucket(
+            discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=2, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         checkDuplicatedTrackNumbers('c:/', tracks)
         
     def test_checkDuplicatedTrackNumbers3(self):
-        tracks = [Bucket(discnumber=1, tracknumber=5, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
+        tracks = [Bucket(
+            discnumber=1, tracknumber=5, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=1, tracknumber=6, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         checkDuplicatedTrackNumbers('c:/', tracks)
         
     def test_checkDuplicatedTrackNumbers4(self):
-        tracks = [Bucket(discnumber=1, tracknumber=0, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
+        tracks = [Bucket(
+            discnumber=1, tracknumber=0, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         with pytest.raises(AssertionError) as exc:
                 checkDuplicatedTrackNumbers('c:/', tracks)
         exc.match('not be 0')
         
     def test_checkDuplicatedTrackNumbers5(self):
-        tracks = [Bucket(discnumber=0, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
+        tracks = [Bucket(
+            discnumber=0, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         with pytest.raises(AssertionError) as exc:
                 checkDuplicatedTrackNumbers('c:/', tracks)
         exc.match('not be 0')
         
     def test_checkDuplicatedTrackNumbers6(self):
-        tracks = [Bucket(discnumber=2, tracknumber=4, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
+        tracks = [Bucket(
+            discnumber=2, tracknumber=4, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=2, tracknumber=4, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         with pytest.raises(AssertionError) as exc:
                 checkDuplicatedTrackNumbers('c:/', tracks)
         exc.match('duplicate')
         
     def test_checkDuplicatedTrackNumbers7(self):
-        tracks = [Bucket(discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
+        tracks = [Bucket(
+            discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=2, tracknumber=4, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=2, tracknumber=4, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         with pytest.raises(AssertionError) as exc:
@@ -478,7 +483,8 @@ class TestMusicUtils(object):
         exc.match('duplicate')
         
     def test_checkDuplicatedTrackNumbers8(self):
-        tracks = [Bucket(discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
+        tracks = [Bucket(
+            discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=2, tracknumber=4, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString()),
             Bucket(discnumber=1, tracknumber=1, style=NameStyle.TrackTitle, short=0, artist=getRandomString(), title=getRandomString())]
         with pytest.raises(AssertionError) as exc:
@@ -588,27 +594,27 @@ class TestMusicUtils(object):
     # test getChoiceString
     def testGetChoiceStringTwoTitles(self):
         assert '(02:00)  (a1;; a2) title1 same lngth' == \
-        getChoiceString(dict(
-            duration_ms=120000, name='title1', artists=[dict(name='a1'), dict(name='a2')], 
-            track_number=2, disc_number=2), 120)
+            getChoiceString(dict(
+                duration_ms=120000, name='title1', artists=[dict(name='a1'), dict(name='a2')],
+                track_number=2, disc_number=2), 120)
 
     def testGetChoiceStringOneTitle(self):
         assert '(02:05)  (a1) title1 same lngth' == \
-        getChoiceString(dict(
-            duration_ms=125000, name='title1', artists=[dict(name='a1')],
-            track_number=2, disc_number=2), 120)
+            getChoiceString(dict(
+                duration_ms=125000, name='title1', artists=[dict(name='a1')],
+                track_number=2, disc_number=2), 120)
 
     def testGetChoiceStringRenderDurationLonger(self):
         assert '(02:09)  (a1) title1 lnger(9s)' == \
-        getChoiceString(dict(
-            duration_ms=129000, name='title1', artists=[dict(name='a1')],
-            track_number=2, disc_number=2), 120)
+            getChoiceString(dict(
+                duration_ms=129000, name='title1', artists=[dict(name='a1')],
+                track_number=2, disc_number=2), 120)
     
     def testGetChoiceStringRenderDurationShorter(self):
         assert '(01:52)  (a1) title1 shrter(8s)' == \
-        getChoiceString(dict(
-            duration_ms=112000, name='title1', artists=[dict(name='a1')],
-            track_number=2, disc_number=2), 120)
+            getChoiceString(dict(
+                duration_ms=112000, name='title1', artists=[dict(name='a1')],
+                track_number=2, disc_number=2), 120)
     
     # test renderRemoteAudio
     def test_renderRemoteAudioShowNoNumber(self):
@@ -630,6 +636,3 @@ class TestMusicUtils(object):
         assert '(00:00)   title1' == \
             getStrRemoteAudio(dict(duration_ms=0, name='title1', artists=[dict(name='a1')],
             track_number=1, disc_number=2), False, False, 'a1')
-
-
-    

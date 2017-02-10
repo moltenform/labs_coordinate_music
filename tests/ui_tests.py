@@ -243,4 +243,3 @@ if __name__ == '__main__':
     testMusicToUrlInteractive(tmpdir, mediadir)
     testFromOutsideMp3Interactive(tmpdir, mediadir)
     testLinkSpotifyInteractive(tmpdir, mediadir)
-

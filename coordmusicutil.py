@@ -5,9 +5,10 @@
 import sys
 from labs_coordinate_music.ben_python_common import *
 from labs_coordinate_music.coordmusicuserconfig import *
+from labs_coordinate_music.easypythonmutagen import get_empirical_bitrate  # noqa: F401
 from labs_coordinate_music.easypythonmutagen import \
-    EasyPythonMutagen, get_empirical_bitrate, mutagen_get_audio_duration
-   
+    EasyPythonMutagen, mutagen_get_audio_duration
+
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
     with open(filename) as f:
@@ -140,7 +141,8 @@ def _spotipyconnect():
         args['scope'] = scope
     token = sputil.prompt_for_user_token(getSpotifyUsername(), **args)
     return spotipy.Spotify(auth=token)
-    
+
+
 g_spotipyObject = None
 def spotipyconn():
     global g_spotipyObject

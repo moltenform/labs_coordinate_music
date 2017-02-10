@@ -68,7 +68,8 @@ def checkForMetadataTags(dir):
                 countWithoutTags += 1
                 
     sys.stderr.write('saw %d audio files with tags and %d audio files without tags'%(countWithTags, countWithoutTags))
-    
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and (sys.argv[1] == '-?' or sys.argv[1] == '-h' or sys.argv[1] == '/?'):
         showCmdOptions()

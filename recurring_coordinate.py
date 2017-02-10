@@ -4,8 +4,6 @@
 
 import re
 import copy
-import labs_coordinate_music.recurring_linkspotify
-import labs_coordinate_music.recurring_music_to_url
 from labs_coordinate_music.coordmusicutil import *
     
 # directories with these words in the name have different properties:
@@ -326,7 +324,7 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
             assertTrue(False, 'file', fullpathdir, tag.short, 'could not infer value for field', field)
         if not doStringsMatchForField(fromFilename, fromTag, field):
             # the Compilation/Selections keyword allows files with different album tags to coexist in the same directory.
-            if field == 'album' and fromTag is not None and (dirsplit[-1].endswith(' Compilation') or \
+            if field == 'album' and fromTag is not None and (dirsplit[-1].endswith(' Compilation') or
                     dirsplit[-1].endswith(' Selections')):
                 continue
                 

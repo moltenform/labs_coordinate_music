@@ -4,10 +4,10 @@
 
 import pytest
 from os.path import join
-from labs_coordinate_music import easypythonmutagen
-from labs_coordinate_music.tests import fixture_getmedia
 from labs_coordinate_music.coordmusicutil import *
 from labs_coordinate_music.ben_python_common import *
+from labs_coordinate_music.tests import fixture_getmedia as fixture_getmedia_
+fixture_getmedia = fixture_getmedia_
 
 class TestLengthAndBitrate(object):
     # get duration; no tag object provided
@@ -52,40 +52,52 @@ class TestLengthAndBitrate(object):
     
     # get duration; tag object provided
     def test_getDurationFlacWithObj(self, fixture_getmedia):
-        assert 1023 == int(1000 * get_audio_duration(join(fixture_getmedia, 'flac.flac'), CoordMusicAudioMetadata(join(fixture_getmedia, 'flac.flac'))))
+        assert 1023 == int(1000 * get_audio_duration(join(fixture_getmedia, 'flac.flac'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'flac.flac'))))
     
     def test_getDurationM4a16WithObj(self, fixture_getmedia):
-        assert 1160 == int(1000 * get_audio_duration(join(fixture_getmedia, 'm4a16.m4a'), CoordMusicAudioMetadata(join(fixture_getmedia, 'm4a16.m4a'))))
+        assert 1160 == int(1000 * get_audio_duration(join(fixture_getmedia, 'm4a16.m4a'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'm4a16.m4a'))))
 
     def test_getDurationM4a128WithObj(self, fixture_getmedia):
-        assert 1091 == int(1000 * get_audio_duration(join(fixture_getmedia, 'm4a128.m4a'), CoordMusicAudioMetadata(join(fixture_getmedia, 'm4a128.m4a'))))
+        assert 1091 == int(1000 * get_audio_duration(join(fixture_getmedia, 'm4a128.m4a'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'm4a128.m4a'))))
 
     def test_getDurationM4a224WithObj(self, fixture_getmedia):
-        assert 1091 == int(1000 * get_audio_duration(join(fixture_getmedia, 'm4a224.m4a'), CoordMusicAudioMetadata(join(fixture_getmedia, 'm4a224.m4a'))))
+        assert 1091 == int(1000 * get_audio_duration(join(fixture_getmedia, 'm4a224.m4a'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'm4a224.m4a'))))
 
     def test_getDurationMp3Avg16WithObj(self, fixture_getmedia):
-        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_avgb16.mp3'), CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_avgb16.mp3'))))
+        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_avgb16.mp3'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_avgb16.mp3'))))
 
     def test_getDurationMp3Avg126WithObj(self, fixture_getmedia):
-        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_avgb128.mp3'), CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_avgb128.mp3'))))
+        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_avgb128.mp3'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_avgb128.mp3'))))
 
     def test_getDurationMp3Avg224WithObj(self, fixture_getmedia):
-        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_avgb224.mp3'), CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_avgb224.mp3'))))
+        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_avgb224.mp3'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_avgb224.mp3'))))
 
     def test_getDurationMp3Cns16WithObj(self, fixture_getmedia):
-        assert 2873 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_cnsb16.mp3'), CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_cnsb16.mp3'))))
+        assert 2873 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_cnsb16.mp3'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_cnsb16.mp3'))))
 
     def test_getDurationMp3Cns128WithObj(self, fixture_getmedia):
-        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_cnsb128.mp3'), CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_cnsb128.mp3'))))
+        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_cnsb128.mp3'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_cnsb128.mp3'))))
 
     def test_getDurationMp3Cns224WithObj(self, fixture_getmedia):
-        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_cnsb224.mp3'), CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_cnsb224.mp3'))))
+        assert 2773 == int(1000 * get_audio_duration(join(fixture_getmedia, 'mp3_cnsb224.mp3'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'mp3_cnsb224.mp3'))))
 
     def test_getDurationOgg01WithObj(self, fixture_getmedia):
-        assert 1591 == int(1000 * get_audio_duration(join(fixture_getmedia, 'ogg_01.ogg'), CoordMusicAudioMetadata(join(fixture_getmedia, 'ogg_01.ogg'))))
+        assert 1591 == int(1000 * get_audio_duration(join(fixture_getmedia, 'ogg_01.ogg'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'ogg_01.ogg'))))
 
     def test_getDurationOgg10WithObj(self, fixture_getmedia):
-        assert 1591 == int(1000 * get_audio_duration(join(fixture_getmedia, 'ogg_10.ogg'), CoordMusicAudioMetadata(join(fixture_getmedia, 'ogg_10.ogg'))))
+        assert 1591 == int(1000 * get_audio_duration(join(fixture_getmedia, 'ogg_10.ogg'),
+            CoordMusicAudioMetadata(join(fixture_getmedia, 'ogg_10.ogg'))))
         
     # get empirical bitrate
     def test_getBitrateM4a16(self, fixture_getmedia):
@@ -160,21 +172,21 @@ class TestSettingTags(object):
             obj = EasyPythonMutagen(full)
             # workaround for mutagen bug in easymp4.py, line 183 EasyMP4KeyError("%r is not a valid key" % key)
             extype = Exception if full.endswith('.m4a') else KeyError
-            with pytest.raises(extype) as exc:
+            with pytest.raises(extype):
                 obj.get('aartist')
     
     def test_settingInvalidTagShouldFail(self, fixture_getmedia):
         for full, short in self.iterMediaWithTags(fixture_getmedia):
             obj = EasyPythonMutagen(full)
             extype = Exception if full.endswith('.m4a') else KeyError
-            with pytest.raises(extype) as exc:
+            with pytest.raises(extype):
                 obj.set('aartist', 'test')
     
     def test_allTagsShouldBeEmptyWhenNotSet(self, fixture_getmedia):
         for full, short in self.iterMediaWithTags(fixture_getmedia):
             obj = EasyPythonMutagen(full)
             for field in self.getFieldsToSet():
-                assert obj.get_or_default(field, None) == None
+                assert obj.get_or_default(field, None) is None
         
     def test_roundTripAllTags(self, fixture_getmedia):
         dir = join(fixture_getmedia, 'modified')
@@ -201,5 +213,3 @@ class TestSettingTags(object):
             for field, val in self.getFieldsToSet().items():
                 if 'number' not in field:
                     assert obj.get(field) == ustr(val) + 'appended'
-
-
