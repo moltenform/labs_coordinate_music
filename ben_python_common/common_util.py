@@ -350,7 +350,8 @@ if sys.version_info[0] <= 2:
     
     def asbytes(s):
         return s
-     
+    
+    rinput = raw_input
     ustr = unicode
     uchr = unichr
     anystringtype = basestring
@@ -392,6 +393,7 @@ else:
     def asbytes(s, encoding='ascii'):
         return bytes(s, encoding)
     
+    rinput = input
     ustr = str
     uchr = chr
     anystringtype = str

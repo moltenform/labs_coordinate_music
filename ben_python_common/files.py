@@ -79,11 +79,12 @@ def copy(srcfile, destfile, overwrite):
     if srcfile == destfile:
         pass
     elif sys.platform == 'win32':
-        from ctypes import windll, c_wchar_p, c_int
+        from ctypes import windll, c_wchar_p, c_int, GetLastError
         failIfExists = c_int(0) if overwrite else c_int(1)
         res = windll.kernel32.CopyFileW(c_wchar_p(srcfile), c_wchar_p(destfile), failIfExists)
         if not res:
-            raise IOError('CopyFileW failed (maybe dest already exists?) ' +
+            err = GetLastError()
+            raise IOError('CopyFileW failed (maybe dest already exists?) err=%d' % err +
                 getPrintable(srcfile + '->' + destfile))
     else:
         if overwrite:
@@ -93,19 +94,28 @@ def copy(srcfile, destfile, overwrite):
 
     assertTrue(exists(destfile))
         
-def move(srcfile, destfile, overwrite):
+def move(srcfile, destfile, overwrite, warn_between_drives=False):
     if not exists(srcfile):
         raise IOError('source path does not exist')
         
     if srcfile == destfile:
         pass
     elif sys.platform == 'win32':
-        from ctypes import windll, c_wchar_p, c_int
-        replaceExisting = c_int(1) if overwrite else c_int(0)
-        res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), replaceExisting)
+        from ctypes import windll, c_wchar_p, c_int, GetLastError
+        ERROR_NOT_SAME_DEVICE = 17
+        flags = 0
+        flags |= 1 if overwrite else 0
+        flags |= 0 if warn_between_drives else 2
+        res = windll.kernel32.MoveFileExW(c_wchar_p(srcfile), c_wchar_p(destfile), c_int(flags))
         if not res:
-            raise IOError('MoveFileExW failed (maybe dest already exists?) ' +
+            err = GetLastError()
+            if err == ERROR_NOT_SAME_DEVICE and warn_between_drives:
+                rinput('Note: moving file from one drive to another. Press Enter to continue.\r\n')
+                return move(srcfile, destfile, overwrite, warn_between_drives=False)
+                
+            raise IOError('MoveFileExW failed (maybe dest already exists?) err=%d' % err +
                 getPrintable(srcfile + '->' + destfile))
+        
     elif sys.platform.startswith('linux') and overwrite:
         _os.rename(srcfile, destfile)
     else:
