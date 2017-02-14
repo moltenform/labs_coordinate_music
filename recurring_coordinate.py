@@ -5,7 +5,10 @@
 import re
 import copy
 from labs_coordinate_music.coordmusicutil import *
-    
+from labs_coordinate_music.recurring_music_to_url import SaveDiskSpaceMusicToUrl
+from labs_coordinate_music.recurring_linkspotify import \
+    lookupAlbumForFile, linkspotify, RemoveRemasteredString
+
 # directories with these words in the name have different properties:
 # ' Compilation': within this directory, allow tracks to have tag for a different album
 # ' Selections': do not require track numbers in this directory
@@ -376,7 +379,7 @@ def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
             if not tag.get_or_default(field, None):
                 spotlink = tag.getLink()
                 if field == 'album':
-                    if recurring_linkspotify.lookupAlbumForFile(fullpathdir + '/' + tag.short, tag, parsed, spotlink):
+                    if lookupAlbumForFile(fullpathdir + '/' + tag.short, tag, parsed, spotlink):
                         raise StopBecauseWeRenamedFile
                 elif field == 'tracknumber' and 'Track' not in parsed.style:
                     pass  # allowing missing tracknumber since non-album
@@ -403,7 +406,7 @@ def checkFilenamesMain(fullpathdir, dirsplit, tags, helpers):
     checkStyleConsistency(fullpathdir, parsedNames)
     checkDuplicatedTrackNumbers(fullpathdir, parsedNames)
     seenTracknumber, seenWithoutSpotify = checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames)
-    recurring_linkspotify.linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, helpers.market)
+    linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, helpers.market)
     helpers.music_to_url.go(fullpathdir, tags, parsedNames)
     checkForLowBitrates(fullpathdir, tags, True)
 
@@ -432,8 +435,8 @@ def goPerDirectory(fullpathdir, dirsplit, helpers):
 def getHelpers(root, enableSaveSpace):
     helpers = Bucket()
     helpers.checkFileExtensions = CheckFileExtensions()
-    helpers.removeRemasteredString = recurring_linkspotify.RemoveRemasteredString()
-    helpers.music_to_url = recurring_music_to_url.SaveDiskSpaceMusicToUrl(enableSaveSpace)
+    helpers.removeRemasteredString = RemoveRemasteredString()
+    helpers.music_to_url = SaveDiskSpaceMusicToUrl(enableSaveSpace)
     helpers.extsCheckFilenames = dict(mp3=1, m4a=1, flac=1, url=1)
     helpers.splroot = root.split(files.sep)
     helpers.market = getSpotifyGeographicMarketName()

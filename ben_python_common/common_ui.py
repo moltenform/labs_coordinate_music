@@ -1,8 +1,13 @@
 # BenPythonCommon,
 # 2015 Ben Fisher, released under the GPLv3 license.
 
+import tempfile
 from .common_util import *
 from . import files
+try:
+    from . import get_delete_location
+except ImportError:
+    get_delete_location = None
 
 def getInputBool(prompt, flushOutput=True):
     prompt += ' '
@@ -248,22 +253,22 @@ def registerDebughook(b=True):
     else:
         sys.excepthook = sys.__excepthook__
     
-def softDeleteFile(s):
-    import os
-    trashdir = os.path.expanduser('~') + u'/.local/less_important/trash'
-    if not files.exists(trashdir):
-        trashdir = u'C:\\data\\local\\less_important\\trash'
-        if not files.exists(trashdir):
-            import tempfile
-            trashdir = tempfile.gettempdir() + files.sep + 'ben_python_common_trash'
-            if not files.exists(trashdir):
-                os.makedirs(trashdir)
-            
+def softDeleteFileFull(s, destination):
     # as a prefix, the first 2 chars of the parent directory
     prefix = files.getname(files.getparent(s))[0:2] + '_'
-    newname = trashdir + files.sep + prefix + files.split(s)[1] + getRandomString()
+    newname = destination + files.sep + prefix + files.split(s)[1] + getRandomString()
     if files.exists(newname):
         raise Exception('already exists ' + newname +
             '. is this directory full of files, or was the random seed reused?')
-    files.move(s, newname, False)
+
+    files.move(s, newname, overwrite=False, warn_between_drives=True)
     return newname
+
+def softDeleteFile(s):
+    if get_delete_location:
+        destination = get_delete_location.get_delete_location(s)
+    else:
+        destination = files.join(tempfile.gettempdir(), 'ben_python_common_trash')
+        files.makedirs(destination)
+    
+    return softDeleteFileFull(s, destination)

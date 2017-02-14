@@ -5,9 +5,11 @@
 import sys
 from labs_coordinate_music.ben_python_common import *
 from labs_coordinate_music.coordmusicuserconfig import *
-from labs_coordinate_music.easypythonmutagen import get_empirical_bitrate  # noqa: F401
 from labs_coordinate_music.easypythonmutagen import \
     EasyPythonMutagen, mutagen_get_audio_duration
+
+# get_empirical_bitrate is used by files that import this module
+from labs_coordinate_music.easypythonmutagen import get_empirical_bitrate  # noqa: F401
 
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
