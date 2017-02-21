@@ -67,6 +67,34 @@ class TestStringHelpers(object):
     def test_truncateWithEllipsisStringLength6TruncatedTo4(self):
         assert 'a...' == truncateWithEllipsis('abcdef', 4)
 
+    # formatSize
+    def test_formatSizeGb(self):
+        assert '3.00GB' == formatSize(3 * 1024 * 1024 * 1024)
+        
+    def test_formatSizeGbAndFewBytes(self):
+        assert '3.00GB' == formatSize(3 * 1024 * 1024 * 1024 + 123)
+    
+    def test_formatSizeGbDecimal(self):
+        assert '3.12GB' == formatSize(3 * 1024 * 1024 * 1024 + 123 * 1024 * 1024)
+    
+    def test_formatSizeGbDecimalRound(self):
+        assert '3.17GB' == formatSize(3 * 1024 * 1024 * 1024 + 169 * 1024 * 1024)
+    
+    def test_formatSizeMb(self):
+        assert '2.31MB' == formatSize(2 * 1024 * 1024 + 315 * 1024)
+    
+    def test_formatSizeKb(self):
+        assert '1.77KB' == formatSize(1 * 1024 + 789)
+    
+    def test_formatSizeB(self):
+        assert '1000b' == formatSize(1000)
+    
+    def test_formatSize1000B(self):
+        assert '678b' == formatSize(678)
+    
+    def test_formatSizeZeroB(self):
+        assert '0b' == formatSize(0)
+
     # getRandomString
     def test_getRandomString(self):
         s1 = getRandomString()

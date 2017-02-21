@@ -115,6 +115,16 @@ def truncateWithEllipsis(s, maxLength):
         else:
             return s[0:maxLength - len(ellipsis)] + ellipsis
 
+def formatSize(n):
+    if n >= 1024 * 1024 * 1024:
+        return '%.2fGB' % (n / (1024.0 * 1024.0 * 1024.0))
+    elif n >= 1024 * 1024:
+        return '%.2fMB' % (n / (1024.0 * 1024.0))
+    elif n >= 1024:
+        return '%.2fKB' % (n / (1024.0))
+    else:
+        return '%db' % n
+
 def getClipboardTextTk():
     from Tkinter import Tk
     try:
