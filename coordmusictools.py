@@ -64,7 +64,11 @@ def tools_spotifyPlaylistToFilenames(playlistId=None):
     for i, track in enumerate(tracks):
         if i >= len(localfiles):
             trace('reached end of available files, %d files needed but got %d'%(len(tracks), len(localfiles)))
-            return
+            if not getInputBool('continue?'):
+                return
+            else:
+                break
+
         trace('%d) %s %s\t->%s %s - %s'%(i + 1, localfiles[i][1], getFormattedDuration(get_audio_duration(localfiles[i][0])),
             getFormattedDuration(track['duration_ms'] / 1000.0),
             track['artists'][0]['name'], track['name']))
