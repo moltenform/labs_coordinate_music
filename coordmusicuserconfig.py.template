@@ -31,7 +31,10 @@ def getPopularityCutoff():
     # when turning .mp3s into .urls to save disk space, skip rare/'unpopular' songs that might be hard to find in the future.
     # 18 is about where spotify UI begins to show 2 bars.
     return 18
-    
+
+def enableAutoTagFromFilenameForRecentFiles():
+    return False
+
 def getDefaultDirectorySpotifyToFilenames():
     return None
 

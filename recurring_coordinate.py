@@ -4,10 +4,13 @@
 
 import re
 import copy
+import codecs
+import time
 from labs_coordinate_music.coordmusicutil import *
 from labs_coordinate_music.recurring_music_to_url import SaveDiskSpaceMusicToUrl
 from labs_coordinate_music.recurring_linkspotify import \
-    lookupAlbumForFile, linkspotify, RemoveRemasteredString
+    lookupAlbumForFile, linkspotify, RemoveRemasteredString, \
+    enableAutoTagFromFilenameForRecentFiles
 
 # directories with these words in the name have different properties:
 # ' Compilation': within this directory, allow tracks to have tag for a different album
@@ -337,15 +340,25 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
                 tag.set(field, bulkSetValue)
                 needSave = True
             else:
-                trace('for file %s/%s,\n field %s,\nfilename says "%s"\ntag says "%s"'%(
-                    fullpathdir, tag.short, field, fromFilename, fromTag))
+                message = 'for file %s/%s,\n field %s,\nfilename says "%s"\ntag says "%s"'%(
+                    fullpathdir, tag.short, field, fromFilename, fromTag)
+                trace(message)
                 proposedNameFromTag = getNewnameFromTag(parsed, field, fromFilename, fromTag)
                 
                 choices = ['set from filename (%s=%s)'%(field, fromFilename),
                     'bulk set from filename (%s=%s only for this album+field)'%(field, fromFilename)]
                 if proposedNameFromTag != parsed.short:
                     choices.append('set filename from tag (%s)'%proposedNameFromTag)
-                choice = getInputFromChoices('', choices)
+                    
+                if shouldAutoAcceptTagFromFilename(fullpathdir, tag.short, tag, message):
+                    # almost certainly, for newly added files in m4a format, if the tag and filename don't match,
+                    # it is the filename that should be used.
+                    # so for convenience, you can enable automatically setting tag based on filename in this case.
+                    choice = [0, 0]
+                    print('automatically choosing 1) for this recently added file.')
+                else:
+                    choice = getInputFromChoices('', choices)
+                
                 if choice[0] == 0 or choice[0] == 1:
                     tag.set(field, fromFilename)
                     needSave = True
@@ -357,6 +370,22 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
     if needSave:
         tag.save()
 
+def shouldAutoAcceptTagFromFilename(dir, short, tag, message):
+    # almost certainly, for newly added files in m4a format, if the tag and filename don't match,
+    # it is the filename that should be used.
+    # if a filepath is provided, we'll write log statements to that path.
+    if enableAutoTagFromFilenameForRecentFiles():
+        if short.endswith('.m4a'):
+            oneweek = 7 * 86400
+            if time.time() - files.modtime(files.join(dir, short)) < oneweek:
+                if time.time() - files.createdtime(files.join(dir, short)) < oneweek:
+                    if tag.getLink() and 'spotify:track:' in tag.getLink() and 'notfound' not in tag.getLink():
+                        if isinstance(enableAutoTagFromFilenameForRecentFiles(), anystringtype):
+                            f = codecs.open(enableAutoTagFromFilenameForRecentFiles(), 'a', 'utf8')
+                            f.write('\n' + message.replace('\n', ' '))
+                            f.close()
+                        return True
+    return False
 
 def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
     requiredfields = ['album', 'artist', 'title', 'discnumber']
