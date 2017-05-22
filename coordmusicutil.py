@@ -223,7 +223,7 @@ def launchSpotifyUri(uri):
         return
     assert uri.startswith('spotify:track:')
     assert all(c == '#' or c == ':' or c.isalnum() for c in uri) and len(uri) < 50
-    if sys.platform == 'win32':
+    if sys.platform.startswith('win'):
         import subprocess
         args = ['start', uri]
         subprocess.Popen(args, shell=True)

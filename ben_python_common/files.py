@@ -78,7 +78,7 @@ def copy(srcfile, destfile, overwrite):
         
     if srcfile == destfile:
         pass
-    elif sys.platform == 'win32':
+    elif sys.platform.startswith('win'):
         from ctypes import windll, c_wchar_p, c_int, GetLastError
         failIfExists = c_int(0) if overwrite else c_int(1)
         res = windll.kernel32.CopyFileW(c_wchar_p(srcfile), c_wchar_p(destfile), failIfExists)
@@ -100,7 +100,7 @@ def move(srcfile, destfile, overwrite, warn_between_drives=False):
         
     if srcfile == destfile:
         pass
-    elif sys.platform == 'win32':
+    elif sys.platform.startswith('win'):
         from ctypes import windll, c_wchar_p, c_int, GetLastError
         ERROR_NOT_SAME_DEVICE = 17
         flags = 0
@@ -176,7 +176,7 @@ def listchildrenUnsorted(dir, _ind=_enforceExplicitlyNamedParameters, filenamesO
             yield filename if filenamesOnly else (dir + _os.path.sep + filename, filename)
 
 
-if sys.platform == 'win32':
+if sys.platform.startswith('win'):
     listchildren = listchildrenUnsorted
 else:
     def listchildren(*args, **kwargs):
@@ -199,7 +199,7 @@ def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fal
             dirnames[:] = newdirs
         
         if includeFiles:
-            for filename in (filenames if sys.platform == 'win32' else sorted(filenames)):
+            for filename in (filenames if sys.platform.startswith('win') else sorted(filenames)):
                 if not allowedexts or getext(filename) in allowedexts:
                     yield filename if filenamesOnly else (dirpath + _os.path.sep + filename, filename)
         
@@ -231,11 +231,11 @@ class FileInfoEntryWrapper(object):
         return self.obj.stat().st_mtime
     
     def metadatachangetime(self):
-        assertTrue(sys.platform != 'win32')
+        assertTrue(not sys.platform.startswith('win'))
         return self.obj.stat().st_ctime
     
     def createtime(self):
-        assertTrue(sys.platform == 'win32')
+        assertTrue(sys.platform.startswith('win'))
         return self.obj.stat().st_ctime
 
 def recursefileinfo(root, recurse=True, followSymlinks=False, filesOnly=True):
@@ -311,7 +311,7 @@ def findBinaryOnPath(binaryName):
     if _os.sep in binaryName:
         return binaryName if is_exe(binaryName) else None
 
-    if sys.platform == 'win32' and not binaryName.lower().endswith('.exe'):
+    if sys.platform.startswith('win') and not binaryName.lower().endswith('.exe'):
         binaryName += '.exe'
 
     for path in _os.environ["PATH"].split(_os.pathsep):
@@ -355,7 +355,7 @@ def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoW
     _checkNamedParameters(_ind)
     kwargs = {}
     
-    if sys.platform == 'win32' and createNoWindow:
+    if sys.platform.startswith('win') and createNoWindow:
         kwargs['creationflags'] = 0x08000000
     
     if captureoutput and not wait:
@@ -409,7 +409,7 @@ def runWithoutWaitUnicode(listArgs):
     # https://bugs.python.org/issue1759845
     
     import subprocess
-    if isPy3OrNewer or sys.platform != 'win32' or all(isinstance(arg, str) for arg in listArgs):
+    if isPy3OrNewer or not sys.platform.startswith('win') or all(isinstance(arg, str) for arg in listArgs):
         # no workaround needed in Python3
         p = subprocess.Popen(listArgs, shell=False)
         return p.pid
