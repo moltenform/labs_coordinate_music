@@ -377,7 +377,8 @@ errormsg runWavCutUsingProvidedTimes(
 errormsg runWavCutUsingAudioMark(
 	FILE* f, const WavFileInfoT* info, const char* prefix, bool preview)
 {
-	const short amplitudeThreshold = (short)(0.09*(SHRT_MAX - 1));
+	const short amplitudeThreshold = (short)(0.022*(SHRT_MAX - 1));
+	// previously (0.09*(SHRT_MAX - 1)), but made more lenient
 
 	int whichOutputFile = 1;
 	FileWriteWrapper* outputFile = 0;
