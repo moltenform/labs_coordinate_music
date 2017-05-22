@@ -110,7 +110,8 @@ def move(srcfile, destfile, overwrite, warn_between_drives=False):
         if not res:
             err = GetLastError()
             if err == ERROR_NOT_SAME_DEVICE and warn_between_drives:
-                rinput('Note: moving file from one drive to another. Press Enter to continue.\r\n')
+                rinput('Note: moving file from one drive to another. ' +
+                    '%s %s Press Enter to continue.\r\n'%(srcfile, destfile))
                 return move(srcfile, destfile, overwrite, warn_between_drives=False)
                 
             raise IOError('MoveFileExW failed (maybe dest already exists?) err=%d' % err +
@@ -208,7 +209,56 @@ def recursefiles(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=Fal
 def recursedirs(root, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, fnFilterDirs=None, topdown=True):
     _checkNamedParameters(_ind)
     return recursefiles(root, filenamesOnly=filenamesOnly, fnFilterDirs=fnFilterDirs, includeFiles=False, includeDirs=True, topdown=topdown)
+
+class FileInfoEntryWrapper(object):
+    def __init__(self, obj):
+        self.obj = obj
+        self.path = obj.path
+        
+    def is_dir(self, *args):
+        return self.obj.is_dir(*args)
+        
+    def is_file(self, *args):
+        return self.obj.is_file(*args)
+        
+    def short(self):
+        return _os.path.split(self.path)[1]
+        
+    def size(self):
+        return self.obj.stat().st_size
+        
+    def mtime(self):
+        return self.obj.stat().st_mtime
     
+    def metadatachangetime(self):
+        assertTrue(sys.platform != 'win32')
+        return self.obj.stat().st_ctime
+    
+    def createtime(self):
+        assertTrue(sys.platform == 'win32')
+        return self.obj.stat().st_ctime
+
+def recursefileinfo(root, recurse=True, followSymlinks=False, filesOnly=True):
+    assertTrue(isPy3OrNewer)
+    
+    # scandir's resources are released in destructor,
+    # do not create circular references holding it
+    for entry in _os.scandir(root):
+        if entry.is_dir(follow_symlinks=followSymlinks):
+            if not filesOnly:
+                yield FileInfoEntryWrapper(entry)
+            if recurse:
+                for subentry in recursefileinfo(entry.path, recurse=recurse,
+                        followSymlinks=followSymlinks, filesOnly=filesOnly):
+                    yield subentry
+        
+        if entry.is_file():
+            yield FileInfoEntryWrapper(entry)
+
+def listfileinfo(root, followSymlinks=False, filesOnly=True):
+    return recursefileinfo(root, recurse=False,
+        followSymlinks=followSymlinks, filesOnly=filesOnly)
+
 def isemptydir(dir):
     return len(_os.listdir(dir)) == 0
     

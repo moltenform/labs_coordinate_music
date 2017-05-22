@@ -5,9 +5,10 @@ import pytest
 import tempfile
 import os
 from os.path import join
+from ..common_util import isPy3OrNewer
 from ..files import (readall, writeall, copy, move, sep, run, isemptydir, listchildren,
-    getname, getparent, listfiles, recursedirs, recursefiles, computeHash, runWithoutWaitUnicode,
-    ensure_empty_directory, ustr, makedirs, isfile)
+    getname, getparent, listfiles, recursedirs, recursefiles, listfileinfo, recursefileinfo,
+    computeHash, runWithoutWaitUnicode, ensure_empty_directory, ustr, makedirs, isfile)
     
 class TestComputeHash(object):
     def test_computeHashDefaultHash(self, fixture_dir):
@@ -94,6 +95,37 @@ class TestDirectoryList(object):
         def filter(d):
             return getname(d) != 's1'
         assert expected == sorted(list(recursedirs(fixture_fulldir, filenamesOnly=True, fnFilterDirs=filter)))
+    
+    def test_listFileInfo(self, fixture_fulldir):
+        if isPy3OrNewer:
+            expected = [('full', 'P1.PNG', 8), ('full', 'a1.txt', 8), ('full', 'a2png', 8)]
+            got = [(getname(getparent(o.path)), o.short(), o.size()) for o in listfileinfo(fixture_fulldir)]
+            assert expected == sorted(got)
+    
+    def test_listFileInfoIncludeDirs(self, fixture_fulldir):
+        if isPy3OrNewer:
+            expected = [('full', 'P1.PNG', 8), ('full', 'a1.txt', 8), ('full', 'a2png', 8),
+                ('full', 's1', 0), ('full', 's2', 0)]
+            got = [(getname(getparent(o.path)), o.short(), o.size())
+                for o in listfileinfo(fixture_fulldir, filesOnly=False)]
+            assert expected == sorted(got)
+            
+    def test_recurseFileInfo(self, fixture_fulldir):
+        if isPy3OrNewer:
+            expected = [('full', 'P1.PNG', 8), ('full', 'a1.txt', 8), ('full', 'a2png', 8),
+                ('s2', 'other.txt', 8), ('ss1', 'file.txt', 8)]
+            got = [(getname(getparent(o.path)), o.short(), o.size())
+                for o in recursefileinfo(fixture_fulldir)]
+            assert expected == sorted(got)
+    
+    def test_recurseFileInfoIncludeDirs(self, fixture_fulldir):
+        if isPy3OrNewer:
+            expected = [('full', 'P1.PNG', 8), ('full', 'a1.txt', 8), ('full', 'a2png', 8),
+                ('full', 's1', 0), ('full', 's2', 0), ('s1', 'ss1', 0), ('s1', 'ss2', 0),
+                ('s2', 'other.txt', 8), ('ss1', 'file.txt', 8)]
+            got = [(getname(getparent(o.path)), o.short(), o.size())
+                for o in recursefileinfo(fixture_fulldir, filesOnly=False)]
+            assert expected == sorted(got)
     
     def test_checkNamedParameters(self, fixture_dir):
         with pytest.raises(ValueError) as exc:
