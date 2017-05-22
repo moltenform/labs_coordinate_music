@@ -51,6 +51,11 @@ void assertEqualImpl(int a, int b, const char* msg, int line, const char* file)
 	}
 }
 
+bool stringsEqual(const char *s1, const char *s2)
+{
+	return strcmp(s1, s2) == 0;
+}
+
 std::vector<std::string> splitString(const std::string & s, char delim)
 {
 	std::vector<std::string> elems;
@@ -75,7 +80,7 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 	std::vector<int64> result;
 	if (!fileExists(filename))
 	{
-		printf("file does not exist");
+		printf("file does not exist.\n");
 		return result;
 	}
 
@@ -121,7 +126,7 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 		if (parts.size() != expectedParts)
 		{
 			printf("Error: expected one line of text per cut point,"
-				"every line in the form seconds|trackname but got\n%s",
+				"every line in the form seconds|trackname but got\n%s\n",
 				elems[i].c_str());
 			return std::vector<int64>();
 		}
@@ -129,7 +134,7 @@ std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
 		int64 sampleAtWhichToCut = (int64)(sampleRate * atof(parts[0].c_str()));
 		if (sampleAtWhichToCut <= 0 && i != 0)
 		{
-			printf("Error: length should not be <= 0\n%s", elems[i].c_str());
+			printf("Error: length should not be <= 0\n%s\n", elems[i].c_str());
 			return std::vector<int64>();
 		}
 

@@ -63,8 +63,9 @@ errormsg finishOutputFileAndStartNext(
 		lengthInSamples = std::max(2, lengthInSamples - 133400);
 	}
 
-	printf("\n%d) Writing a track with length ", whichOutputFile - 1);
+	printf("%d) Writing a track with length ", whichOutputFile - 1);
 	printADuration(lengthInSamples, info->nSampleRate);
+	printf("\n");
 
 	// first go back and fix the header with the correct length
 	FILE* ftemp = (*f)->detach();
@@ -200,8 +201,8 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 
 		if (longestPeriodOfSilenceLength <= 50)
 		{
-			printf("\ndid not find very much silence in track %d, only %d. "
-				"Will apply auto-fade", i + 1, longestPeriodOfSilenceLength);
+			printf("did not find very much silence in track %d, only %d. "
+				"Will apply auto-fade\n", i + 1, longestPeriodOfSilenceLength);
 			trackNeedsFadeOut.get()[i] = 1;
 			trackNeedsFadeIn.get()[i+1] = 1;
 		}
@@ -231,7 +232,7 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 
 errormsg runWavCutUsingProvidedTimes(
 	FILE* f, const WavFileInfoT* info, const char* prefix,
-	int64* times, int timesLen)
+	int64* times, int timesLen, bool preview)
 {
 	debugWriteTimesToDisk("./lengthsUnadjusted.txt", times, timesLen, false);
 
@@ -248,6 +249,19 @@ errormsg runWavCutUsingProvidedTimes(
 		return err;
 
 	debugWriteTimesToDisk("./lengthsAdjusted.txt", times, timesLen, true);
+
+	if (preview)
+	{
+		printf("Here are the track lengths after we've adjusted times:\n");
+		for (int i = 0; i < timesLen; i++)
+		{
+			int64 diff = (times[i] - (i == 0 ? 0 : times[i - 1]));
+			int seconds = (int)(diff / 44100.0);
+			printf("%04d\t%02d:%02d\n", i + 1, seconds / 60, seconds % 60);
+		}
+
+		return OK;
+	}
 	
 	// write output file.
 	SimpleBuffer bufferToWrite(1 * 1024 * 1024);
@@ -301,7 +315,8 @@ errormsg runWavCutUsingProvidedTimes(
 				// fade in the first part of this buffer.
 				uint32 fadeLength = std::min(
 					(uint32)(.6 * 44100), nGotThisIteration / 4);
-				printf("\nin file %s writing fadein", filename.c_str());
+				
+				printf("in file %s writing fadein\n", filename.c_str());
 				for (uint32 j = 0; j < fadeLength; j++)
 				{
 					double factor = j / ((double)fadeLength);
@@ -326,7 +341,7 @@ errormsg runWavCutUsingProvidedTimes(
 				// fade out the last part of this buffer.
 				uint32 fadeLength = std::min(
 					(uint32)(.6 * 44100), nGotThisIteration / 4);
-				printf("\nin %s writing fadeout len=%d",
+				printf("in %s writing fadeout len=%d\n",
 					filename.c_str(), fadeLength);
 				for (uint32 jcounter = 0; jcounter < fadeLength; jcounter++)
 				{
@@ -359,30 +374,49 @@ errormsg runWavCutUsingProvidedTimes(
 	return OK;
 }
 
-const short amplitudeThreshold = (short)(0.09*(SHRT_MAX - 1));
 errormsg runWavCutUsingAudioMark(
-	FILE* f, const WavFileInfoT* info, const char* prefix)
+	FILE* f, const WavFileInfoT* info, const char* prefix, bool preview)
 {
+	const short amplitudeThreshold = (short)(0.09*(SHRT_MAX - 1));
+
 	int whichOutputFile = 1;
 	FileWriteWrapper* outputFile = 0;
 	int64 lengthOfHeader = 0;
-	errormsg err = startOutputFile(
-		&outputFile, whichOutputFile, prefix, info, &lengthOfHeader);
-	if (err)
-		return err;
+	int cuts = 0;
+	errormsg err = OK;
+	if (preview)
+	{
+		printf("beginning preview...\n");
+	}
+	else
+	{
+		err = startOutputFile(
+			&outputFile, whichOutputFile, prefix, info, &lengthOfHeader);
+		if (err)
+			return err;
+	}
 
 	int nConsectiveWellAboveZero = 0;
 	for (uint64 i = 0; i < info->nExpectedSamples; i++)
 	{
-		int b = 0;
-		b = fgetc(f);
-		outputFile->putchar(b);
-		b = fgetc(f);
-		outputFile->putchar(b);
+		int b0001 = fgetc(f);
+		int b0002 = fgetc(f);
+		if (!preview)
+		{
+			outputFile->putchar(b0001);
+			outputFile->putchar(b0002);
+		}
+
 		int b1 = fgetc(f);
-		outputFile->putchar(b1);
 		int b2 = fgetc(f);
-		outputFile->putchar(b2);
+		if (!preview)
+		{
+			outputFile->putchar(b1);
+			outputFile->putchar(b2);
+		}
+
+		const int64 thresholdConsectiveWellAboveZero = 47 * 1000;
+		const int64 amountToSkipForward = thresholdConsectiveWellAboveZero - 3000;
 
 		// we only need to look at one of the channels
 		short sh1 = (short)b1; // intel byte order
@@ -394,20 +428,30 @@ errormsg runWavCutUsingAudioMark(
 		}
 		else
 		{
-			if (nConsectiveWellAboveZero > 47 * 1000)
+			if (nConsectiveWellAboveZero > thresholdConsectiveWellAboveZero)
 			{
-				++whichOutputFile;
-				err = finishOutputFileAndStartNext(
-					&outputFile, whichOutputFile, prefix, info,
-					lengthOfHeader, true, true /*fUseMark*/);
-				if (err)
-					return err;
+				if (preview)
+				{
+					int seconds = (int)(i / 44100.0);
+					printf("found a place to cut (%02d:%02d) \n", 
+						seconds / 60, seconds % 60);
+					
+					++cuts;
+				}
+				else
+				{
+					++whichOutputFile;
+					err = finishOutputFileAndStartNext(
+						&outputFile, whichOutputFile, prefix, info,
+						lengthOfHeader, true, true /*fUseMark*/);
+					if (err)
+						return err;
+				}
 
 				// seek forward past the silence
-				int64 nSamplesSeekForward = 44 * 1000;
-				i += nSamplesSeekForward;
+				i += amountToSkipForward;
 				int seekres = fseek64(
-					f, nSamplesSeekForward * 4/*bytes per sample*/, SEEK_CUR);
+					f, amountToSkipForward * 4 /*bytes per sample*/, SEEK_CUR);
 				if (seekres != 0)
 					return_err("seek failed");
 
@@ -420,20 +464,29 @@ errormsg runWavCutUsingAudioMark(
 		}
 	}
 
-	++whichOutputFile;
-	err = finishOutputFileAndStartNext(
-		&outputFile, whichOutputFile, prefix, info,
-		lengthOfHeader, false, true /*fUseMark*/);
-	if (err)
-		return err;
+	if (!preview)
+	{
+		++whichOutputFile;
+		err = finishOutputFileAndStartNext(
+			&outputFile, whichOutputFile, prefix, info,
+			lengthOfHeader, false, true /*fUseMark*/);
+		if (err)
+			return err;
+	}
 
+	printf("made %d cuts.\n", cuts);
 	return OK;
 }
 
 
 errormsg runWavCutUsingAutoDetectSilence(
-	FILE* f, const WavFileInfoT* info, const char* prefix)
+	FILE* f, const WavFileInfoT* info, const char* prefix, bool preview)
 {
+	if (preview)
+	{
+		return "preview not yet supported for auto-detect-silence.";
+	}
+
 	int whichOutputFile = 1;
 	FileWriteWrapper* outputFile = 0;
 	int64 lengthOfHeader = 0;
@@ -513,7 +566,7 @@ bool checkForNameConflict(const char* prefix)
 	return false;
 }
 
-int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
+int runWavCut(const char* path, const char* pathLengthsFile, FILE* f, bool preview)
 {
 	if (!stringEndsWith(path, ".wav") && 
 		!getBoolFromUser("expected a .wav file. continue?"))
@@ -541,7 +594,7 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 	if (msg)
 	{
 		fclose(f);
-		printf("\nError reading wav: %s", msg);
+		printf("Error reading wav: \n%s\n", msg);
 		return 1;
 	}
 
@@ -558,10 +611,10 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 	}
 
 	char prefix[] = { (char)nPrefix, 0 };
-	if (checkForNameConflict(prefix))
+	if (!preview && checkForNameConflict(prefix))
 	{
 		printf("\nLikely name conflict, please move all out_01.wav "
-			"and out_02.wav files so that they aren't overwritten.");
+			"and out_02.wav files so that they aren't overwritten.\n");
 		return 1;
 	}
 
@@ -573,39 +626,39 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f)
 			return 1;
 
 		msg = runWavCutUsingProvidedTimes(
-			f, &info, prefix, &lengths[0], size_t_to32(lengths.size()));
+			f, &info, prefix, &lengths[0], size_t_to32(lengths.size()), preview);
 	}
 	else
 	{
 		bool fUseMark = getBoolFromUser(
 			" Use audio mark (y), or look for silence (n)?");
 		if (!fUseMark)
-			msg = runWavCutUsingAutoDetectSilence(f, &info, prefix);
+			msg = runWavCutUsingAutoDetectSilence(f, &info, prefix, preview);
 		else
-			msg = runWavCutUsingAudioMark(f, &info, prefix);
+			msg = runWavCutUsingAudioMark(f, &info, prefix, preview);
 	}
 
 	if (msg)
 	{
-		printf("\nError cutting wav: %s", msg);
+		printf("\nCould not cut wav: \n%s\n", msg);
 		return 1;
 	}
 
-	printf("\ncompleted in %f seconds.", timer.stop());
-	printf("\nComplete.");
+	printf("completed in %f seconds.\n", timer.stop());
+	printf("Complete.\n");
 	return 0;
 }
 
-int runWavCut(const char* path, const char* pathLengthsFile)
+int runWavCut(const char* path, const char* pathLengthsFile, bool preview)
 {
 	FILE* f = fopen(path, "rb");
 	if (!f)
 	{
-		printf("\nCould not open this file.");
+		printf("Could not open this file.\n");
 		return 1;
 	}
 
-	int ret = runWavCut(path, pathLengthsFile, f);
+	int ret = runWavCut(path, pathLengthsFile, f, preview);
 	fclose(f);
 	return ret;
 }

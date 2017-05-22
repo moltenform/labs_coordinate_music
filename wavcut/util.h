@@ -70,6 +70,7 @@ void assertEqualImpl(int a, int b, const char* msg, int line, const char* file);
 typedef const char* errormsg;
 extern const errormsg OK;
 
+bool stringsEqual(const char *s1, const char *s2);
 std::vector<std::string> splitString(const std::string & s, char delim);
 bool fileExists(const char* path);
 bool getBoolFromUser(const char* prompt);

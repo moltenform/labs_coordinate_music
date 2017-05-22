@@ -6,6 +6,6 @@
 #define WAVCUT_H
 #include "wav.h"
 
-int runWavCut(const char* path, const char* pathLengthsFile);
+int runWavCut(const char* path, const char* pathLengthsFile, bool preview);
 
 #endif /* WAVCUT_H */
