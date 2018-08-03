@@ -276,8 +276,8 @@ def checkFilenameIrregularities(fullpathdir, shorts):
                     first + ', ' + second,
                     first + ' ' + second]
                 choice = getInputFromChoices('choose a new name:', proposednames)
-                if choice >= 0:
-                    files.move(fullpathdir + '/' + short, fullpathdir + '/' + proposednames[choice[0]])
+                if choice[0] >= 0:
+                    files.move(fullpathdir + '/' + short, fullpathdir + '/' + proposednames[choice[0]], False)
                     changedAtLeastOne = True
     
     stopIfFileRenamed(changedAtLeastOne)
@@ -365,26 +365,26 @@ def checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBul
                 if choice[0] == 1:
                     userAllowsBulkSet[(field, fromTag, fromFilename)] = fromFilename
                 if choice[0] == 2:
-                    files.move(fullpathdir + '/' + tag.short, fullpathdir + '/' + proposedNameFromTag)
+                    files.move(fullpathdir + '/' + tag.short, fullpathdir + '/' + proposedNameFromTag, False)
                     raise StopBecauseWeRenamedFile
     if needSave:
         tag.save()
 
 def shouldAutoAcceptTagFromFilename(dir, short, tag, message):
-    # almost certainly, for newly added files in m4a format, if the tag and filename don't match,
-    # it is the filename that should be used.
+    # it's almost always the case that, for newly added files in m4a format, if the tag and filename don't match,
+    # it is the filename that should be used, since we usually don't add m4a files with the wrong filename.
     # if a filepath is provided, we'll write log statements to that path.
     if enableAutoTagFromFilenameForRecentFiles():
         if short.endswith('.m4a'):
             oneweek = 7 * 86400
-            if time.time() - files.modtime(files.join(dir, short)) < oneweek:
-                if time.time() - files.createdtime(files.join(dir, short)) < oneweek:
-                    if tag.getLink() and 'spotify:track:' in tag.getLink() and 'notfound' not in tag.getLink():
-                        if isinstance(enableAutoTagFromFilenameForRecentFiles(), anystringtype):
-                            f = codecs.open(enableAutoTagFromFilenameForRecentFiles(), 'a', 'utf8')
-                            f.write('\n' + message.replace('\n', ' '))
-                            f.close()
-                        return True
+            useIfYoungerThan = oneweek * enableAutoTagForFilesYoungerThanThisManyWeeks()
+            if time.time() - files.modtime(files.join(dir, short)) < useIfYoungerThan:
+                if time.time() - files.createdtime(files.join(dir, short)) < useIfYoungerThan:
+                    if isinstance(enableAutoTagFromFilenameForRecentFiles(), anystringtype):
+                        f = codecs.open(enableAutoTagFromFilenameForRecentFiles(), 'a', 'utf8')
+                        f.write('\n' + message.replace('\n', ' '))
+                        f.close()
+                    return True
     return False
 
 def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):

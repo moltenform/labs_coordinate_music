@@ -33,7 +33,10 @@ def getPopularityCutoff():
     return 18
 
 def enableAutoTagFromFilenameForRecentFiles():
-    return False
+    return r'C:\b\pydev\devhiatus\pytools_music\logautotag.txt'
+    
+def enableAutoTagForFilesYoungerThanThisManyWeeks():
+    return 4
 
 def getDefaultDirectorySpotifyToFilenames():
     return None
