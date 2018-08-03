@@ -3,6 +3,8 @@
 # Released under the GNU General Public License version 3
 
 import sys
+import string
+import re
 from labs_coordinate_music.ben_python_common import *
 from labs_coordinate_music.coordmusicuserconfig import *
 from labs_coordinate_music.easypythonmutagen import \
@@ -108,17 +110,34 @@ def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
     if not onlyIfNotAlreadySet or not obj.getLink():
         obj.setLink(spotifyurl)
     obj.save()
-    
+
+def videoUrlFromFile(comment):
+    if comment and len(comment) == 11 and not any(c in string.whitespace for c in comment):
+        return 'https://www.youtube.com/watch?v=' + comment
+    elif comment:
+        reg = re.compile(r'\[([^ 	]{11})\]')
+        for match in reg.finditer(comment):
+            if match.group(1) and len(match.group(1)) == 11:
+                return 'https://www.youtube.com/watch?v=' + match.group(1)
+    return None
+
 def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
     newname = files.splitext(short)[0]
     if replaceMarkersInName:
         newname = newname.replace(' (v)', '').replace(' (vv)', '')
     newname = directory + '/' + newname + '.url'
     link = obj.getLink()
-    assertTrue(link and 'spotify:' in link and 'notfound' not in link,
-        'm4aToUrl needs valid spotify link' + directory + short)
+    if 'spotify:' in link and 'notfound' not in link:
+        writeUrlFile(newname, obj.getLink())
+    else:
+        vid = videoUrlFromFile(obj.get_or_default('comment', ''))
+        if vid:
+            trace('making video link for %s' % (directory + short))
+            writeUrlFile(newname, vid)
+        else:
+            assertTrue(False, 'we are making\n%s' % (directory + short) +
+                '\n into a url, but no link to spotify or video found.')
     
-    writeUrlFile(newname, obj.getLink())
     if softDelete:
         softDeleteFile(directory + '/' + short)
     else:
@@ -230,6 +249,20 @@ def launchSpotifyUri(uri):
     else:
         url = 'https://open.spotify.com/track/' + uri.replace('spotify:track:', '')
         files.openUrl(url)
+
+def isInSpotifyMarket(track, market=None):
+    if not market:
+        market = getSpotifyGeographicMarketName()
+    if 'available_markets' in track:
+        return market in track['available_markets']
+    else:
+        if 'is_playable' not in track:
+            print('key "is_playable" not found')
+            print(track)
+            raise RuntimeError('key "is_playable" not found')
+        
+        is_local = track.get('is_local', False)
+        return not not track['is_playable'] and not is_local
 
 def launchMediaPlayer(path):
     mplayer = getMediaPlayer()

@@ -110,16 +110,46 @@ class TestCoordMusicAudioMetadata(object):
     
     def test_makeUrlFileHttp(self, fixture_dir):
         writeUrlFile(join(fixture_dir, 'test1.url'), 'https://www.youtube.com/watch?v=0OSF')
-        assert getFromUrlFile(join(fixture_dir, 'test1.url')) == 'https://www.youtube.com/watch?v=0OSF'
+        assert 'https://www.youtube.com/watch?v=0OSF' == getFromUrlFile(join(fixture_dir, 'test1.url'))
     
     def test_makeUrlFileSpotify(self, fixture_dir):
         writeUrlFile(join(fixture_dir, 'test1.url'), 'spotify:track:0Svkvt5I79wficMFgaqEQJ')
-        assert getFromUrlFile(join(fixture_dir, 'test1.url')) == 'spotify:track:0Svkvt5I79wficMFgaqEQJ'
+        assert 'spotify:track:0Svkvt5I79wficMFgaqEQJ' == getFromUrlFile(join(fixture_dir, 'test1.url'))
     
     def test_makeUrlFileFileAlreadyExists(self, fixture_dir):
         writeUrlFile(join(fixture_dir, 'test1.url'), 'spotify:track:0Svkvt5I79wficMFgaqEQJ')
         with pytest.raises(AssertionError):
             writeUrlFile(join(fixture_dir, 'test1.url'), 'spotify:track:0Svkvt5I79wficMFgaqEQJ')
+    
+    def test_readVideoUrlNone(self):
+        assert None is videoUrlFromFile(None)
+    
+    def test_readVideoUrlEmpty(self):
+        assert None is videoUrlFromFile('')
+    
+    def test_readVideoUrlShort(self):
+        assert None is videoUrlFromFile('abc')
+    
+    def test_readVideoUrlLong(self):
+        assert None is videoUrlFromFile('abcabcabcabcabc')
+    
+    def test_readVideoUrlWhitespace1(self):
+        assert None is videoUrlFromFile('a b c d e f')
+    
+    def test_readVideoUrlWhitespace2(self):
+        assert None is videoUrlFromFile('te xt. [a b c d e f] te xt.')
+    
+    def test_readVideoUrlValid1(self):
+        assert 'https://www.youtube.com/watch?v=aabbccddeef' == videoUrlFromFile('aabbccddeef')
+    
+    def test_readVideoUrlValid2(self):
+        assert 'https://www.youtube.com/watch?v=aabbccddeef' == videoUrlFromFile('te xt. [aabbccddeef] te xt.')
+    
+    def test_readVideoUrlValid3(self):
+        assert 'https://www.youtube.com/watch?v=aa--CC__eef' == videoUrlFromFile('aa--CC__eef')
+    
+    def test_readVideoUrlValid4(self):
+        assert 'https://www.youtube.com/watch?v=aa--CC__eef' == videoUrlFromFile('te xt. [aa--CC__eef] te xt.')
     
 class TestFilenamesToText(object):
     def test_filenamesToText(self, fixture_dir, fixture_getmedia):
