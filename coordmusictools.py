@@ -350,7 +350,7 @@ class ExtendedSongInfo(object):
         self.info['spotifyAlbum'] = track['album']['name']
         self.info['spotifyPopularity'] = track['popularity']
         self.info['spotifyIsInMarket'] = '(not in market)' if \
-            getSpotifyGeographicMarketName() not in track['available_markets'] else ''
+            not isInSpotifyMarket(track) else ''
         
     def toString(self):
         fields = [

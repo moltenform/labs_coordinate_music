@@ -93,7 +93,7 @@ def runspotifysearch(market, search_str, type, limit, filterCovers):
             resultFiltered.append(res)
             
     # confirm that it is filtered by market
-    resultFiltered = [track for track in resultFiltered if ustr(market) in track[u'available_markets'] and
+    resultFiltered = [track for track in resultFiltered if isInSpotifyMarket(track, market) and
         track[u'uri'].startswith('spotify:' + type + ':')]
     return resultFiltered
 
@@ -117,7 +117,7 @@ def getTracksRemoteAlbum(albumid, market):
     while results['next']:
         results = spotipyconn().next(results)
         tracks.extend(results['items'])
-    return [track for track in tracks if ustr(market) in track[u'available_markets']]
+    return [track for track in tracks if isInSpotifyMarket(track, market)]
 
 def getStrRemoteAlbum(tracks, albumartists):
     ret = []

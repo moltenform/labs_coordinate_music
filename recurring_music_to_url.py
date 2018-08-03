@@ -24,7 +24,7 @@ def getPopularitiesList(fullpathdir, tags):
             if mappedIndex == -1:
                 trace('unexpected track?', track['name'])
             else:
-                popularity = track['popularity'] if 'US' in track[u'available_markets'] else 0
+                popularity = track['popularity'] if isInSpotifyMarket(track) else 0
                 result[mappedIndex] = popularity
     return result
     
