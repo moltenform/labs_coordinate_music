@@ -115,14 +115,16 @@ def bnsplitext(s):
                         
 class CheckFileExtensions(object):
     def __init__(self):
-        self.goodExts = dict(url=1, mp3=1, m4a=1, flac=1, jpg=1, m4v=1, txt=1, png=1, flv=1, zip=1, rtf=1, pdf=1, lnk=1)
+        self.goodExts = dict(url=1, mp3=1, m4a=1, flac=1, m4v=1, txt=1)
         
     def check(self, directory, short):
         spl = short.split('.')
         assertTrue(len(spl) > 1, 'no extension found ', directory, short)
         ext = spl[-1]
         assertTrue(ext == ext.lower(), 'extension must be lowercase ', directory, short)
-        assertTrue(ext in self.goodExts, 'unsupported file extension ', directory, short)
+        assertTrue(ext in self.goodExts or alsoAllowThisFileExtensionInMusicDirectory(ext),
+            'unsupported file extension ', directory, short)
+        
         return ext
 
 def parseDirname(s):

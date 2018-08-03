@@ -38,6 +38,9 @@ def enableAutoTagFromFilenameForRecentFiles():
 def enableAutoTagForFilesYoungerThanThisManyWeeks():
     return 4
 
+def alsoAllowThisFileExtensionInMusicDirectory(ext):
+    return False
+
 def getDefaultDirectorySpotifyToFilenames():
     return None
 

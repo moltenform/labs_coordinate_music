@@ -256,13 +256,9 @@ def isInSpotifyMarket(track, market=None):
     if 'available_markets' in track:
         return market in track['available_markets']
     else:
-        if 'is_playable' not in track:
-            print('key "is_playable" not found')
-            print(track)
-            raise RuntimeError('key "is_playable" not found')
-        
+        is_playable = track.get('is_playable', True)
         is_local = track.get('is_local', False)
-        return not not track['is_playable'] and not is_local
+        return is_playable and not is_local
 
 def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
