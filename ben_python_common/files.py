@@ -192,6 +192,12 @@ else:
     def listchildren(*args, **kwargs):
         return sorted(listchildrenUnsorted(*args, **kwargs))
 
+def listdirs(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
+    _checkNamedParameters(_ind)
+    for full, name in listchildren(dir, allowedexts=allowedexts):
+        if _os.path.isdir(full):
+            yield name if filenamesOnly else (full, name)
+
 def listfiles(dir, _ind=_enforceExplicitlyNamedParameters, filenamesOnly=False, allowedexts=None):
     _checkNamedParameters(_ind)
     for full, name in listchildren(dir, allowedexts=allowedexts):
@@ -275,7 +281,16 @@ def isemptydir(dir):
 def fileContentsEqual(f1, f2):
     import filecmp
     return filecmp.cmp(f1, f2, shallow=False)
-    
+
+def getFileLastModifiedTime(filepath):
+    return _os.path.getmtime(filepath)
+
+def setFileLastModifiedTime(filepath, lmt):
+    curtimes = os.stat(filepath)
+    newtimes = (curtimes.st_atime, lmt)
+    with open(filepath, 'ab') as f:
+        _os.utime(filepath, newtimes)
+
 # processes
 def openDirectoryInExplorer(dir):
     assert isdir(dir), 'not a dir? ' + dir
