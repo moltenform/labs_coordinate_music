@@ -51,7 +51,17 @@ class EasyPythonMutagen(object):
             val = str(val)
             
         assert isinstance(val, anystringtype), 'val must be a string'
-        self.obj[fieldname] = val
+        try:
+            self.obj[fieldname] = val
+        except AttributeError as exc:
+            # workaround for a mutagen bug (apparently _padding is for debugging)
+            # https://github.com/quodlibet/mutagen/issues/334
+            if "has no attribute '_padding'" in str(exc):
+                from mutagen.mp4 import MP4Tags
+                MP4Tags._padding = 0
+                self.obj[fieldname] = val
+            else:
+                raise
         
     def save(self):
         self.obj.save()
