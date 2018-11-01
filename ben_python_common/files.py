@@ -139,26 +139,36 @@ def copyFilePosixWithoutOverwrite(srcfile, destfile):
                 fdest.write(buffer)
     
 # unicodetype can be utf-8, utf-8-sig, etc.
-def readall(s, mode='r', unicodetype=None):
-    if unicodetype:
+def readall(s, mode='r', unicodetype=None, encoding=None):
+    if encoding:
+        # python 3-style
+        getF = lambda: open(s, mode, encoding=encoding)
+    elif unicodetype:
+        # python 2-style
         import codecs
-        f = codecs.open(s, mode, unicodetype)
+        getF = lambda: codecs.open(s, mode, encoding=unicodetype)
     else:
-        f = open(s, mode)
-    txt = f.read()
-    f.close()
+        getF = lambda: open(s, mode)
+
+    with getF() as f:
+        txt = f.read()
+
     return txt
 
 # unicodetype can be utf-8, utf-8-sig, etc.
-def writeall(s, txt, mode='w', unicodetype=None):
-    if unicodetype:
+def writeall(s, txt, mode='w', unicodetype=None, encoding=None):
+    if encoding:
+        # python 3-style
+        getF = lambda: open(s, mode, encoding=encoding)
+    elif unicodetype:
+        # python 2-style
         import codecs
-        f = codecs.open(s, mode, unicodetype)
+        getF = lambda: codecs.open(s, mode, encoding=unicodetype)
     else:
-        f = open(s, mode)
-    f.write(txt)
-    f.close()
+        getF = lambda: open(s, mode)
 
+    with getF() as f:
+        f.write(txt)
 
 # use this to make the caller pass argument names,
 # allowing foo(param=False) but preventing foo(False)
