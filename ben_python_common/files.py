@@ -372,6 +372,30 @@ def computeHash(path, hasher=None, buffersize=0x40000):
                 hasher.update(buffer)
         return hasher.hexdigest()
 
+def windowsUrlFileGet(path):
+    assertEq('.url', _os.path.splitext(path)[1].lower())
+    s = readall(path, mode='r', encoding='latin1')
+    lines = s.split('\n')
+    for line in lines:
+        if line.startswith('URL='):
+            return line[len('URL='):]
+    raise RuntimeError('no url seen in ' + path)
+
+def windowsUrlFileWrite(path, url):
+    assertTrue(len(url) > 0)
+    assertTrue(not files.exists(path), 'file already exists at', path)
+    try:
+        testUrl = url.encode('ascii')
+    except e:
+        if isinstance(e, UnicodeEncodeError):
+            raise RuntimeError('can\'t support a non-ascii url' + url + ' ' + path)
+        else:
+            raise
+    f = open(path, 'w', encoding='ascii')
+    f.write('[InternetShortcut]\n')
+    f.write('URL=%s\n' % url)
+    f.close()
+
 # returns tuple (returncode, stdout, stderr)
 def run(listArgs, _ind=_enforceExplicitlyNamedParameters, shell=False, createNoWindow=True,
         throwOnFailure=RuntimeError, stripText=True, captureoutput=True, silenceoutput=False,
