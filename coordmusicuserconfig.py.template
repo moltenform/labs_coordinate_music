@@ -9,17 +9,18 @@ def getSpotifyUsername():
     # return ''
     
 def getSpotifyClientID():
+    # sign up at https://developer.spotify.com/my-applications/
     # return None to disable spotify connection
     # return ''
     
 def getSpotifyClientSecret():
-    # sign up at https://developer.spotify.com/my-applications/
-    # return ''
+    # when you enter SpotifyClientID above, then run __main__.py and connect,
+    # we'll open the CallbackUrl from which you can get the client secret and paste it here.
+    return ''
 
 def getSpotifyCallbackUrl():
-    # specify a url that will print all GET / POST parameters given to the page, so that you can see ClientSecret
-    # this only needs to be called once.
-    return 'http://downpoured.com/printinputs.php'
+    # specify a url, such as the one below, that will show you the SpotifyClientID and SpotifyClientSecret, for the initial spotify api setup
+    return 'https://moltenjs.com/page/labs_coordinate_music/view_post_data.html'
 
 def getSpotifyGeographicMarketName():
     return 'US'
@@ -36,7 +37,7 @@ def enableAutoTagFromFilenameForRecentFiles():
     return r'C:\b\pydev\devhiatus\pytools_music\logautotag.txt'
     
 def enableAutoTagForFilesYoungerThanThisManyWeeks():
-    return 4
+    return 1
 
 def alsoAllowThisFileExtensionInMusicDirectory(ext):
     return False
