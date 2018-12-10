@@ -39,7 +39,7 @@ Here's what it looks like to create links, an album at a time:
 	* for example from `# return u'~/music'` to `# return u'~/my/music/files'`
 	* to enable linking to spotify, you will need a SpotifyClientID,
 	* you can sign up for this at https://developer.spotify.com/my-applications/
-1. Run \_\_main\_\_.py, it will interactively ask what to do next
+1. Run \_\_main\_\_.py, it will interactively ask what you'd like it to do
 
 Optional: the C++ program wavcut can split wav files based on a list of approximate song lengths in seconds.
 
