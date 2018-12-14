@@ -458,8 +458,7 @@ def goPerDirectory(fullpathdir, dirsplit, helpers):
                     tags[-1].short = short
     
     if not seenOne:
-        if getInputBool('empty directories not allowed ' + fullpathdir + ' delete?'):
-                files.rmdir(fullpathdir)
+        trace('\n\nempty directories are discouraged ... ' + fullpathdir + '\n\n')
 
     checkFilenamesMain(fullpathdir, dirsplit, tags, helpers)
 
