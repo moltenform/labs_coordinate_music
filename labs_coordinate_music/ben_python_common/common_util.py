@@ -126,6 +126,62 @@ def formatSize(n):
     else:
         return '%db' % n
 
+# extract and replace: utility functions when looking for/replacing text that
+# has consistent prefix and suffix.
+# for example, if finding the title of an html doc, you could say
+# opener='<title>' and closer='</title>', and it will return the title text.
+
+def extractAndReplaceTextInFile(newText, path, opener, closer, 
+    allowManyInstancesOfOpener=True, allowManyInstancesOfCloser=True,
+    appendWithThisIfNotExists=False, mode='w'):
+    from .files import readall, writeall
+    s = readall(path, encoding='utf-8') if isPy3OrNewer else readall(path)
+    newS = extractAndReplaceText(newText, s, opener, closer, 
+        allowManyInstancesOfOpener, allowManyInstancesOfCloser,
+        appendWithThisIfNotExists)
+    if isPy3OrNewer:
+        writeall(path, newS, mode, encoding='utf-8')
+    else:
+        writeall(path, newS, mode)
+
+def extractAndReplaceText(newText, contents, opener, closer, 
+    allowManyInstancesOfOpener=True, allowManyInstancesOfCloser=True,
+    appendWithThisIfNotExists=False):
+    if appendWithThisIfNotExists is not False and \
+        (not opener in contents or not closer in contents):
+        return contents + appendWithThisIfNotExists + newText
+    indexStart, indexEnd = _extractTextImpl(contents, opener, closer, 
+        False, allowManyInstancesOfOpener,
+        allowManyInstancesOfCloser)
+    return contents[0:indexStart] + newText + contents[indexEnd:]
+    
+def extractText(contents, opener, closer, 
+    includeMarks=False, allowManyInstancesOfOpener=True,
+    allowManyInstancesOfCloser=True):
+    indexStart, indexEnd = _extractTextImpl(contents, opener, closer, 
+        includeMarks, allowManyInstancesOfOpener,
+        allowManyInstancesOfCloser)
+    return contents[indexStart:indexEnd]
+    
+def _extractTextImpl(contents, opener, closer, 
+    includeMarks=False, allowManyInstancesOfOpener=True,
+    allowManyInstancesOfCloser=True):
+    spl = contents.split(opener, 1)
+    assertTrue(len(spl) > 1, 'opener not found %s' % opener)
+    assertTrue(allowManyInstancesOfOpener or opener not in spl[1],
+        'allowManyInstancesOfOpener %s seen' % opener)
+    splAfter = spl[1].split(closer, 1)
+    assertTrue(len(splAfter) > 1, 'closer not found %s' % closer)
+    assertTrue(allowManyInstancesOfCloser or closer not in splAfter[1],
+        'allowManyInstancesOfCloser %s seen' % closer)
+    indexStart = len(spl[0])
+    indexEnd = len(spl[0]) + len(opener) + len(splAfter[0]) + len(closer)
+    if not includeMarks:
+        indexStart += len(opener)
+        indexEnd -= len(closer)
+    
+    return indexStart, indexEnd
+
 def getClipboardTextTk():
     from Tkinter import Tk
     try:

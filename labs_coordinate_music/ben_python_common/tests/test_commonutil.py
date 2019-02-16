@@ -105,6 +105,8 @@ class TestStringHelpers(object):
     
     # getClipboardText
     def test_getClipboardTextWithNoUnicode(self):
+        # let's check that pyperclip is installed
+        import pyperclip
         prev = getClipboardText()
         try:
             setClipboardText('normal ascii')
@@ -113,6 +115,8 @@ class TestStringHelpers(object):
             setClipboardText(prev)
     
     def test_getClipboardTextWithUnicode(self):
+        # let's check that pyperclip is installed
+        import pyperclip
         prev = getClipboardText()
         try:
             setClipboardText(u'\u1E31\u1E77\u1E53\u006E')
@@ -290,6 +294,118 @@ class TestCommonUI(object):
         newlocation = softDeleteFile(path)
         assert os.path.exists(newlocation)
         assert files.getname(newlocation).startswith('z')
+
+class TestExtractTest(object):
+    def test_extractTextFailsIfNotFound(self):
+        contentsFail = '<tag> Target</b> </tag>'
+        with pytest.raises(AssertionError) as exc:
+            extractText(contentsFail, '<b>', '</b>')
+        exc.match('opener not found')
+
+    def test_extractTextFailsIfCloseNotFound(self):
+        contentsFail = '<tag> <b>Target </tag>'
+        with pytest.raises(AssertionError) as exc:
+            extractText(contentsFail, '<b>', '</b>')
+        exc.match('closer not found')
+
+    def test_extractTextFailsIfNeitherFound(self):
+        contentsFail = '<tag> Target </tag>'
+        with pytest.raises(AssertionError) as exc:
+            extractText(contentsFail, '<b>', '</b>')
+        exc.match('opener not found')
+
+    def test_extractTextFailsIfMultipleOpeners(self):
+        contentsFail = '<tag> <b>Target</b>and<b> </tag>'
+        with pytest.raises(AssertionError) as exc:
+            extractText(contentsFail, '<b>', '</b>', allowManyInstancesOfOpener=False)
+        exc.match('allowManyInstancesOfOpener')
+
+    def test_extractTextFailsIfMultipleClosers(self):
+        contentsFail = '<tag> <b>Target</b>and</b> </tag>'
+        with pytest.raises(AssertionError) as exc:
+            extractText(contentsFail, '<b>', '</b>', allowManyInstancesOfCloser=False)
+        exc.match('allowManyInstancesOfCloser')
+
+    def test_extractTextAllowMultipleClosers(self):
+        contents = '<tag> <b>Target</b>and</b> </tag>'
+        s = extractText(contents, '<b>', '</b>', allowManyInstancesOfCloser=True)
+        assert s == 'Target'
+
+    def test_extractTextAllowMultipleBoth(self):
+        contents = '<tag> <b>Target</b>and<b>Second</b> </tag>'
+        s = extractText(contents, '<b>', '</b>', allowManyInstancesOfOpener=True,
+            allowManyInstancesOfCloser=True)
+        assert s == 'Target'
+
+    def test_extractTextSucceeds(self):
+        contents = '<tag> <look>insideTextHere</look>and </tag>'
+        s = extractText(contents, '<look>', '</look>')
+        assert s == 'insideTextHere'
+        s = extractText(contents, '<look>', '</look>', includeMarks=True)
+        assert s == '<look>insideTextHere</look>'
+        contents = '<tag> <b>Target</b>and </tag>'
+        s = extractText(contents, '<b>', '</b>')
+        assert s == 'Target'
+        s = extractText(contents, '<b>', '</b>', includeMarks=True)
+        assert s == '<b>Target</b>'
+
+    def test_replaceTextFailsIfNotExists(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contentsFail = '<tag> Target</b> </tag>'
+        files.writeall(path, contentsFail)
+        with pytest.raises(AssertionError) as exc:
+            extractAndReplaceTextInFile('NewTarget', path, '<b>', '</b>')
+        exc.match('opener not found')
+
+    def test_replaceTextFailsIfMultiple(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contentsFail = '<tag> <b>Target</b> <b>Other</b></tag>'
+        files.writeall(path, contentsFail)
+        with pytest.raises(AssertionError) as exc:
+            extractAndReplaceTextInFile('NewTarget', path, '<b>', '</b>',
+                allowManyInstancesOfOpener=False)
+        exc.match('allowManyInstancesOfOpener')
+
+    def test_replaceTextAppendsIfNotExists(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contents = '<tag>Target</b> </tag>'
+        files.writeall(path, contents)
+        extractAndReplaceTextInFile('NewTarget', path, '<b>', '</b>',
+            appendWithThisIfNotExists=':append:')
+        newContents = files.readall(path)
+        assert newContents == '<tag>Target</b> </tag>:append:NewTarget'
+
+    def test_replaceTextSucceeds(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contents = '<tag> <b>Target</b> </tag>'
+        files.writeall(path, contents)
+        extractAndReplaceTextInFile('NewTarget', path, '<b>', '</b>')
+        newContents = files.readall(path)
+        assert newContents == '<tag> <b>NewTarget</b> </tag>'
+
+    def test_replaceTextSucceedsManyClosers(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contents = '<tag> <b>Target</b> and</b></tag>'
+        files.writeall(path, contents)
+        extractAndReplaceTextInFile('NewTarget', path, '<b>', '</b>')
+        newContents = files.readall(path)
+        assert newContents == '<tag> <b>NewTarget</b> and</b></tag>'
+
+    def test_replaceTextSucceedsManyBoth(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contents = '<tag> <b>Target</b> <b>other</b></tag>'
+        files.writeall(path, contents)
+        extractAndReplaceTextInFile('NewTarget', path, '<b>', '</b>')
+        newContents = files.readall(path)
+        assert newContents == '<tag> <b>NewTarget</b> <b>other</b></tag>'
+
+    def test_replaceTextSucceedsLonger(self, fixture_dir):
+        path = files.join(fixture_dir, 'testreplace.txt')
+        contents = '<tag> <look>LongerTextIsHere</look> </tag>'
+        files.writeall(path, contents)
+        extractAndReplaceTextInFile('Short', path, '<look>', '</look>')
+        newContents = files.readall(path)
+        assert newContents == '<tag> <look>Short</look> </tag>'
 
 class TestCustomAsserts(object):
     def raisevalueerr(self):
