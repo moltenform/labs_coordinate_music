@@ -33,6 +33,7 @@ Here's what it looks like to create links, an album at a time:
 1. Install Python, either Python 2.7+ or 3.5+
 1. Install Mutagen (pip install mutagen)
 1. Install Spotipy (pip install spotipy)
+1. Install Pyperclip (pip install pyperclip)
 1. Copy coordmusicuserconfig.py.template to coordmusicuserconfig.py,
 	* fill in the missing information,
 	* for example from `# return u'~/music'` to `return u'~/my/music/files'`

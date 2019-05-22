@@ -5,7 +5,6 @@
 import pytest
 from os.path import join
 from labs_coordinate_music.coordmusicutil import *
-from labs_coordinate_music.ben_python_common import *
 from labs_coordinate_music.tests import fixture_getmedia as fixture_getmedia_
 fixture_getmedia = fixture_getmedia_
 

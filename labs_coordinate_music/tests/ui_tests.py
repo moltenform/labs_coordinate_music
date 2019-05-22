@@ -227,7 +227,6 @@ if __name__ == '__main__':
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(path))))
 
     from labs_coordinate_music import coordmusictools
-    from labs_coordinate_music.ben_python_common import *
     from labs_coordinate_music.coordmusicutil import *
     from labs_coordinate_music.recurring_linkspotify import \
         linkspotify, launchSpotifyUri

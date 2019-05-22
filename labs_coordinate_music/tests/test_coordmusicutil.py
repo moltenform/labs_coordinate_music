@@ -7,7 +7,7 @@ from os.path import join
 from labs_coordinate_music import coordmusictools
 from labs_coordinate_music.tests import *
 from labs_coordinate_music.coordmusicutil import *
-from labs_coordinate_music.ben_python_common import *
+
 
 class TestMusicUtils(object):
     # format duration

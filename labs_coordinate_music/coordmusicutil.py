@@ -5,7 +5,8 @@
 import sys
 import string
 import re
-from labs_coordinate_music.ben_python_common import *
+sys.path.append('bn_python_common.zip')
+from bn_python_common import *
 from labs_coordinate_music.coordmusicuserconfig import *
 from labs_coordinate_music.easypythonmutagen import \
     EasyPythonMutagen, mutagen_get_audio_duration

@@ -55,7 +55,9 @@ def main():
 def checkForMetadataTags(dir):
     import coordmusicutil
     import sys
-    from ben_python_common import files
+    sys.path.append('bn_python_common.zip')
+    from bn_python_common import files
+
     assert files.exists(dir)
     countWithTags = 0
     countWithoutTags = 0

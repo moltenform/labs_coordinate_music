@@ -6,7 +6,9 @@ import pytest
 import tempfile
 import os
 from os.path import join
-from labs_coordinate_music.ben_python_common import *
+import sys
+sys.path.append('../bn_python_common.zip')
+from bn_python_common import *
 
 @pytest.fixture(scope='module')
 def fixture_getmedia():
