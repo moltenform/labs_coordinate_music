@@ -12,11 +12,11 @@ This is a set of tools I made back in 2014, to keep a local music library "coord
 
 Here's what it looks like to create a link between a local audio file and a track on Spotify:
 
-<a href="#">![Demo search by track](https://moltenjs.com/page/labs-coordinate-music/fromtracklgc.png)</a>
+<a href="#">![Demo search by track](https://moltenform.com/page/labs-coordinate-music/fromtracklgc.png)</a>
 
 Here's what it looks like to create links, an album at a time:
 
-<a href="#">![Demo search by album](https://moltenjs.com/page/labs-coordinate-music/fromalbumlgc.png)</a>
+<a href="#">![Demo search by album](https://moltenform.com/page/labs-coordinate-music/fromalbumlgc.png)</a>
 
 ### Other Features and Details
 
