@@ -1,6 +1,5 @@
-### Introduction
 
-This is a set of tools I made back in 2014, to keep a local music library "coordinated" and organized. Coordinate\_music can:
+I made Coordinate\_music back in 2014, to help keep a local music library organized:
 
 * check for, and automatically correct, consistency between filename, ID3 tag, and Spotify's metadata.
 * check that every directory is structured correctly (by genre, artist, and album name).
@@ -25,7 +24,7 @@ Here's what it looks like to create links, an album at a time:
 * create Spotify playlist from directory of mp3s
 * save a Spotify playlist to text file of song names and lengths.
 * rename audio files in a directory based on a text file of song names.
-* set tags automatically based on filename and path, see [directory structure](directory_structure.md)
+* set tags automatically based on filename and path, see [directory structure](./labs_coordinate_music/directory_structure.md)
 * save disk space by replacing audio files with .url files linking to Spotify (if you've marked the file as "low quality" and Spotify's "popularity" data indicates high popularity for the song).
 
 ### Installation
