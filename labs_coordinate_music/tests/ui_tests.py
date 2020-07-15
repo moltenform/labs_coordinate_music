@@ -13,7 +13,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     
     # testing files outside of an album
     trace('testing files outside of an album')
-    files.ensure_empty_directory(tmpdir)
+    files.ensureEmptyDirectory(tmpdir)
     files.makedirs(tmpdir + '/classic rock/collection')
     files.copy(mediadir + '/test_02_52.m4a',
         tmpdir + '/classic rock/collection/Queen - You\'re My Best Friend.m4a', False)
@@ -32,7 +32,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     
     # testing files inside of an album with one disc
     trace('testing files inside of an album with one disc')
-    files.ensure_empty_directory(tmpdir)
+    files.ensureEmptyDirectory(tmpdir)
     files.makedirs(tmpdir + '/classic rock/Queen/1975, A Night At The Opera')
     parsedNames = []
     files.copy(mediadir + '/test_02_52.m4a',
@@ -60,7 +60,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     trace('testing files inside of an album with several discs')
     trace('"I Want to Break Free" is intentionally 04_09 instead of 02_05, to test misnumbering')
     trace('"Barcelona" is intentionally too short, to test checking mismatched duration')
-    files.ensure_empty_directory(tmpdir)
+    files.ensureEmptyDirectory(tmpdir)
     files.makedirs(tmpdir + '/classic rock/Queen/2002, The Platinum Collection')
     parsedNames = []
     
@@ -95,7 +95,7 @@ def testMusicToUrlInteractive(tmpdir, mediadir):
     if not getInputBool('Run interactive MusicToUrl test?'):
         return
     
-    files.ensure_empty_directory(tmpdir)
+    files.ensureEmptyDirectory(tmpdir)
     tmpdirsl = tmpdir + files.sep
     files.copy(mediadir + '/m4a128.m4a', tmpdirsl + 'Carly Rae Jepsen - Run Away With Me.m4a', False)
     files.copy(mediadir + '/mp3_avgb128.mp3', tmpdirsl + 'Qua - Ritmo Giallo.mp3', False)
@@ -125,7 +125,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
         return
         
     # create "outside" files, mocking input files
-    files.ensure_empty_directory(tmpdir)
+    files.ensureEmptyDirectory(tmpdir)
     tmpdirsl = tmpdir + files.sep
     files.makedirs(tmpdirsl + 'outside')
     files.makedirs(tmpdirsl + 'outside/Space Oddity')
