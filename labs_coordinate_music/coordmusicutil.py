@@ -5,6 +5,7 @@
 import sys
 import string
 import re
+sys.path.append('bn_python_common/bn_python_common.zip')
 sys.path.append('bn_python_common.zip')
 from bn_python_common import *
 from labs_coordinate_music.coordmusicuserconfig import *
@@ -105,7 +106,32 @@ def get_audio_duration(filename, obj=None):
         return length
     else:
         return mutagen_get_audio_duration(filename, obj)
+
+def stripMarkersFromFilename(s):
+    # markers like (^) aren't truly part of the name
+    s = s.replace(' (^)', '').replace(' (^^)', '')
+    s = s.replace(' (v)', '').replace(' (vv)', '')
+    if ' {} ' in s:
+        return s.split(' {} ')[-1]
     
+    return s
+
+def reconstructMarkersFromFilename(new, old):
+    if ' (^)' in old:
+        new += ' (^)'
+    if ' (^^)' in old:
+        new += ' (^^)'
+    if ' (v)' in old:
+        new += ' (v)'
+    if ' (vv)' in old:
+        new += ' (vv)'
+
+    if ' {} ' in old:
+        mark = old.split(' {} ')[0]
+        new = mark + ' {} ' + new
+    
+    return new
+
 def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
     obj = CoordMusicAudioMetadata(filename)
     if not onlyIfNotAlreadySet or not obj.getLink():

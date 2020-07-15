@@ -98,7 +98,7 @@ def getFilenameFromTrack(number, track):
         newname = spalbum + newname
     
     newname = '%04d '%number + newname
-    return safefilename(newname)
+    return toValidFilename(newname)
     
 def setMetadataFromFilename(fullpath):
     parts = files.getname(fullpath).split('$')

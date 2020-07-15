@@ -21,7 +21,7 @@ NameStyle = SimpleEnum(('Title', 'ArtistTitle', 'TrackTitle',
     
 def parseAFilename(short):
     name = bnsplitext(short)[0]
-    name = name.replace(' (^)', '').replace(' (v)', '')
+    name = stripMarkersFromFilename(name)
     res = Bucket(short=short, album=None, style=None,
         discnumber=None, tracknumber=None, artist=None, title=None)
     
@@ -83,11 +83,7 @@ def renderAFilename(res, short):
     elif res.style == NameStyle.DiscTrackArtistTitle:
         name = '%02d %02d %s - %s'%(res.discnumber, res.tracknumber, res.artist, res.title)
     
-    if ' (^)' in short:
-        name += ' (^)'
-    if ' (v)' in short:
-        name += ' (v)'
-
+    name = reconstructMarkersFromFilename(name, short)
     name += rest
     return name
     
@@ -179,7 +175,7 @@ def doStringsMatchForField(a, b, field):
         return True
     a = ustr(a)
     b = ustr(b)
-    if a == safefilename(b) or a == removeCharsFlavor1(b) or a == removeCharsFlavor2(b):
+    if a == toValidFilename(b) or a == removeCharsFlavor1(b) or a == removeCharsFlavor2(b):
         return True
     if field == 'tracknumber' or field == 'discnumber':
         try:
@@ -188,7 +184,7 @@ def doStringsMatchForField(a, b, field):
         except ValueError:
             pass
     elif field == 'title':
-        a = a.replace(' (^)', '').replace(' (v)', '').replace(' (vv)', '')
+        a = stripMarkersFromFilename(a)
         b = b.rstrip('!')
         return doStringsMatchForField(a, b, None)
     return False
@@ -306,7 +302,7 @@ def getNewnameFromTag(parsed, field, fromFilename, fromTag):
     elif isinstance(fromTag, int):
         newval = fromTag
     else:
-        newval = safefilename(fromTag)
+        newval = toValidFilename(fromTag)
     if 'number' in field and not isinstance(newval, int):
         newval = newval.split('-')[0].split('/')[0]
         try:
@@ -407,12 +403,14 @@ def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
         seenTracknumber |= 'Track' in parsed.style
         seenWithoutSpotify |= not tag.getLink()
         for field in requiredfields:
+            isInAnAlbum = 'Track' in parsed.style
             if not tag.get_or_default(field, None):
                 spotlink = tag.getLink()
                 if field == 'album':
-                    if lookupAlbumForFile(fullpathdir + '/' + tag.short, tag, parsed, spotlink):
-                        raise StopBecauseWeRenamedFile
-                elif field == 'tracknumber' and 'Track' not in parsed.style:
+                    if isInAnAlbum or askAlbumName():
+                        if lookupAlbumForFile(fullpathdir + '/' + tag.short, tag, parsed, spotlink):
+                            raise StopBecauseWeRenamedFile
+                elif field == 'tracknumber' and not isInAnAlbum:
                     pass  # allowing missing tracknumber since non-album
                 else:
                     assertTrue(False, 'missing required field', field, fullpathdir, tag.short)
@@ -483,7 +481,8 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
         while True:
             err = None
             try:
-                goPerDirectory(fullpathdir, fullpathdir.split(files.sep), helpers)
+                dirsplit = list(map(stripMarkersFromFilename, fullpathdir.split(files.sep)))
+                goPerDirectory(fullpathdir, dirsplit, helpers)
             except StopBecauseWeRenamedFile:
                 trace('we renamed a file; re-entering directory.')
                 continue

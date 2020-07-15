@@ -52,3 +52,6 @@ def getDefaultSpotifyPlaylist():
 def runAfterCoordinate():
     # optionally provide code to run here after mainCoordinate() is called.
     pass
+
+def askAlbumName():
+    return False
