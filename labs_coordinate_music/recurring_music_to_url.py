@@ -130,7 +130,7 @@ class SaveDiskSpaceMusicToUrl(object):
                     elif inp == 'hear0':
                         launchMediaPlayer(files.join(fullpathdir, tag.short))
                     elif inp == 'hear1':
-                        launchSpotifyUri(tag.getLink())
+                        launchSpotifyUri(getSpotifyOrVideoUrlFromFile(tag))
                     elif inp == 'explorer':
                         askExplorer(fullpathdir, False)
                     

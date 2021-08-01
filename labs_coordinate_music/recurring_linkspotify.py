@@ -382,13 +382,7 @@ def startSpotifyFromM4a(s):
     assert files.exists(s), 'file not found'
     
     obj = CoordMusicAudioMetadata(s)
-    spotifyUri = obj.getLink()
-    if 'spotify:notfound' in spotifyUri:
-        assert False, 'audio file explicitly marked as not in spotify'
-    elif not spotifyUri:
-        assert False, 'no link to spotify found in file'
-    else:
-        launchSpotifyUri(spotifyUri)
+    assert launchSpotifyUri(getSpotifyOrVideoUrlFromFile(obj))
 
 def startSpotifyFromM4aArgs(args):
     # catch all exceptions; script output shown in a cmd window
