@@ -49,6 +49,8 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         self.linkfield = getFieldForFile(filename, False)
         self.short = files.getname(filename)
         self.ext = files.getext(filename)
+        self.fullFilename = filename
+        self.preserveLastModTime = True
     
     def normalizeFieldname(self, fieldname):
         if fieldname == '%spotifylink%':
@@ -95,6 +97,13 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         if isinstance(val, int):
             val = str(val)
         EasyPythonMutagen.set(self, fieldname, val)
+    
+    def save(self):
+        assertTrue(files.exists(self.fullFilename))
+        prevModTime = files.getModTimeNs(self.fullFilename)
+        super(CoordMusicAudioMetadata, self).save()
+        if self.preserveLastModTime:
+            files.setModTimeNs(self.fullFilename, prevModTime)
 
 def get_audio_duration(filename, obj=None):
     if filename.lower().endswith('.wav'):
@@ -138,6 +147,13 @@ def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
         obj.setLink(spotifyurl)
     obj.save()
 
+def getSpotifyOrVideoUrlFromFile(obj):
+    link = obj.getLink()
+    if link and 'spotify:' in link and 'notfound' not in link:
+        return link
+    else:
+        return videoUrlFromFile(obj.get_or_default('comment', ''))
+
 def videoUrlFromFile(comment):
     if comment and len(comment) == 11 and not any(c in string.whitespace for c in comment):
         return 'https://www.youtube.com/watch?v=' + comment
@@ -149,26 +165,23 @@ def videoUrlFromFile(comment):
     return None
 
 def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
+    prevTime = files.getModTimeNs(directory + '/' + short)
     newname = files.splitext(short)[0]
     if replaceMarkersInName:
         newname = newname.replace(' (v)', '').replace(' (vv)', '')
     newname = directory + '/' + newname + '.url'
-    link = obj.getLink()
-    if 'spotify:' in link and 'notfound' not in link:
-        writeUrlFile(newname, obj.getLink())
+    link = getSpotifyOrVideoUrlFromFile(obj)
+    if link:
+        writeUrlFile(newname, link)
     else:
-        vid = videoUrlFromFile(obj.get_or_default('comment', ''))
-        if vid:
-            trace('making video link for %s' % (directory + short))
-            writeUrlFile(newname, vid)
-        else:
-            assertTrue(False, 'we are making\n%s' % (directory + short) +
-                '\n into a url, but no link to spotify or video found.')
+        assertTrue(False, 'we are making\n%s' % (directory + short) +
+            '\n into a url, but no link to spotify or video found.')
     
     if softDelete:
         softDeleteFile(directory + '/' + short)
     else:
         files.delete(directory + '/' + short)
+    files.setModTimeNs(newname, prevTime)
     return newname
 
 def removeCharsFlavor1(s):
@@ -266,16 +279,21 @@ def typeIntoSpotifySearch(s):
 def launchSpotifyUri(uri):
     if not uri or uri == 'spotify:notfound':
         trace('cannot start uri', str(uri))
-        return
+        return False
+    if uri.startswith('https://www.youtube.com') or uri.startswith('https://youtube.com'):
+        files.openUrl(uri)
+        return True
     assert uri.startswith('spotify:track:')
     assert all(c == '#' or c == ':' or c.isalnum() for c in uri) and len(uri) < 50
     if sys.platform.startswith('win'):
         import subprocess
         args = ['start', uri]
         subprocess.Popen(args, shell=True)
+        return True
     else:
         url = 'https://open.spotify.com/track/' + uri.replace('spotify:track:', '')
         files.openUrl(url)
+        return True
 
 def isInSpotifyMarket(track, market=None):
     if not market:
