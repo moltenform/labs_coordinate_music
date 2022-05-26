@@ -5,6 +5,7 @@
 import sys
 import string
 import re
+import wave
 sys.path.append('bn_python_common/bn_python_common.zip')
 sys.path.append('bn_python_common.zip')
 from bn_python_common import *
@@ -107,12 +108,20 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
 
 def get_audio_duration(filename, obj=None):
     if filename.lower().endswith('.wav'):
-        # rough estimate, doesn't take metadata into account
-        sz = files.getsize(filename)
-        channels, bits, freq = 2, 16, 44100
-        sz /= (1.0 * channels * (bits / 8.0))
-        length = sz / freq
-        return length
+        with wave.open(filename, 'rb') as parsedWave:
+            channels = parsedWave.getnchannels()
+            assertTrue(channels in [1, 2], 'unsupported # of channels', filename)
+            bytewidth = parsedWave.getsampwidth()
+            assertTrue(bytewidth in [1, 2, 3], 'unsupported bytewidth', filename)
+            freq = parsedWave.getframerate()
+            assertTrue(freq in [44100, 48000, 44100 * 2, 48000 * 2], 'unsupported freq', filename)
+            
+            # just an estimate, doesn't take metadata into account
+            bits = bytewidth * 8
+            sz = files.getsize(filename)
+            sz /= (1.0 * channels * (bits / 8.0))
+            length = sz / freq
+            return length
     else:
         return mutagen_get_audio_duration(filename, obj)
 
@@ -361,3 +370,4 @@ def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown=True):
     for fullpathdir, shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
         for fullpath, short in files.listfiles(fullpathdir):
             yield fullpath, short
+

@@ -78,7 +78,7 @@ uint64 getFileSize(const char* path);
 errormsg truncateFile(const char* path, int64 length);
 int fseek64(FILE *stream, int64 offset, int type);
 int64 ftell64(FILE *stream);
-std::vector<int64> parseLengthsFile(const char* filename, int sampleRate);
+std::vector<int64> parseLengthsFile(const char* filename, uint64 sampleRate);
 const uint64 fourgb = 268435456ULL * 16ULL;
 
 class PerfTimer

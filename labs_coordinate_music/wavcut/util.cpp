@@ -75,7 +75,7 @@ std::vector<std::string> splitString(const std::string & s, char delim)
 	return elems;
 }
 
-std::vector<int64> parseLengthsFile(const char* filename, int sampleRate)
+std::vector<int64> parseLengthsFile(const char* filename, uint64 sampleRate)
 {
 	std::vector<int64> result;
 	if (!fileExists(filename))

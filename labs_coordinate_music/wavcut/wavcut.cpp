@@ -97,17 +97,18 @@ errormsg finishOutputFileAndStartNext(
 }
 
 void debugWriteTimesToDisk(
-	const char* filename, int64* times, int timesLen, bool diffs)
+	const char* filename, int64* times, int timesLen, bool diffs, uint64 nSampleRate)
 {
 #ifdef _DEBUG
 	FILE* f = fopen(filename, "w");
+	double sampleRate = nSampleRate * 1.0;
 	for (int i = 0; i < timesLen; i++)
 	{
 		int64 diff = (times[i] - (i == 0 ? 0 : times[i - 1]));
 		if (diffs)
-			fprintf(f, "%f|%d\n", diff / 44100.0, i);
+			fprintf(f, "%f|%d\n", diff / sampleRate, i);
 		else
-			fprintf(f, "%f|%d\n", times[i] / 44100.0, i);
+			fprintf(f, "%f|%d\n", times[i] / sampleRate, i);
 	}
 	fclose(f);
 #endif
@@ -118,12 +119,17 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 	int64* times, int timesLen, int64 startingpoint, 
 	SimpleBuffer& trackNeedsFadeIn, SimpleBuffer& trackNeedsFadeOut)
 {
+	if (info->nSampleRate != 44100 && info->nSampleRate != 48000 &&
+		info->nSampleRate != 44100 * 2 && info->nSampleRate != 48000 * 2) {
+		return_err("Error, sample rate is not supported.");
+	}
+	
 	const uint64 bytesPerSample = 4;
-	SimpleBuffer bufferWindow(4 * bytesPerSample * 44100);
+	SimpleBuffer bufferWindow(4 * bytesPerSample * info->nSampleRate);
 	
 	for (int i = 0; i < timesLen; i++)
 	{
-		if (times[i] / 44100.0 <= 9)
+		if (times[i] * 1.0 / info->nSampleRate <= 9)
 			return_err("we don't support tracks shorter than 9seconds");
 
 		// go to the approximate end of the song.
@@ -132,7 +138,7 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 		int64 timeprev = i == 0 ? 0 : times[i - 1];
 		uint64 firstPoint = startingpoint + 
 			(times[i] + timeprev) * bytesPerSample -
-			lookBefore * 44100 * bytesPerSample;
+			lookBefore * info->nSampleRate * bytesPerSample;
 
 		if (firstPoint >= info->nExpectedSamples * bytesPerSample ||
 			firstPoint + bufferWindow.size() >= 
@@ -140,7 +146,7 @@ errormsg adjustGivenTimesBasedOnObservedSilence(
 			return_err("tried to read past end of file?");
 		int64 positionToSeekToNotCountingStartingPoint = 
 			(times[i] + timeprev)*bytesPerSample -
-			lookBefore * 44100 * bytesPerSample;
+			lookBefore * info->nSampleRate * bytesPerSample;
 		int seekres = fseek64(
 			f,
 			startingpoint + positionToSeekToNotCountingStartingPoint,
@@ -234,7 +240,7 @@ errormsg runWavCutUsingProvidedTimes(
 	FILE* f, const WavFileInfoT* info, const char* prefix,
 	int64* times, int timesLen, bool preview)
 {
-	debugWriteTimesToDisk("./lengthsUnadjusted.txt", times, timesLen, false);
+	debugWriteTimesToDisk("./lengthsUnadjusted.txt", times, timesLen, false, info->nSampleRate);
 
 	// in a 4 second window, use observed silence to see where the end really is.
 	// (or if no silence, enable fade-out).
@@ -248,7 +254,7 @@ errormsg runWavCutUsingProvidedTimes(
 	if (err)
 		return err;
 
-	debugWriteTimesToDisk("./lengthsAdjusted.txt", times, timesLen, true);
+	debugWriteTimesToDisk("./lengthsAdjusted.txt", times, timesLen, true, info->nSampleRate);
 
 	if (preview)
 	{
@@ -256,7 +262,7 @@ errormsg runWavCutUsingProvidedTimes(
 		for (int i = 0; i < timesLen; i++)
 		{
 			int64 diff = (times[i] - (i == 0 ? 0 : times[i - 1]));
-			int seconds = (int)(diff / 44100.0);
+			int seconds = (int)(diff * 1.0 / info->nSampleRate);
 			printf("%04d\t%02d:%02d\n", i + 1, seconds / 60, seconds % 60);
 		}
 
@@ -314,7 +320,7 @@ errormsg runWavCutUsingProvidedTimes(
 			{
 				// fade in the first part of this buffer.
 				uint32 fadeLength = std::min(
-					(uint32)(.6 * 44100), nGotThisIteration / 4);
+					(uint32)(.6 * info->nSampleRate), nGotThisIteration / 4);
 				
 				printf("in file %s writing fadein\n", filename.c_str());
 				for (uint32 j = 0; j < fadeLength; j++)
@@ -340,7 +346,7 @@ errormsg runWavCutUsingProvidedTimes(
 			{
 				// fade out the last part of this buffer.
 				uint32 fadeLength = std::min(
-					(uint32)(.6 * 44100), nGotThisIteration / 4);
+					(uint32)(.6 * info->nSampleRate), nGotThisIteration / 4);
 				printf("in %s writing fadeout len=%d\n",
 					filename.c_str(), fadeLength);
 				for (uint32 jcounter = 0; jcounter < fadeLength; jcounter++)
@@ -433,7 +439,7 @@ errormsg runWavCutUsingAudioMark(
 			{
 				if (preview)
 				{
-					int seconds = (int)(i / 44100.0);
+					int seconds = (int)(i * 1.0 / info->nSampleRate);
 					printf("found a place to cut (%02d:%02d) \n", 
 						seconds / 60, seconds % 60);
 					
@@ -511,7 +517,7 @@ errormsg runWavCutUsingAutoDetectSilence(
 		outputFile->putchar(b2);
 
 		// 8 seconds is shortest song length
-		if (i - nFileWrittenAt < 44100 * 8)
+		if (i - nFileWrittenAt < info->nSampleRate * 8)
 			continue;
 
 		// only look at one of the channels
@@ -601,6 +607,11 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f, bool previ
 
 	printf("\n\nLength of file is ");
 	printADuration(info.nExpectedSamples, info.nSampleRate);
+	if (info.nSampleRate != 44100 && info.nSampleRate != 48000 &&
+		info.nSampleRate != 44100 * 2 && info.nSampleRate != 48000 * 2) {
+		printf("Error, sample rate is not supported.");
+		return 1;
+	}
 
 	int nPrefix = 'a';
 	printf("\nenter a one-letter prefix for output filenames (a-z):");
@@ -622,7 +633,7 @@ int runWavCut(const char* path, const char* pathLengthsFile, FILE* f, bool previ
 	PerfTimer timer;
 	if (pathLengthsFile)
 	{
-		std::vector<int64> lengths = parseLengthsFile(pathLengthsFile, 44100);
+		std::vector<int64> lengths = parseLengthsFile(pathLengthsFile, info.nSampleRate);
 		if (!lengths.size())
 			return 1;
 
