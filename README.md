@@ -40,7 +40,7 @@ Here's what it looks like to create links, an album at a time:
 	* you can sign up for this at https://developer.spotify.com/my-applications/
 1. Run \_\_main\_\_.py, it will interactively ask what you'd like it to do
 
-Also: the C++ program wavcut can split wav files based on a list of approximate song lengths in seconds.
+Also: the C++ program wavcut can split wav files based on a list of approximate song lengths in seconds. It searches for silence in order to split a long audio file into separate tracks.
 
 Also: on Windows, you can install pywinauto to enable the "type into Spotify window" feature.
 

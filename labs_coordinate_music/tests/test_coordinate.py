@@ -283,13 +283,13 @@ class TestMusicUtils(object):
     
     # test checkDeleteUrlsInTheWayOfM4as
     def getFileList(self, dir, joined=True):
-        lst = (sorted([short for file, short in files.listfiles(dir)]))
+        lst = (sorted([short for file, short in files.listFiles(dir)]))
         return '|'.join(lst) if joined else lst
     
     def test_checkDeleteUrlsInTheWayOfM4as(self, fixture_dir):
-        files.writeall(join(fixture_dir, 'test ok.url'), '')
-        files.writeall(join(fixture_dir, 'test conflict.url'), '')
-        files.writeall(join(fixture_dir, 'test conflict.m4a'), '')
+        files.writeAll(join(fixture_dir, 'test ok.url'), '')
+        files.writeAll(join(fixture_dir, 'test conflict.url'), '')
+        files.writeAll(join(fixture_dir, 'test conflict.m4a'), '')
         with pytest.raises(StopBecauseWeRenamedFile):
             checkDeleteUrlsInTheWayOfM4as(fixture_dir, self.getFileList(fixture_dir, False))
         

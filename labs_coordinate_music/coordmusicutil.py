@@ -6,9 +6,10 @@ import sys
 import string
 import re
 import wave
-sys.path.append('bn_python_common/bn_python_common.zip')
-sys.path.append('bn_python_common.zip')
-from bn_python_common import *
+
+from shinerainsevenlib.standard import *
+from shinerainsevenlib.core import *
+
 from labs_coordinate_music.coordmusicuserconfig import *
 from labs_coordinate_music.easypythonmutagen import \
     EasyPythonMutagen, mutagen_get_audio_duration
@@ -272,7 +273,6 @@ def typeIntoSpotifySearch(s):
         subprocess.Popen(['start', 'spotify:'], shell=True)
         if getInputFromChoices('please wait for spotify to open', ['Spotify is open'])[0] == 0:
             return typeIntoSpotifySearch(s)
-            return
             
     try:
         sEscaped = s.replace('%', '{%}').replace('^', '{^}').replace('+', '{+}')

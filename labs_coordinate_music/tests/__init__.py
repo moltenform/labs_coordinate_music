@@ -7,9 +7,9 @@ import tempfile
 import os
 from os.path import join
 import sys
-sys.path.append('../bn_python_common/bn_python_common.zip')
-sys.path.append('../bn_python_common.zip')
-from bn_python_common import *
+
+from shinerainsevenlib.standard import *
+from shinerainsevenlib.core import *
 
 @pytest.fixture(scope='module')
 def fixture_getmedia():
@@ -21,7 +21,7 @@ def fixture_getmedia():
         assert False
 
     # copy test media to temp directory
-    for full, short in files.listfiles(u'./media'):
+    for full, short in files.listFiles(u'./media'):
         files.copy(full, join(basedir, short), True)
 
     yield basedir

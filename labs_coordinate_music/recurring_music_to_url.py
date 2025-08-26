@@ -31,7 +31,7 @@ def getPopularitiesList(fullpathdir, tags):
 def getStringTrackAndPopularity(directory, obj, popularity):
     localLen = int(get_audio_duration(files.join(directory, obj.short), obj))
     localBitrate = int(get_empirical_bitrate(files.join(directory, obj.short), obj))
-    size = '%.1fMb'%(files.getsize(files.join(directory, obj.short)) / (1024.0 * 1024))
+    size = '%.1fMb'%(files.getSize(files.join(directory, obj.short)) / (1024.0 * 1024))
     return 'p%02dp %s %s %dk %02d:%02d'%(popularity, obj.short, size, localBitrate, localLen // 60, localLen%60)
     
 
@@ -73,7 +73,7 @@ def m4aToUrlWithBitrate(directory, short, obj):
             break
         elif inp == 'no' or inp == 'n':
             return
-    newname = directory + '/' + files.splitext(short)[0]
+    newname = directory + '/' + files.splitExt(short)[0]
     newname += (' (%d).url'%urlRatingNumber) if urlRatingNumber != 'none' else '.url'
     assert 'spotify:track:' in obj.getLink()
     writeUrlFile(newname, obj.getLink())
@@ -82,6 +82,7 @@ def m4aToUrlWithBitrate(directory, short, obj):
     except WindowsError:
         alert('you need to close the file first!')
         softDeleteFile(directory + '/' + short)
+    return newname
     
 class SaveDiskSpaceMusicToUrl(object):
     def __init__(self, enabled=True):
@@ -104,7 +105,7 @@ class SaveDiskSpaceMusicToUrl(object):
         
         # if it's an album, show the entire album, for context
         trace('looking to save disk space in %s (%.1fMb)\n'%(
-            fullpathdir, sum(files.getsize(files.join(fullpathdir, tag.short)) for tag in tags) / (1024.0 * 1024)))
+            fullpathdir, sum(files.getSize(files.join(fullpathdir, tag.short)) for tag in tags) / (1024.0 * 1024)))
         for tag, popularity in zip(tags, popularitiesList):
             trace(getStringTrackAndPopularity(fullpathdir, tag, popularity))
         

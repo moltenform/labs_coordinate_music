@@ -1,0 +1,34 @@
+{
+    
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "python lint",
+            "type": "shell",
+            "command": "py -m pylint .",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/labs_coordinate_music"
+            },
+        },
+        {
+            "label": "ruff lint",
+            "type": "shell",
+            "command": "py -m ruff check .",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}/labs_coordinate_music"
+            },
+        },
+    ]
+}
+
+

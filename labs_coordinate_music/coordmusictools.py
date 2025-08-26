@@ -12,7 +12,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     path = os.path.realpath(os.path.abspath(__file__))
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
-import labs_coordinate_music.recurring_linkspotify as recurring_linkspotify
+from labs_coordinate_music import recurring_linkspotify
 from labs_coordinate_music.coordmusicutil import *
 
 def tools_getPlaylistId(playlistId=None):
@@ -47,7 +47,7 @@ def tools_spotifyPlaylistToSongLengths(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
     tracks = getTracksFromPlaylist(spotipyconn(), playlistId)
     outpath = getDefaultDirectorySpotifyToFilenames() + '/data/lengths.txt'
-    with open(outpath, 'w') as fout:
+    with open(outpath, 'w', encoding='utf-8') as fout:
         for i, track in enumerate(tracks):
             fout.write('%f|%d %s'%(track['duration_ms'] / 1000.0, i + 1, track['uri']))
             fout.write('\n')

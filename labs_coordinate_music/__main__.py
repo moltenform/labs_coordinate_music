@@ -55,9 +55,7 @@ def main():
 def checkForMetadataTags(dir):
     import coordmusicutil
     import sys
-    sys.path.append('bn_python_common/bn_python_common.zip')
-    sys.path.append('bn_python_common.zip')
-    from bn_python_common import files
+    from shinerainsevenlib.standard import files
 
     assert files.exists(dir)
     countWithTags = 0

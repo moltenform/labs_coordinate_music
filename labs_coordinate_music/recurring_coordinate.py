@@ -6,6 +6,8 @@ import re
 import copy
 import codecs
 import time
+import enum
+
 from labs_coordinate_music.coordmusicutil import *
 from labs_coordinate_music.recurring_music_to_url import SaveDiskSpaceMusicToUrl
 from labs_coordinate_music.recurring_linkspotify import \
@@ -16,9 +18,14 @@ from labs_coordinate_music.recurring_linkspotify import \
 # ' Compilation': within this directory, allow tracks to have tag for a different album
 # ' Selections': do not require track numbers in this directory
 
-NameStyle = SimpleEnum(('Title', 'ArtistTitle', 'TrackTitle',
-    'TrackArtistTitle', 'DiscTrackTitle', 'DiscTrackArtistTitle'))
-    
+class NameStyle(enum.StrEnum):
+    Title = enum.auto()
+    ArtistTitle = enum.auto()
+    TrackTitle = enum.auto()
+    TrackArtistTitle = enum.auto()
+    DiscTrackTitle = enum.auto()
+    DiscTrackArtistTitle = enum.auto()
+
 def parseAFilename(short):
     name = bnsplitext(short)[0]
     name = stripMarkersFromFilename(name)
