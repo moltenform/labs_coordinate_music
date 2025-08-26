@@ -47,6 +47,8 @@ def tools_viewSpotifyPlaylist(playlistId=None):
 def tools_spotifyPlaylistToSongLengths(playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
     tracks = getTracksFromPlaylist(spotipyconn(), playlistId)
+    startInPlaylist = getInputInt('start where in the playlist (default 1)?', 1, len(tracks)) - 1
+    tracks = tracks[startInPlaylist:]
     outpath = getDefaultDirectorySpotifyToFilenames() + '/data/lengths.txt'
     with open(outpath, 'w', encoding='utf-8') as fout:
         for i, track in enumerate(tracks):
@@ -117,23 +119,59 @@ def setMetadataFromFilename(fullpath):
     obj.set('tracknumber', tracknum)
     obj.save()
     
-def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None):
+def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None, styleGiven=None):
+    respondToSmallFiles = 'makeLink' # makeLink|skip|delete 
     if localfiles is None:
-        localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
+        localfiles = list(files.listFiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
     for fullpath, short in localfiles:
         if short.endswith('.wav'):
             warn('why is there still a wav here? ' + short)
         if '__MARKAS' in short:
             warn('why is there a file with MARKAS here? ' + short)
     
+    if styleGiven:
+        renameAlbumStyle = styleGiven['renameAlbumStyle']
+        renameAlbumHasManyArtists = styleGiven['renameAlbumHasManyArtists']
+        renameLooseStyle = styleGiven['renameLooseStyle']
+    else:
+        renameAlbumStyle = getInputBool('Rename albums style?')
+        renameLooseStyle = getInputBool('Rename loose songs style?')
+        if renameAlbumStyle:
+            renameAlbumHasManyArtists = getInputBool('Album has mulitple artists?')
+            
     for fullpath, short in localfiles:
-        if fullpath.endswith('.m4a'):
+        if fullpath.endswith('.m4a') or fullpath.endswith('.flac'):
+            newpath = None
             setMetadataFromFilename(fullpath)
-            if get_empirical_bitrate(fullpath) < 20:
-                trace('auto-deleting low bitrate', short)
-                softDeleteFile(fullpath)
+            tag = CoordMusicAudioMetadata(fullpath)
+            if get_empirical_bitrate(fullpath) <= 30:
+                trace('found low bitrate', short)
+                if respondToSmallFiles == 'skip':
+                    results.append(fullpath)
+                elif respondToSmallFiles == 'delete':
+                    softDeleteFile(fullpath)
+                elif respondToSmallFiles == 'makeLink':
+                    newpath = recurring_music_to_url.m4aToUrlWithBitrate(files.getParent(fullpath), tag.short, tag)
+                else:
+                    raise Exception('unknown respondToSmallFiles')
             else:
                 trace('saved tags for', short)
+        
+            if renameAlbumStyle:
+                path = newpath or fullpath
+                if renameAlbumHasManyArtists:
+                    newshort = ('%02d'%int(tag.get('tracknumber'))) + ' ' + tag.get('artist') + ' - ' + tag.get('title') + files.splitExt(path)[1]
+                    newDir = files.getParent(path) + '/' + tag.get('album')
+                else:
+                    newshort = ('%02d'%int(tag.get('tracknumber'))) + ' ' + tag.get('title') + files.splitExt(path)[1]
+                    newDir = files.getParent(path) + '/' + tag.get('album')
+                files.makeDirs(newDir)
+                files.move(path, newDir + '/' + newshort, False)
+            elif renameLooseStyle:
+                path = newpath or fullpath
+                newshort = tag.get('artist') + ' - ' + tag.get('title') + files.splitExt(path)[1]
+                files.move(path, files.getParent(path) + '/' + newshort, False)
+    
 
 def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
     if not dir:
@@ -191,7 +229,7 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
         playlistId = tools_getPlaylistId()
         trace('adding %d tracks' % len(addToPlaylist))
         for batch in takeBatch(addToPlaylist, 10):
-            spotipyconn().user_playlist_add_tracks(getSpotifyUsername(), playlistId, [item for item in batch])
+            spotipyconn().user_playlist_add_tracks(getSpotifyUsername(), playlistId, list(batch))
             time.sleep(0.2)
     
 def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
@@ -423,6 +461,18 @@ def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMa
         listOfSongInfoObjects = []
         countObjectsNeedingHttp = 0
 
+def tools_assignTagIfUntagged():
+    import recurring_coordinate
+    fileIterator = getScopedRecurseFiles(getMusicRoot(), filterOutLib=True)
+    logOnly = True
+    for filename, short in fileIterator:
+        if getFieldForFile(filename, throw=False):
+            obj = CoordMusicAudioMetadata(filename)
+            if not obj.get_or_default('album', None) and not obj.get_or_default('track', None) and not obj.get_or_default('comment', None) and not obj.get_or_default('title', None):
+                trace('hardly any tags set on', filename)
+                if not logOnly:
+                    obj.set('album', recurring_coordinate.emptyAlbumPlaceholder)
+                    obj.save()
 
 if __name__ == '__main__':
     fns = [tools_clearPlaylist,
@@ -433,7 +483,9 @@ if __name__ == '__main__':
         tools_outsideMp3sToSpotifyPlaylist,
         tools_newFilesBackToReplaceOutsideMp3s,
         tools_lookForMp3AndAddToPlaylist,
-        tools_saveFilenamesMetadataToText]
+        tools_saveFilenamesMetadataToText,
+        tools_assignTagIfUntagged,
+        ]
     choice, s = getInputFromChoices('', [fn.__name__.replace('tools_', '') for fn in fns])
     if choice >= 0:
         fns[choice]()

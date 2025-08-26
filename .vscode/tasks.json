@@ -5,7 +5,7 @@
         {
             "label": "python lint",
             "type": "shell",
-            "command": "py -m pylint .",
+            "command": "py -m pylint --rcfile pyproject.toml .",
             "problemMatcher": [],
             "group": {
                 "kind": "build",

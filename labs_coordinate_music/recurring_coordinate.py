@@ -30,8 +30,6 @@ class NameStyle(enum.StrEnum):
     DiscTrackTitle = enum.auto()
     DiscTrackArtistTitle = enum.auto()
 
-    
-
 def parseAFilename(short):
     name = bnsplitext(short)[0]
     name = stripMarkersFromFilename(name)
@@ -294,13 +292,20 @@ def checkFilenameIrregularities(fullpathdir, shorts):
         for short in shorts:
             if ' - ' in short:
                 first, second = short.split(' - ')
-                proposednames = [first + ' (' + bnsplitext(second)[0] + ')' + bnsplitext(second)[1],
-                    first + ', ' + second,
-                    first + ' ' + second]
-                choice = getInputFromChoices('choose a new name:', proposednames)
-                if choice[0] >= 0:
-                    files.move(fullpathdir + '/' + short, fullpathdir + '/' + proposednames[choice[0]], False)
-                    changedAtLeastOne = True
+                while True:
+                    proposednames = ['Open in explorer',
+                        first + ' (' + bnsplitext(second)[0] + ')' + bnsplitext(second)[1],
+                        first + ', ' + second,
+                        first + ' ' + second]
+                    choice = getInputFromChoices('choose a new name:', proposednames)
+                    if choice[0] >= 0:
+                        if proposednames[choice[0]] == 'Open in explorer':
+                            files.openDirectoryInExplorer(fullpathdir)
+                            continue
+                        else:
+                            files.move(fullpathdir + '/' + short, fullpathdir + '/' + proposednames[choice[0]], False)
+                            changedAtLeastOne = True
+                    break
     
     stopIfFileRenamed(changedAtLeastOne)
     
@@ -427,6 +432,9 @@ def checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames):
         seenTracknumber |= 'Track' in parsed.style
         seenWithoutSpotify |= not tag.getLink()
         for field in requiredfields:
+            if field == 'album' and tag.get_or_default(field, None) == emptyAlbumPlaceholder:
+                tag.set('album', '')
+            
             isInAnAlbum = 'Track' in parsed.style
             if not tag.get_or_default(field, None):
                 spotlink = tag.getLink()

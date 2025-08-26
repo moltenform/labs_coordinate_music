@@ -133,7 +133,45 @@ max-line-length = 999
 
 # C0413 imports should be at the top
 # W1406 no longer need u''
-disable = "C0103,W0401,C0116,C0114, W0614,R0911,R0912,C0415,W0611,R0913,C0209,C0305,W0702,C0115,R1705,R0902,R0903,E0401,C0303,C1802,R0401,R1720,R1732,R0914,R1735,R1737,W0603,R1716,W0718,W0108,R1703,R0917,C3001,C0413,W1406"
+# C0411 standard import "os.path.join" should be placed before third party import "pytest" 
+disable = """
+C0103,
+W0401,
+C0116,
+C0114,
+W0614,
+R0911,
+R0912,
+C0415,
+W0611,
+R0913,
+C0209,
+C0305,
+W0702,
+C0115,
+R1705,
+R0902,
+R0903,
+E0401,
+C0303,
+C1802,
+R0401,
+R1720,
+R1732,
+R0914,
+R1735,
+R1737,
+W0603,
+R1716,
+W0718,
+W0108,
+R1703,
+R0917,
+C3001,
+C0413,
+W1406,
+C0411,
+W0622"""
 
 # The warning E1101 we want enabled because it's useful to catch missing functions.
 

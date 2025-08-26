@@ -247,10 +247,12 @@ class EasyPythonMutagenId3(object):
             else:
                 frame.encoding = encoding
                 frame.text = val
+            
+            return None
         
     def __contains__(self, key):
         try:
-            self[key]
+            self[key]  # noqa: W0104
             return True
         except KeyError:
             return False

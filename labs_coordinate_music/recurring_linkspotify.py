@@ -5,6 +5,15 @@
 from labs_coordinate_music.coordmusicutil import *
 import re
 
+def getMetadataForSongIfFound(spotlink):
+    assertTrue(spotlink.startswith('spotify:track:'))
+    results = spotipyconn().tracks([spotlink])
+    for track in results['tracks']:
+        if track['id'] == spotlink or track['uri'] == spotlink:
+            return track
+
+    return None
+
 def lookupAlbumForFile(path, tag, parsed, spotlink):
     if get_empirical_bitrate(path, tag) < 30:
         trace('skipping lookupAlbumForFile for %s since bitrate is low'%path)
@@ -12,10 +21,7 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
     
     trackSeen = None
     if spotlink and 'spotify:track:' in spotlink:
-        results = spotipyconn().tracks([spotlink])
-        for track in results['tracks']:
-            if track['id'] == spotlink or track['uri'] == spotlink:
-                trackSeen = track
+        trackSeen = getMetadataForSongIfFound(spotlink)
 
     choices = ['search online']
     if trackSeen:
@@ -28,7 +34,7 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
             launchMediaPlayer(otherCommandsContext.path)
             return False
         elif s == 'explorer':
-            askExplorer(files.getparent(path))
+            askExplorer(files.getParent(path))
             return False
         elif s == 'SS':
             return 'enteredmanally' + parsed.title
@@ -78,7 +84,7 @@ def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknum
     elif choice[0] == 1:
         linkspotifyperalbum(market, fullpathdir, tags, parsedNames)
         
-def runspotifysearch(market, search_str, type, limit, filterCovers):
+def runspotifysearch(market, search_str, search_title, type, limit, filterCovers):
     assertTrue(type == 'album' or type == 'track', 'unsupported search type ' + type)
     result = spotipyconn()._get('search', q=search_str, limit=limit, offset=0, type=type, market=market)
     result = result[type + 's']['items']
@@ -89,13 +95,56 @@ def runspotifysearch(market, search_str, type, limit, filterCovers):
         else:
             textlower = res[u'name'].lower()
         
+        if stricter_matching and not does_title_match_a_bit(search_title.lower(), res[u'name'].lower()):
+            continue
+
+        if not isInSpotifyMarket(res, market):
+            continue
+        
+        if not res[u'uri'].startswith('spotify:' + type + ':'):
+            continue
+        
         if not filterCovers or not re.findall(r'\b(karaoke|style of|tribute|tributes|cover|parody|originally performed)\b', textlower):
             resultFiltered.append(res)
             
-    # confirm that it is filtered by market
-    resultFiltered = [track for track in resultFiltered if isInSpotifyMarket(track, market) and
-        track[u'uri'].startswith('spotify:' + type + ':')]
     return resultFiltered
+
+def remove_quotes_punctuation(s):
+    # normalize quote marks by deleting them
+    s = s.replace('"', '').replace("'", '')
+    s = s.replace('“', '').replace('”', '').replace('‘', '').replace('’', '')
+    s = s.replace(':', '').replace(';', '').replace('-', '').replace('–', '')
+    return s
+
+def remove_diacritics(s):
+    from unicodedata import combining, normalize
+    s = remove_quotes_punctuation(s)
+    LATIN = "ä  æ  ǽ  đ ð ƒ ħ ı ł ø ǿ ö  œ  ß  ŧ ü "
+    ASCII = "ae ae ae d d f h i l o o oe oe ss t ue"
+    outliers = str.maketrans(dict(zip(LATIN.split(), ASCII.split())))
+    return "".join(c for c in normalize("NFD", s.lower().translate(outliers)) if not combining(c))
+
+def longest_common_substring(s1, s2):
+   m = [[0] * (1 + len(s2)) for i in range (1 + len(s1))]
+   longest, x_longest = 0, 0
+   for x in range(1, 1 + len(s1)):
+       for y in range(1, 1 + len(s2)):
+           if s1[x - 1] == s2[y - 1]:
+               m[x][y] = m[x - 1][y - 1] + 1
+               if m[x][y] > longest:
+                   longest = m[x][y]
+                   x_longest = x
+           else:
+               m[x][y] = 0
+   return s1[x_longest - longest: x_longest]
+
+def does_title_match_a_bit(expected, got):
+    # not diflib.ratio because it returns a low score for 'hello, world' vs 'hello' which we'd want to give a high score
+    expected = remove_diacritics(expected)
+    got = remove_diacritics(got)
+    score_wanted = min(5, len(expected), len(got)) # can't require a score of 5 for strings shorter than 5
+    longestmatch = longest_common_substring(expected, got)
+    return len(longestmatch) >= score_wanted
 
 def getStrLocalAudioFile(path, parsed, tag, duration=None):
     if duration is None:
@@ -127,14 +176,14 @@ def getStrRemoteAlbum(tracks, albumartists):
     return '\n'.join(ret)
     
 def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
-    fullpathdir, search_str, tag, results, market = otherCommandsContext
+    fullpathdir, search_str, search_title, tag, results, market = otherCommandsContext
     done = False
     if inp == 'ns':
         tag.setLink('spotify:notfound')
         tag.save()
         done = True
     elif inp == 'NS' and getInputBool('sure entire directory is not on spotify?'):
-        for fullpath, short in files.listfiles(fullpathdir):
+        for fullpath, short in files.listFiles(fullpathdir):
             if getFieldForFile(fullpath, False):
                 trace('setting to spotify:notfound,', short)
                 stampM4a(fullpath, 'spotify:notfound', onlyIfNotAlreadySet=True)
@@ -157,19 +206,28 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
     elif inp == 'type':
         typeIntoSpotifySearch(search_str)
     elif inp.startswith('more'):
-        results[:] = runspotifysearch(market, search_str, type='track', limit=20, filterCovers=False)
+        results[:] = runspotifysearch(market, search_str, search_title=search_title, type='track', limit=20, filterCovers=False)
         done = 'more'
     elif inp.startswith('spotify:track:'):
         inp = inp[len('spotify:track:'):]
         results.append(spotipyconn().track(inp))
         done = 'more'
+    elif inp.startswith('https://open.spotify.com/track/'):
+        inp = inp[len('https://open.spotify.com/track/'):]
+        inp = inp.split('?')[0]
+        if len(inp) == len('5XeSAezNDk9tuw3viiCbZ3'):            
+            results.insert(0, spotipyconn().track(inp))
+            done = 'more'
+        else:
+            trace("Could not parse. Expected something like https://open.spotify.com/track/5XeSAezNDk9tuw3viiCbZ3?si=abc")
+    
     return done
 
 def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
-    fullpathdir, search_str, tags, results, market = otherCommandsContext
+    fullpathdir, search_str, search_title, tags, results, market = otherCommandsContext
     done = False
     if inp == 'ns' and getInputBool('sure entire directory is not on spotify?'):
-        for fullpath, short in files.listfiles(fullpathdir):
+        for fullpath, short in files.listFiles(fullpathdir):
             if getFieldForFile(fullpath, False):
                 trace('setting to spotify:notfound,', short)
                 stampM4a(fullpath, 'spotify:notfound', onlyIfNotAlreadySet=True)
@@ -181,12 +239,21 @@ def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
     elif inp == 'type':
         typeIntoSpotifySearch(search_str)
     elif inp.startswith('more'):
-        results[:] = runspotifysearch(market, search_str, type='album', limit=20, filterCovers=True)
+        results[:] = runspotifysearch(market, search_str, search_title=search_title, type='album', limit=20, filterCovers=False)
         done = 'more'
     elif inp.startswith('spotify:album:'):
         inp = inp[len('spotify:album:'):]
         results.append(spotipyconn().album(inp))
         done = 'more'
+    elif inp.startswith('https://open.spotify.com/album/'):
+        inp = inp[len('https://open.spotify.com/album/'):]
+        inp = inp.split('?')[0]
+        if len(inp) == len('3Eiwyp3EB66AuXjBI2MYZI'):            
+            results.insert(0, spotipyconn().track(inp))
+            done = 'more'
+        else:
+            trace("Could not parse. Expected something like https://open.spotify.com/album/3Eiwyp3EB66AuXjBI2MYZI?si=SnT")
+    
     return done
     
 def callbackForChoiceAlbumTrack(inp, arrChoices, otherCommandsContext):
@@ -219,6 +286,14 @@ def getChoiceString(track, localduration, artistExpected='', inclAlbum=False):
         ret += '\n\tfrom %s'%track['album']['name']
     return ret
 
+def filter_by_duration(results, localduration):
+    max_allowed_difference = 35
+    def is_duration_ok(track):
+        remoteduration = track['duration_ms'] / 1000.0
+        diff = abs(remoteduration - localduration)
+        return diff < max_allowed_difference
+    return [track for track in results if is_duration_ok(track)]
+
 def linkspotifypertrack(market, fullpathdir, tag, parsed):
     if tag.short.endswith('.url') or 'spotify:' in tag.getLink():
         return
@@ -228,15 +303,17 @@ def linkspotifypertrack(market, fullpathdir, tag, parsed):
     artist = (parsed.artist if parsed.artist else tag.get('artist')) or ''
     title = (parsed.title if parsed.title else tag.get('title')) or ''
     
-    trace('\n\n\nin folder\n', files.getname(fullpathdir), '\n', tag.short)
+    trace('\n\n\nin folder\n', files.getName(fullpathdir), '\n', tag.short)
     trace('\n00 %s\n\n'%getStrLocalAudioFile(path, parsed, tag, localduration))
     search_str = ustr(artist) + ' ' + title
-    results = runspotifysearch(market, search_str, type='track', limit=8, filterCovers=True)
+    limit = 5 if stricter_matching else 8
+    results = runspotifysearch(market, search_str, search_title=title, type='track', limit=limit, filterCovers=True)
+    results = filter_by_duration(results, localduration) if stricter_matching else results
     
     while True:
         choices = [getChoiceString(track, localduration, artist, inclAlbum=True) for track in results]
-        prompt = 'choose, or "hear#", "type", "more", "spotify:track:...", "ns" (notseenonspotify)'
-        otherCommandsContext = (fullpathdir, search_str, tag, results, market)
+        prompt = 'choose, or "hear#", "type", "more", "spotify:track:...", link to track, "ns" (notseenonspotify)'
+        otherCommandsContext = (fullpathdir, search_str, title, tag, results, market)
         choice = getInputFromChoices(prompt, choices, callbackForChoiceTrack, otherCommandsContext)
         if choice[0] == -1 and choice[1] == 'more':
             # the variable "results" has been updated; loop again
@@ -271,13 +348,13 @@ def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
     album = parsedNames[0].album
     artist = parsedNames[0].artist
     search_str = ustr(artist + ' ' + album)
-    results = runspotifysearch(market, search_str, type='album', limit=10, filterCovers=True)
+    results = runspotifysearch(market, search_str, search_title=album, type='album', limit=10, filterCovers=True)
     
     while True:
         estimatedalbumartists = [getArtistFromAlbumid(albumobj['id']) for albumobj in results]
         choices = [albumobj['name'] + ' by "' + estimatedalbumartists[i] + '"' for i, albumobj in enumerate(results)]
         prompt = 'choose, or "type", "more", "spotify:album:...", "ns" (notseenonspotify)'
-        otherCommandsContext = (fullpathdir, search_str, tags, results, market)
+        otherCommandsContext = (fullpathdir, search_str, album, tags, results, market)
         choice = getInputFromChoices(prompt, choices, callbackForChoiceAlbum, otherCommandsContext)
         if choice[0] == -1 and choice[1] == 'more':
             # the variable "results" has been updated; loop again
@@ -403,10 +480,16 @@ def viewTagsFromM4aOrDirectory(path):
         else:
             return ''
             
-    if files.isdir(path):
+    if files.isDir(path):
         trace('Spotify links in', path)
-        for full, short in files.listfiles(path):
+        for full, short in files.listFiles(path):
             trace(short, viewTagsFromFile(full))
     else:
-        trace('Spotify links in', files.getparent(path))
-        trace(files.getname(path), viewTagsFromFile(path))
+        trace('Spotify links in', files.getParent(path))
+        trace(files.getName(path), viewTagsFromFile(path))
+
+
+assertEq('abc', remove_diacritics('abc'))
+assertEq('antonio e e', remove_diacritics('Antônio é è'))
+assertEq('ae oe', remove_diacritics('æ ö'))
+

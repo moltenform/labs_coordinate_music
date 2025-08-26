@@ -9,5 +9,13 @@
             "args": ["--capture=no", "--maxfail=1", "-v", "tests/"],
             "cwd": "${workspaceFolder}/labs_coordinate_music"
         },
+        {
+            "name": "Run ui tests",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tests/ui_tests.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}/labs_coordinate_music"
+        },
     ]
 }

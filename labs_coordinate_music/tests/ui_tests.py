@@ -225,6 +225,11 @@ if __name__ == '__main__':
     if __package__ is None and not hasattr(sys, 'frozen'):
         path = os.path.realpath(os.path.abspath(__file__))
         sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(path))))
+    
+    try:
+        from labs_coordinate_music import coordmusictools
+    except ImportError:
+        sys.path.append('..')
 
     from labs_coordinate_music import coordmusictools
     from labs_coordinate_music.coordmusicutil import *
@@ -238,7 +243,7 @@ if __name__ == '__main__':
         assert False
     
     tmpdir = ustr(join(tempfile.gettempdir(), 'test_music_coordination'))
-    mediadir = u'./media'
+    mediadir = u'./tests/media'
     testMusicToUrlInteractive(tmpdir, mediadir)
     testFromOutsideMp3Interactive(tmpdir, mediadir)
     testLinkSpotifyInteractive(tmpdir, mediadir)
