@@ -60,7 +60,7 @@ def checkForMetadataTags(dir):
     assert files.exists(dir)
     countWithTags = 0
     countWithoutTags = 0
-    for file, short in files.listfiles(dir):
+    for file, short in files.listFiles(dir):
         if coordmusicutil.getFieldForFile(file, False):
             obj = coordmusicutil.CoordMusicAudioMetadata(file)
             if obj.get_or_default('artist', None) and obj.get_or_default('title', None):

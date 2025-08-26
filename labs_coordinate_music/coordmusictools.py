@@ -13,6 +13,7 @@ if __package__ is None and not hasattr(sys, 'frozen'):
     sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
 
 from labs_coordinate_music import recurring_linkspotify
+from labs_coordinate_music import recurring_music_to_url
 from labs_coordinate_music.coordmusicutil import *
 
 def tools_getPlaylistId(playlistId=None):
@@ -60,7 +61,7 @@ def tools_spotifyPlaylistToFilenames(playlistId=None):
     tracks = tracks[startInPlaylist:]
     
     potentialRenames = []
-    localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
+    localfiles = list(files.listFiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
     for i, track in enumerate(tracks):
         if i >= len(localfiles):
             trace('reached end of available files, %d files needed but got %d'%(len(tracks), len(localfiles)))
@@ -72,12 +73,12 @@ def tools_spotifyPlaylistToFilenames(playlistId=None):
         trace('%d) %s %s\t->%s %s - %s'%(i + 1, localfiles[i][1], getFormattedDuration(get_audio_duration(localfiles[i][0])),
             getFormattedDuration(track['duration_ms'] / 1000.0),
             track['artists'][0]['name'], track['name']))
-        newname = files.getparent(localfiles[i][0]) + files.sep + getFilenameFromTrack(i + 1, track) + '.' + files.getext(localfiles[i][0])
+        newname = files.getParent(localfiles[i][0]) + files.sep + getFilenameFromTrack(i + 1, track) + '.' + files.getExt(localfiles[i][0])
         potentialRenames.append((localfiles[i][0], newname))
     
     if getInputBool('begin renaming?'):
         for old, new in potentialRenames:
-            trace('renaming "%s" to "%s"'%(files.getname(old), files.getname(new)))
+            trace('renaming "%s" to "%s"'%(files.getName(old), files.getName(new)))
             files.move(old, new, False)
 
 def getFilenameFromTrack(number, track):
@@ -101,7 +102,7 @@ def getFilenameFromTrack(number, track):
     return toValidFilename(newname)
     
 def setMetadataFromFilename(fullpath):
-    parts = files.getname(fullpath).split('$')
+    parts = files.getName(fullpath).split('$')
     if len(parts) != 5:
         trace('for file %s incorrect # of $'%(fullpath))
         return
@@ -142,13 +143,13 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
         if not dir:
             return
     
-    diriter = files.recursedirs(dir)
+    diriter = files.recurseDirs(dir)
     if mustSort:
         diriter = sorted(diriter, reverse=True)
     
     # first, associate all files with Spotify
     for fullpathdir, shortdir in diriter:
-        filepaths = [filepath for (filepath, fileshort) in files.listfiles(fullpathdir) if getFieldForFile(filepath, False)]
+        filepaths = [filepath for (filepath, fileshort) in files.listFiles(fullpathdir) if getFieldForFile(filepath, False)]
         for filepath in filepaths:
             if '__MARKAS' not in filepath:
                 assertTrue(False, 'cannot continue, file does not have __MARKAS. ' + filepath)
@@ -173,13 +174,13 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
             len(tags) > 0 and not alreadyAll, fullpathdir, tags, parsed, True, getSpotifyGeographicMarketName())
     
     # check that all files have a spotify link
-    for fullpath, short in files.recursefiles(dir):
+    for fullpath, short in files.recurseFiles(dir):
         if getFieldForFile(filepath, False):
             assertTrue('spotify:' in CoordMusicAudioMetadata(filepath).getLink())
     
     # add uris to list
     addToPlaylist = []
-    for fullpath, short in files.recursefiles(dir):
+    for fullpath, short in files.recurseFiles(dir):
         if getFieldForFile(fullpath, False) and '__MARKAS__24.' not in short:
             link = CoordMusicAudioMetadata(fullpath).getLink()
             if 'spotify:track:' in link:
@@ -206,7 +207,7 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
     mapSpotifyIdToNewFile = dict()
     if not dirNewFiles:
         dirNewFiles = getDirChoice(getDefaultDirectorySpotifyToFilenames(), 'where are incoming files?')
-    for newfilepath, newfileshort in files.listfiles(dirNewFiles):
+    for newfilepath, newfileshort in files.listFiles(dirNewFiles):
         if newfileshort.endswith('.wav') and '__MARKAS' not in newfileshort:
             parts = newfileshort.split('$')
             assertTrue(len(parts) == 5, 'unexpected number of $ in file ' + newfilepath)
@@ -217,14 +218,14 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
     
     # rename new files
     oldFiles = []
-    for fullpath, short in files.recursefiles(dir):
+    for fullpath, short in files.recurseFiles(dir):
         if getFieldForFile(fullpath, False) and '__MARKAS__' in short:
             link = CoordMusicAudioMetadata(fullpath).getLink()
             oldFiles.append((fullpath, short, link))
             if link in mapSpotifyIdToNewFile:
                 suffix = short.split('__MARKAS__')[1].split('.')[0]
-                newname = files.splitext(mapSpotifyIdToNewFile[link])[0] + '__MARKAS__' + suffix + '.wav'
-                trace('renaming\n', files.getname(mapSpotifyIdToNewFile[link]), '\nto\n', files.getname(newname))
+                newname = files.splitExt(mapSpotifyIdToNewFile[link])[0] + '__MARKAS__' + suffix + '.wav'
+                trace('renaming\n', files.getName(mapSpotifyIdToNewFile[link]), '\nto\n', files.getName(newname))
                 files.move(mapSpotifyIdToNewFile[link], newname, False)
                 
     # wait for user to convert .wav to .m4a
@@ -247,7 +248,7 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
 
     # rebuild mapSpotifyIdToNewFile, in case resuming and there are m4as present
     mapSpotifyIdToNewFile = dict()
-    for newfilepath, newfileshort in files.listfiles(dirNewFiles):
+    for newfilepath, newfileshort in files.listFiles(dirNewFiles):
         if newfileshort.endswith('.m4a') and '__MARKAS' not in newfileshort:
             parts = newfileshort.split('$')
             assertTrue(len(parts) == 5, 'unexpected number of $ in file ' + newfilepath)
@@ -259,7 +260,7 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
     # add id3 metadata
     alert('adding metadata.')
     filepaths = (mapSpotifyIdToNewFile[key] for key in mapSpotifyIdToNewFile)
-    tools_filenamesToMetadataAndRemoveLowBitrate([(s, files.getname(s)) for s in filepaths])
+    tools_filenamesToMetadataAndRemoveLowBitrate([(s, files.getName(s)) for s in filepaths])
         
     # move newfile back and replace existing.
     alert('about to move newfiles back and replace existing files.')
@@ -272,7 +273,7 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
                 softDeleteFile(fullpath)
             else:
                 if getInputBool(fullpath + ' can\'t be made a shortcut because it\'s not on Spotify. keep?'):
-                    files.move(fullpath, pathNoMark + files.splitext(fullpath)[1], False)
+                    files.move(fullpath, pathNoMark + files.splitExt(fullpath)[1], False)
                 else:
                     softDeleteFile(fullpath)
                     
@@ -288,11 +289,11 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
         else:
             # has no corresponding new file, so rename it
             suffix = short.split('__MARKAS__')[1].split('.')[0]
-            newshortWithQual = short if len(suffix) <= 2 else files.getname(pathNoMark) + ' (%s)'%suffix[0:2] + files.splitext(fullpath)[1]
-            newshortNoQual = files.getname(pathNoMark) + files.splitext(fullpath)[1]
+            newshortWithQual = short if len(suffix) <= 2 else files.getName(pathNoMark) + ' (%s)'%suffix[0:2] + files.splitExt(fullpath)[1]
+            newshortNoQual = files.getName(pathNoMark) + files.splitExt(fullpath)[1]
             choice, s = getInputFromChoices(fullpath + ' this file isn\'t on Spotify, new name is?', [newshortWithQual, newshortNoQual])
             if choice >= 0:
-                files.move(fullpath, files.join(files.getparent(fullpath), s), False)
+                files.move(fullpath, files.join(files.getParent(fullpath), s), False)
 
 def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
@@ -332,14 +333,14 @@ class ExtendedSongInfo(object):
             self.info['uri'] = getFromUrlFile(filename)
         elif filename.endswith('.txt'):
             # read the first 64k of utf8 text.
-            self.info['localAlbum'] = files.readall(filename, 'r', 'utf-8').replace('\r\n', '\n').replace('\n', '|')[0: 1024 * 64]
+            self.info['localAlbum'] = files.readAll(filename, 'r', 'utf-8').replace('\r\n', '\n').replace('\n', '|')[0: 1024 * 64]
         elif getFieldForFile(filename, throw=False):
             obj = CoordMusicAudioMetadata(filename)
             self.info['uri'] = obj.getLink()
             self.info['localLength'] = get_audio_duration(filename, obj)
             self.info['localBitrate'] = get_empirical_bitrate(filename, obj)
             
-            parentname = files.getname(files.getparent(filename))
+            parentname = files.getName(files.getParent(filename))
             if not(parentname[4:5] == ',' and parentname[0:4].isdigit()):
                 self.info['localAlbum'] = obj.get_or_default('album', '')
                 
@@ -401,7 +402,7 @@ def saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, fil
     
     for item in listOfSongInfoObjects:
         file.write(item.toString())
-        file.write(files.linesep)
+        file.write(files.lineSep)
 
 def saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=False, requestBatchSize=15):
     listOfSongInfoObjects = []

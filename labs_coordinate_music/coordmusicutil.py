@@ -17,6 +17,8 @@ from labs_coordinate_music.easypythonmutagen import \
 # get_empirical_bitrate is used by files that import this module
 from labs_coordinate_music.easypythonmutagen import get_empirical_bitrate  # noqa: F401
 
+stricter_matching = True
+
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
     with open(filename) as f:
@@ -49,8 +51,8 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
     def __init__(self, filename):
         super(CoordMusicAudioMetadata, self).__init__(filename)
         self.linkfield = getFieldForFile(filename, False)
-        self.short = files.getname(filename)
-        self.ext = files.getext(filename)
+        self.short = files.getName(filename)
+        self.ext = files.getExt(filename)
         self.fullFilename = filename
         self.preserveLastModTime = True
     
@@ -102,10 +104,10 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
     
     def save(self):
         assertTrue(files.exists(self.fullFilename))
-        prevModTime = files.getModTimeNs(self.fullFilename)
+        prevModTime = files.getLastModTime(self.fullFilename, files.TimeUnits.Nanoseconds)
         super(CoordMusicAudioMetadata, self).save()
         if self.preserveLastModTime:
-            files.setModTimeNs(self.fullFilename, prevModTime)
+            files.setLastModTime(self.fullFilename, prevModTime, files.TimeUnits.Nanoseconds)
 
 def get_audio_duration(filename, obj=None):
     if filename.lower().endswith('.wav'):
@@ -119,7 +121,7 @@ def get_audio_duration(filename, obj=None):
             
             # just an estimate, doesn't take metadata into account
             bits = bytewidth * 8
-            sz = files.getsize(filename)
+            sz = files.getSize(filename)
             sz /= (1.0 * channels * (bits / 8.0))
             length = sz / freq
             return length
@@ -175,8 +177,8 @@ def videoUrlFromFile(comment):
     return None
 
 def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
-    prevTime = files.getModTimeNs(directory + '/' + short)
-    newname = files.splitext(short)[0]
+    prevTime = files.getLastModTime(directory + '/' + short, files.TimeUnits.Nanoseconds)
+    newname = files.splitExt(short)[0]
     if replaceMarkersInName:
         newname = newname.replace(' (v)', '').replace(' (vv)', '')
     newname = directory + '/' + newname + '.url'
@@ -184,14 +186,14 @@ def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
     if link:
         writeUrlFile(newname, link)
     else:
-        assertTrue(False, 'we are making\n%s' % (directory + short) +
+        assertTrue(False, 'we are making\n%s' % (directory + '\\' + short) +
             '\n into a url, but no link to spotify or video found.')
     
     if softDelete:
         softDeleteFile(directory + '/' + short)
     else:
         files.delete(directory + '/' + short)
-    files.setModTimeNs(newname, prevTime)
+    files.setLastModTime(newname, prevTime, files.TimeUnits.Nanoseconds)
     return newname
 
 def removeCharsFlavor1(s):
@@ -332,9 +334,13 @@ def getFormattedDuration(seconds, showMilliseconds=False):
         return '%02d:%02d'%(int(seconds) // 60, int(seconds) % 60)
 
 def getDirChoice(dir, prompt):
-    choices = [item[1] for item in files.listchildren(dir) if files.isdir(item[0])]
+    if not files.exists(dir):
+        dir = input('Please enter the path of the folder: ')
+    
+    assertTrue(files.exists(dir), 'Path not found.')
+    choices = [item[1] for item in files.listChildren(dir) if files.isDir(item[0])]
     choices.insert(0, 'All')
-    if len(choices) == 1:
+    if len(choices) == 1 and choices[0] != 'All':
         return choices[0]
     ret = getInputFromChoices(prompt, choices)
     if ret[0] == -1:
@@ -354,7 +360,7 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
     startingPlace = startingPlace.lower()
     reachedStartingPlace = startingPlace == dir.lower()
     lib = files.sep + 'lib' + files.sep
-    for fullpath, short in files.recursedirs(dir, topdown=isTopDown):
+    for fullpath, short in files.recurseDirs(dir, topdown=isTopDown):
         # don't start until we've reached startingpoint
         fullpathLower = fullpath.lower()
         if not reachedStartingPlace:
@@ -368,6 +374,6 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
         
 def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown=True):
     for fullpathdir, shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
-        for fullpath, short in files.listfiles(fullpathdir):
+        for fullpath, short in files.listFiles(fullpathdir):
             yield fullpath, short
 

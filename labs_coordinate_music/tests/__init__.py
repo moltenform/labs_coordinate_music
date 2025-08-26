@@ -16,12 +16,12 @@ def fixture_getmedia():
     basedir = ustr(join(tempfile.gettempdir(), 'test_music_coordination_media'))
     files.ensureEmptyDirectory(basedir)
     
-    if not os.path.isfile(u'./media/flac.flac'):
-        print('could not find test media. please ensure the current directory is labs_coordinate_music/tests')
+    if not os.path.isfile(u'./tests/media/flac.flac'):
+        print('could not find test media. please ensure the current directory is labs_coordinate_music')
         assert False
 
     # copy test media to temp directory
-    for full, short in files.listFiles(u'./media'):
+    for full, short in files.listFiles(u'./tests/media'):
         files.copy(full, join(basedir, short), True)
 
     yield basedir

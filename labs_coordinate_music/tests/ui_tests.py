@@ -14,7 +14,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     # testing files outside of an album
     trace('testing files outside of an album')
     files.ensureEmptyDirectory(tmpdir)
-    files.makedirs(tmpdir + '/classic rock/collection')
+    files.makeDirs(tmpdir + '/classic rock/collection')
     files.copy(mediadir + '/test_02_52.m4a',
         tmpdir + '/classic rock/collection/Queen - You\'re My Best Friend.m4a', False)
     parsedNames = [Bucket(short='Queen - You\'re My Best Friend.m4a',
@@ -33,7 +33,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     # testing files inside of an album with one disc
     trace('testing files inside of an album with one disc')
     files.ensureEmptyDirectory(tmpdir)
-    files.makedirs(tmpdir + '/classic rock/Queen/1975, A Night At The Opera')
+    files.makeDirs(tmpdir + '/classic rock/Queen/1975, A Night At The Opera')
     parsedNames = []
     files.copy(mediadir + '/test_02_52.m4a',
         tmpdir + '/classic rock/Queen/1975, A Night At The Opera/04 You\'re My Best Friend.m4a', False)
@@ -61,7 +61,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     trace('"I Want to Break Free" is intentionally 04_09 instead of 02_05, to test misnumbering')
     trace('"Barcelona" is intentionally too short, to test checking mismatched duration')
     files.ensureEmptyDirectory(tmpdir)
-    files.makedirs(tmpdir + '/classic rock/Queen/2002, The Platinum Collection')
+    files.makeDirs(tmpdir + '/classic rock/Queen/2002, The Platinum Collection')
     parsedNames = []
     
     files.copy(mediadir + '/test_02_52.m4a',
@@ -114,11 +114,11 @@ def testMusicToUrlInteractive(tmpdir, mediadir):
     
     obj = SaveDiskSpaceMusicToUrl()
     try:
-        obj.go(tmpdir, [CoordMusicAudioMetadata(fullfile) for fullfile, short in files.listfiles(tmpdir)], None)
+        obj.go(tmpdir, [CoordMusicAudioMetadata(fullfile) for fullfile, short in files.listFiles(tmpdir)], None)
     except StopBecauseWeRenamedFile:
         pass
         
-    trace('Resulting filenames:\n' + '\n'.join(short for fullfile, short in files.listfiles(tmpdir)))
+    trace('Resulting filenames:\n' + '\n'.join(short for fullfile, short in files.listFiles(tmpdir)))
 
 def testFromOutsideMp3Interactive(tmpdir, mediadir):
     if not getInputBool('Run interactive OutsideMp3 test?  (refer to test/walkthrough_interactive_test_from_outside.png)'):
@@ -127,9 +127,9 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
     # create "outside" files, mocking input files
     files.ensureEmptyDirectory(tmpdir)
     tmpdirsl = tmpdir + files.sep
-    files.makedirs(tmpdirsl + 'outside')
-    files.makedirs(tmpdirsl + 'outside/Space Oddity')
-    files.makedirs(tmpdirsl + 'outside/The Essential Fifth Dimension')
+    files.makeDirs(tmpdirsl + 'outside')
+    files.makeDirs(tmpdirsl + 'outside/Space Oddity')
+    files.makeDirs(tmpdirsl + 'outside/The Essential Fifth Dimension')
     mp3 = mediadir + '/mp3_avgb128.mp3'
     files.copy(mp3, tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione__MARKAS__128.mp3', False)
     files.copy(mp3, tmpdirsl + 'outside/Space Oddity/05 Janine__MARKAS__24.mp3', False)
@@ -140,8 +140,8 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
     files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing__MARKAS__144.mp3', False)
     files.copy(mp3, tmpdirsl + 'outside/The Essential Fifth Dimension/02 19 No Love In The Room__MARKAS__24.mp3', False)
     artists = {'Space Oddity': 'David Bowie', 'The Essential Fifth Dimension': 'The Fifth Dimension'}
-    for file, short in files.recursefiles(tmpdirsl + 'outside'):
-        album = files.getname(files.getparent(file))
+    for file, short in files.recurseFiles(tmpdirsl + 'outside'):
+        album = files.getName(files.getParent(file))
         name = short.split('__')[0]
         if name[3:5].isdigit():
             discnumber = int(name[0:2])
@@ -179,7 +179,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
     
     # mock incoming files
     wav = mediadir + '/wav.wav'
-    files.makedirs(tmpdirsl + 'incoming')
+    files.makeDirs(tmpdirsl + 'incoming')
     files.copy(wav, tmpdirsl + 'incoming/0001 Space Oddity' +
         '$David Bowie$03$Letter To Hermione$%s.wav' % link1, False)
     files.copy(wav, tmpdirsl + 'incoming/0002 The Essential Fifth Dimension' +
@@ -190,7 +190,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
     
     # see if the result is right
     all = sorted([filepath.replace(tmpdirsl + 'outside', '').replace(files.sep, '/')
-        for filepath, short in files.recursefiles(tmpdirsl + 'outside')])
+        for filepath, short in files.recurseFiles(tmpdirsl + 'outside')])
     assertEq(['/Space Oddity/03 Letter To Hermione.m4a',
         '/Space Oddity/05 Janine.url',
         '/Space Oddity/97 Nonexistent song 2.mp3',
@@ -233,8 +233,8 @@ if __name__ == '__main__':
     from labs_coordinate_music.recurring_music_to_url import \
         getStringTrackAndPopularity, SaveDiskSpaceMusicToUrl
     
-    if not files.isfile(u'./media/flac.flac'):
-        print('could not find test media. please ensure the current directory is labs_coordinate_music/tests')
+    if not files.isFile(u'./tests/media/flac.flac'):
+        print('could not find test media. please ensure the current directory is labs_coordinate_music')
         assert False
     
     tmpdir = ustr(join(tempfile.gettempdir(), 'test_music_coordination'))

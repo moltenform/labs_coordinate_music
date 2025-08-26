@@ -65,7 +65,7 @@ class TestMusicUtils(object):
     
 class TestCoordMusicAudioMetadata(object):
     def test_m4aToUrl(self, fixture_getmedia):
-        files.makedirs(join(fixture_getmedia, 'toUrl'))
+        files.makeDirs(join(fixture_getmedia, 'toUrl'))
         files.copy(join(fixture_getmedia, 'm4a24.m4a'), join(fixture_getmedia, 'toUrl', 'test.m4a'), True)
         stampM4a(join(fixture_getmedia, 'toUrl', 'test.m4a'), 'spotify:test')
         obj = CoordMusicAudioMetadata(join(fixture_getmedia, 'toUrl', 'test.m4a'))
@@ -73,7 +73,7 @@ class TestCoordMusicAudioMetadata(object):
         assert 'spotify:test' == getFromUrlFile(join(fixture_getmedia, 'toUrl', 'test.url'))
     
     def test_settingTrackNumberShouldOnlyKeepFirstPart(self, fixture_getmedia):
-        files.makedirs(join(fixture_getmedia, 'setTag'))
+        files.makeDirs(join(fixture_getmedia, 'setTag'))
         files.copy(join(fixture_getmedia, 'm4a24.m4a'), join(fixture_getmedia, 'setTag', 'setTrack.m4a'), True)
         obj = CoordMusicAudioMetadata(join(fixture_getmedia, 'setTag', 'setTrack.m4a'))
         obj.set('track_number', '3/13')
@@ -82,7 +82,7 @@ class TestCoordMusicAudioMetadata(object):
         assert '3' == obj.get('track_number')
     
     def test_settingTitleTag(self, fixture_getmedia):
-        files.makedirs(join(fixture_getmedia, 'setTag'))
+        files.makeDirs(join(fixture_getmedia, 'setTag'))
         files.copy(join(fixture_getmedia, 'm4a24.m4a'), join(fixture_getmedia, 'setTag', 'setTitle.m4a'), True)
         obj = CoordMusicAudioMetadata(join(fixture_getmedia, 'setTag', 'setTitle.m4a'))
         obj.set('title', u'title\u1101')
@@ -92,8 +92,8 @@ class TestCoordMusicAudioMetadata(object):
     
     def test_setLink(self, fixture_getmedia):
         dir = join(fixture_getmedia, 'setLink')
-        files.makedirs(dir)
-        for full, short in files.listfiles(fixture_getmedia):
+        files.makeDirs(dir)
+        for full, short in files.listFiles(fixture_getmedia):
             if not short.endswith('.ogg') and not short.endswith('.wav'):
                 files.copy(full, join(dir, short), True)
                 stampM4a(join(dir, short), 'spotify:1234')
@@ -165,7 +165,7 @@ class TestFilenamesToText(object):
         stampM4a(join(fixture_dir, 'm4a.m4a'), 'spotify:track:abcdefg')
         
         coordmusictools.saveFilenamesMetadataToText(
-            sorted(files.listfiles(fixture_dir, allowedexts=['url', 'flac', 'mp3', 'm4a'])),
+            sorted(files.listFiles(fixture_dir, allowedExts=['url', 'flac', 'mp3', 'm4a'])),
             False,
             join(fixture_dir, 'out.txt'),
             requestBatchSize=3)
@@ -175,6 +175,6 @@ class TestFilenamesToText(object):
 %dir%test1.url	00:00:000	0	https://www.youtube.com/watch?v=0OSF	0
 %dir%test2.url	00:00:000	0	0Svkvt5I79wficMFgaqEQJ	0
 '''.replace('%dir%', fixture_dir + files.sep).replace('\r\n', '\n').replace('\n', '\t\n')
-        got = files.readall(join(fixture_dir, 'out.txt'), 'r', 'utf-8-sig')
+        got = files.readAll(join(fixture_dir, 'out.txt'), 'r', 'utf-8-sig')
         got = got.replace('\r\n', '\n').replace('\t\t', '\t').replace('\t\t', '\t').replace('\t\t', '\t')
         assert expected == got

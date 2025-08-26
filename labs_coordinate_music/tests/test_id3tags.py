@@ -136,10 +136,10 @@ class TestSettingTags(object):
             discnumber=10, tracknumber=20)
     
     def iterMediaWithTags(self, d):
-        return ((full, short) for full, short in files.listfiles(d) if not short.endswith('.wav'))
+        return ((full, short) for full, short in files.listFiles(d) if not short.endswith('.wav'))
         
     def test_id23DiffersFromId24(self, fixture_getmedia):
-        files.makedirs(join(fixture_getmedia, 'id3'))
+        files.makeDirs(join(fixture_getmedia, 'id3'))
         files.copy(join(fixture_getmedia, 'mp3_avgb128.mp3'), join(fixture_getmedia, 'id3', 'id23.mp3'), True)
         files.copy(join(fixture_getmedia, 'mp3_avgb128.mp3'), join(fixture_getmedia, 'id3', 'id24.mp3'), True)
         o23 = EasyPythonMutagen(join(fixture_getmedia, 'id3', 'id23.mp3'), use_id3_v23=True)
@@ -189,7 +189,7 @@ class TestSettingTags(object):
         
     def test_roundTripAllTags(self, fixture_getmedia):
         dir = join(fixture_getmedia, 'modified')
-        files.makedirs(dir)
+        files.makeDirs(dir)
         for full, short in self.iterMediaWithTags(fixture_getmedia):
             # set every field
             files.copy(full, join(dir, short), True)

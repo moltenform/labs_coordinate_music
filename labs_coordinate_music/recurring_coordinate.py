@@ -19,6 +19,10 @@ from labs_coordinate_music.recurring_linkspotify import \
 # ' Selections': do not require track numbers in this directory
 
 class NameStyle(enum.StrEnum):
+    @staticmethod
+    def _generate_next_value_(name, _start, _count, _last_values):
+        return name
+    
     Title = enum.auto()
     ArtistTitle = enum.auto()
     TrackTitle = enum.auto()
@@ -26,10 +30,23 @@ class NameStyle(enum.StrEnum):
     DiscTrackTitle = enum.auto()
     DiscTrackArtistTitle = enum.auto()
 
+    
+
 def parseAFilename(short):
     name = bnsplitext(short)[0]
     name = stripMarkersFromFilename(name)
-    res = Bucket(short=short, album=None, style=None,
+    class ParseAFilenameResults:
+        def __init__(self, short=None, album=None, style=None,
+                discnumber=None, tracknumber=None, artist=None, title=None):
+            self.short = short
+            self.album = album
+            self.style = style
+            self.discnumber = discnumber
+            self.tracknumber = tracknumber
+            self.artist = artist
+            self.title = title
+    
+    res = ParseAFilenameResults(short=short, album=None, style=None,
         discnumber=None, tracknumber=None, artist=None, title=None)
     
     tryRe = re.match('([0-9][0-9]) ([0-9][0-9]) (.*?) - (.*)', name)
@@ -96,7 +113,7 @@ def renderAFilename(res, short):
     
 def bnsplitext(s):
     "splits file and extension, also treats .3.mp3 as .mp3, and any (12) annotation is not part of the name"
-    name, ext = files.splitext(s)
+    name, ext = files.splitExt(s)
    
     # divide test.3.mp3 into (test, 3.mp3)
     if name.endswith('.3'):
@@ -200,7 +217,7 @@ def checkDeleteUrlsInTheWayOfM4as(fullpathdir, shorts):
     changedAtLeastOne = False
     for short in shorts:
         if short.endswith('.url'):
-            filem4a = fullpathdir + '/' + files.splitext(short)[0] + '.m4a'
+            filem4a = fullpathdir + '/' + files.splitExt(short)[0] + '.m4a'
             if files.exists(filem4a):
                 trace('Keeping m4a in favor of url', short)
                 softDeleteFile(fullpathdir + '/' + short)
@@ -383,8 +400,8 @@ def shouldAutoAcceptTagFromFilename(dir, short, tag, message):
         if short.endswith('.m4a'):
             oneweek = 7 * 86400
             useIfYoungerThan = oneweek * enableAutoTagForFilesYoungerThanThisManyWeeks()
-            if time.time() - files.modtime(files.join(dir, short)) < useIfYoungerThan:
-                if time.time() - files.createdtime(files.join(dir, short)) < useIfYoungerThan:
+            if time.time() - files.getLastModTime(files.join(dir, short)) < useIfYoungerThan:
+                if time.time() - files.createdTime(files.join(dir, short)) < useIfYoungerThan:
                     if isinstance(enableAutoTagFromFilenameForRecentFiles(), anystringtype):
                         f = codecs.open(enableAutoTagFromFilenameForRecentFiles(), 'a', 'utf8')
                         f.write('\n' + message.replace('\n', ' '))
@@ -447,13 +464,13 @@ def checkFilenamesMain(fullpathdir, dirsplit, tags, helpers):
     checkForLowBitrates(fullpathdir, tags, True)
 
 def goPerDirectory(fullpathdir, dirsplit, helpers):
-    allshorts = files.listchildren(fullpathdir, filenamesOnly=True)
+    allshorts = files.listChildren(fullpathdir, filenamesOnly=True)
     tags = []
     seenOne = False
     for short in allshorts:
         seenOne = True
         path = fullpathdir + '/' + short
-        if files.isfile(path):
+        if files.isFile(path):
             ext = helpers.checkFileExtensions.check(fullpathdir, short)
             if ext in helpers.extsCheckFilenames:
                 if ext == 'url':
@@ -476,7 +493,9 @@ def getHelpers(root, enableSaveSpace):
     helpers.splroot = root.split(files.sep)
     helpers.market = getSpotifyGeographicMarketName()
     return helpers
-        
+
+emptyAlbumPlaceholder = '   '
+
 def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
     root = getMusicRoot()
     if not dir:
@@ -509,3 +528,4 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
             break
 
     trace('Complete.')
+
