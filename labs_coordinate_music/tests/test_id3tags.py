@@ -4,11 +4,14 @@
 
 import pytest
 from os.path import join
-from labs_coordinate_music.coordmusicutil import *
-from labs_coordinate_music.tests import fixture_getmedia as fixture_getmedia_
-fixture_getmedia = fixture_getmedia_
 
-class TestLengthAndBitrate(object):
+from common import fixture_getmedia
+import sys
+sys.path.append('..')
+
+from coordmusicutil import *
+
+class TestLengthAndBitrate:
     # get duration; no tag object provided
     def test_getDurationWav(self, fixture_getmedia):
         assert 727 == int(1000 * get_audio_duration(join(fixture_getmedia, 'wav.wav')))
@@ -129,7 +132,7 @@ class TestLengthAndBitrate(object):
             get_empirical_bitrate(join(fixture_getmedia, 'no extension'))
         exc.match('unsupported extension')
 
-class TestSettingTags(object):
+class TestSettingTags:
     def getFieldsToSet(self):
         return dict(album=u'album\u1101!', comment=u'comment!', artist=u'artist!', title=u'title!',
             composer=u'composer!', albumartist=u'albumartist!', website=u'http://website!',

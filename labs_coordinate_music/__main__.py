@@ -5,14 +5,10 @@
 import sys
 import os
 
-# let this file be started as either a script or as part of the package.
-if __package__ is None and not hasattr(sys, 'frozen'):
-    path = os.path.realpath(os.path.abspath(__file__))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
-
-from labs_coordinate_music import \
-    coordmusictools, coordmusicuserconfig, \
-    recurring_coordinate, recurring_linkspotify
+import coordmusictools
+import coordmusicuserconfig
+import recurring_coordinate
+import recurring_linkspotify
 
 def showCmdOptions():
     coordmusictools.trace('\nmain.py' +
@@ -54,7 +50,6 @@ def main():
     
 def checkForMetadataTags(dir):
     import coordmusicutil
-    import sys
     from shinerainsevenlib.standard import files
 
     assert files.exists(dir)

@@ -10,26 +10,24 @@ import wave
 from shinerainsevenlib.standard import *
 from shinerainsevenlib.core import *
 
-from labs_coordinate_music.coordmusicuserconfig import *
-from labs_coordinate_music.easypythonmutagen import \
-    EasyPythonMutagen, mutagen_get_audio_duration
-
-# get_empirical_bitrate is used by files that import this module
-from labs_coordinate_music.easypythonmutagen import get_empirical_bitrate  # noqa: F401
+from coordmusicuserconfig import *
+from easypythonmutagen import \
+    EasyPythonMutagen, mutagen_get_audio_duration, get_empirical_bitrate
 
 stricter_matching = True
 
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
-    with open(filename) as f:
+    with open(filename, 'r', encoding='utf-8') as f:
         for line in f:
             if line.startswith('URL='):
                 line = line.strip()
                 return line.split('URL=')[1]
+    return None
                 
 def writeUrlFile(urlfilepath, link, extrainfo='', okOverwrite=False):
     assertTrue(okOverwrite or not files.exists(urlfilepath), 'already exists at ' + urlfilepath)
-    with open(urlfilepath, 'w') as fout:
+    with open(urlfilepath, 'w', encoding='utf-8') as fout:
         fout.write('[InternetShortcut]\n')
         fout.write('URL=' + link + '\n')
         fout.write(extrainfo)
@@ -265,7 +263,7 @@ def typeIntoSpotifySearch(s):
         import time
     except ImportError:
         trace('pywinauto is not installed; to enable this feature first install the Python package pywinauto')
-        return
+        return None
         
     app = pywinauto.Application()
     try:
@@ -286,6 +284,8 @@ def typeIntoSpotifySearch(s):
         time.sleep(0.1)
     except (pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected) as exc:
         trace('exception thrown, ', sys.exc_info()[1])
+    
+    return None
     
 def launchSpotifyUri(uri):
     if not uri or uri == 'spotify:notfound':
@@ -318,7 +318,7 @@ def isInSpotifyMarket(track, market=None):
 
 def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
-    files.runWithoutWaitUnicode([mplayer, path])
+    files.runWithoutWait([mplayer, path])
     
 def launchGoogleQuery(query):
     assert '/' not in query and '\\' not in query and '^' not in query and '%' not in query and ':' not in query
@@ -360,7 +360,7 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
     startingPlace = startingPlace.lower()
     reachedStartingPlace = startingPlace == dir.lower()
     lib = files.sep + 'lib' + files.sep
-    for fullpath, short in files.recurseDirs(dir, topdown=isTopDown):
+    for fullpath, short in files.recurseDirs(dir, topDown=isTopDown):
         # don't start until we've reached startingpoint
         fullpathLower = fullpath.lower()
         if not reachedStartingPlace:

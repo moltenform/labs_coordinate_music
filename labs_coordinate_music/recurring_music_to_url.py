@@ -2,7 +2,7 @@
 # Ben Fisher, 2016
 # Released under the GNU General Public License version 3
 
-from labs_coordinate_music.coordmusicutil import *
+from coordmusicutil import *
 
 showAllAlbumsRegardlessOfPopularity = False
 
@@ -11,10 +11,10 @@ def getPopularitiesList(fullpathdir, tags):
     result = [0] * len(tags)
     mapUriToListIndex = dict()
     trackIds = []
-    for i in range(len(tags)):
-        if 'spotify:track:' in tags[i].getLink():
-            trackIds.append(tags[i].getLink())
-            mapUriToListIndex[ustr(tags[i].getLink())] = i
+    for i, item in enumerate(tags):
+        if 'spotify:track:' in item.getLink():
+            trackIds.append(item.getLink())
+            mapUriToListIndex[ustr(item.getLink())] = i
         
     # save network traffic by using batches of 20
     for trackIdBatch in takeBatch(trackIds, 20):
@@ -72,7 +72,8 @@ def m4aToUrlWithBitrate(directory, short, obj):
             urlRatingNumber = 'none'
             break
         elif inp == 'no' or inp == 'n':
-            return
+            return None
+
     newname = directory + '/' + files.splitExt(short)[0]
     newname += (' (%d).url'%urlRatingNumber) if urlRatingNumber != 'none' else '.url'
     assert 'spotify:track:' in obj.getLink()
@@ -84,7 +85,7 @@ def m4aToUrlWithBitrate(directory, short, obj):
         softDeleteFile(directory + '/' + short)
     return newname
     
-class SaveDiskSpaceMusicToUrl(object):
+class SaveDiskSpaceMusicToUrl:
     def __init__(self, enabled=True):
         self.enabled = enabled
         
@@ -133,6 +134,6 @@ class SaveDiskSpaceMusicToUrl(object):
                     elif inp == 'hear1':
                         launchSpotifyUri(getSpotifyOrVideoUrlFromFile(tag))
                     elif inp == 'explorer':
-                        askExplorer(fullpathdir, False)
+                        askExplorer(fullpathdir)
                     
         stopIfFileRenamed(replacedAny)

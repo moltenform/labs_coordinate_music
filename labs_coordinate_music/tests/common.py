@@ -5,8 +5,8 @@
 import pytest
 import tempfile
 import os
-from os.path import join
 import sys
+from os.path import join
 
 from shinerainsevenlib.standard import *
 from shinerainsevenlib.core import *

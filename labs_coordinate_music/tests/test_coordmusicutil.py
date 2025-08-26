@@ -4,12 +4,14 @@
 
 import pytest
 from os.path import join
-from labs_coordinate_music import coordmusictools
-from labs_coordinate_music.tests import *
-from labs_coordinate_music.coordmusicutil import *
+from common import *
 
+import sys
+sys.path.append('..')
+import coordmusictools
+from coordmusicutil import *
 
-class TestMusicUtils(object):
+class TestMusicUtils:
     # format duration
     def test_getDurationUsual(self):
         assert '02:01' == getFormattedDuration(121)
@@ -63,7 +65,7 @@ class TestMusicUtils(object):
         with pytest.raises(AssertionError):
             getFieldForFile(r'/dir/test')
     
-class TestCoordMusicAudioMetadata(object):
+class TestCoordMusicAudioMetadata:
     def test_m4aToUrl(self, fixture_getmedia):
         files.makeDirs(join(fixture_getmedia, 'toUrl'))
         files.copy(join(fixture_getmedia, 'm4a24.m4a'), join(fixture_getmedia, 'toUrl', 'test.m4a'), True)
@@ -151,7 +153,7 @@ class TestCoordMusicAudioMetadata(object):
     def test_readVideoUrlValid4(self):
         assert 'https://www.youtube.com/watch?v=aa--CC__eef' == videoUrlFromFile('te xt. [aa--CC__eef] te xt.')
     
-class TestFilenamesToText(object):
+class TestFilenamesToText:
     def test_filenamesToText(self, fixture_dir, fixture_getmedia):
         writeUrlFile(join(fixture_dir, 'test1.url'), 'https://www.youtube.com/watch?v=0OSF')
         writeUrlFile(join(fixture_dir, 'test2.url'), 'spotify:track:0Svkvt5I79wficMFgaqEQJ')

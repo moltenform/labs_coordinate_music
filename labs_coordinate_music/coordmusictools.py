@@ -7,14 +7,9 @@ import sys
 import time
 import codecs
 
-# let this file be started as either a script or as part of the package.
-if __package__ is None and not hasattr(sys, 'frozen'):
-    path = os.path.realpath(os.path.abspath(__file__))
-    sys.path.insert(0, os.path.dirname(os.path.dirname(path)))
-
-from labs_coordinate_music import recurring_linkspotify
-from labs_coordinate_music import recurring_music_to_url
-from labs_coordinate_music.coordmusicutil import *
+import recurring_linkspotify
+import recurring_music_to_url
+from coordmusicutil import *
 
 def tools_getPlaylistId(playlistId=None):
     if not playlistId:
@@ -129,6 +124,7 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None, styleGiven=Non
         if '__MARKAS' in short:
             warn('why is there a file with MARKAS here? ' + short)
     
+    renameAlbumHasManyArtists = None
     if styleGiven:
         renameAlbumStyle = styleGiven['renameAlbumStyle']
         renameAlbumHasManyArtists = styleGiven['renameAlbumHasManyArtists']
@@ -147,7 +143,7 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None, styleGiven=Non
             if get_empirical_bitrate(fullpath) <= 30:
                 trace('found low bitrate', short)
                 if respondToSmallFiles == 'skip':
-                    results.append(fullpath)
+                    trace('skipping low bitrate file', fullpath)
                 elif respondToSmallFiles == 'delete':
                     softDeleteFile(fullpath)
                 elif respondToSmallFiles == 'makeLink':
@@ -213,8 +209,8 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
     
     # check that all files have a spotify link
     for fullpath, short in files.recurseFiles(dir):
-        if getFieldForFile(filepath, False):
-            assertTrue('spotify:' in CoordMusicAudioMetadata(filepath).getLink())
+        if getFieldForFile(fullpath, False):
+            assertTrue('spotify:' in CoordMusicAudioMetadata(fullpath).getLink())
     
     # add uris to list
     addToPlaylist = []
@@ -344,6 +340,7 @@ def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
                 results.append((fullpath, obj.getLink()))
                     
     if playlistId:
+        sp = spotipyconn()
         for batch in takeBatch(results, 10):
             trace('adding to playlist', '\n'.join((item[0] for item in batch)))
             sp.user_playlist_add_tracks(getSpotifyUsername(), playlistId, [item[1] for item in batch])
@@ -359,7 +356,7 @@ def tools_saveFilenamesMetadataToText():
     warnIfNotInMarket = getInputBool('warn if files are no longer in market?')
     saveFilenamesMetadataToText(fileIterator, useSpotify, outName, warnIfNotInMarket=warnIfNotInMarket)
     
-class ExtendedSongInfo(object):
+class ExtendedSongInfo:
     def __init__(self, filename, short):
         self.info = dict(filename=filename, short=short, localLength=0, localBitrate=0, localAlbum=u'',
             uri='', spotifyArtist=u'', spotifyTitle=u'', spotifyLength=u'', spotifyAlbum=u'', spotifyIsInMarket=u'',
@@ -416,7 +413,7 @@ def saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, fil
         uriToSongInfo[ustr(item.info['uri'])] = item
     
     if useSpotify and len(uriToSongInfo):
-        tracks = spotipyconn().tracks([uri for uri in uriToSongInfo])
+        tracks = spotipyconn().tracks(list(uriToSongInfo))
         for track in tracks['tracks']:
             songInfo = uriToSongInfo[ustr(track['uri'])]
             songInfo.addSpotifyInfo(track)
@@ -486,6 +483,6 @@ if __name__ == '__main__':
         tools_saveFilenamesMetadataToText,
         tools_assignTagIfUntagged,
         ]
-    choice, s = getInputFromChoices('', [fn.__name__.replace('tools_', '') for fn in fns])
-    if choice >= 0:
-        fns[choice]()
+    topchoice, tops = getInputFromChoices('', [fn.__name__.replace('tools_', '') for fn in fns])
+    if topchoice >= 0:
+        fns[topchoice]()

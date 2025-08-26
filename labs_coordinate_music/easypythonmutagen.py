@@ -18,12 +18,12 @@ from mutagen import easymp4
 # use Mutagen directly if you want to intentionally add rare or custom fields.
 # note that Mutagen's new mutagen.File interface makes much of this obsolete.
 
-class EasyPythonMutagen(object):
+class EasyPythonMutagen:
     """Wraps interfaces, for convenience, will not return values as list."""
     def __init__(self, filename, use_id3_v23=True):
         filenamelower = filename.lower()
         if filenamelower.endswith('.mp3'):
-            self.obj = EasyPythonMutagenId3(filename, use_id3_v23=use_id3_v23)
+            self.obj = _EasyPythonMutagenId3(filename, use_id3_v23=use_id3_v23)
         elif filenamelower.endswith('.ogg'):
             self.obj = _EasyPythonMutagenOggVorbis(filename)
         elif filenamelower.endswith('.flac'):
@@ -58,7 +58,7 @@ class EasyPythonMutagen(object):
             # https://github.com/quodlibet/mutagen/issues/334
             if "has no attribute '_padding'" in str(exc):
                 from mutagen.mp4 import MP4Tags
-                MP4Tags._padding = 0
+                MP4Tags._padding = 0 # pylint: disable=W0212
                 self.obj[fieldname] = val
             else:
                 raise
@@ -67,7 +67,7 @@ class EasyPythonMutagen(object):
         self.obj.save()
 
 
-class _EasyPythonMutagenFlac(object):
+class _EasyPythonMutagenFlac:
     '''An interface like EasyId3, but for Flac files.'''
     
     def __init__(self, filename):
@@ -102,7 +102,7 @@ class _EasyPythonMutagenFlac(object):
     def save(self):
         self.obj.save()
         
-class _EasyPythonMutagenOggVorbis(object):
+class _EasyPythonMutagenOggVorbis:
     '''An interface like EasyId3, but for OggVorbis files.'''
     
     def __init__(self, filename):
@@ -151,7 +151,7 @@ class _EasyPythonMutagenM4a(easymp4.EasyMP4):
         easymp4.EasyMP4Tags.RegisterTextKey('desc', 'desc')
         easymp4.EasyMP4Tags.RegisterFreeformKey('website', 'WWW')
 
-class EasyPythonMutagenId3(object):
+class _EasyPythonMutagenId3:
     '''like EasyId3, but supports id3_v23 and handles missing tags more gracefully.'''
     def __init__(self, filename, use_id3_v23, keep_id3_v1=False):
         from mutagen import id3
@@ -252,7 +252,7 @@ class EasyPythonMutagenId3(object):
         
     def __contains__(self, key):
         try:
-            self[key]  # noqa: W0104
+            self[key]  # pylint: disable=W0104
             return True
         except KeyError:
             return False
@@ -301,6 +301,6 @@ def get_empirical_bitrate(filename, alreadyobj=None):
 
 
 if sys.version_info[0] <= 2:
-    anystringtype = basestring
+    anystringtype = basestring # pylint: disable=E0602
 else:
     anystringtype = str

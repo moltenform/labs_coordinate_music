@@ -4,12 +4,16 @@
 
 import pytest
 from os.path import join
-from labs_coordinate_music.tests import *
-from labs_coordinate_music.coordmusicutil import *
-from labs_coordinate_music.recurring_coordinate import *
-from labs_coordinate_music.recurring_linkspotify import *
+from common import *
 
-class TestMusicUtils(object):
+import sys
+sys.path.append('..')
+
+from coordmusicutil import *
+from recurring_coordinate import *
+from recurring_linkspotify import *
+
+class TestMusicUtils:
     def objToString(self, obj):
         return ';'.join(key + '=' + str(object.__getattribute__(obj, key))
             for key in dir(obj) if (not key.startswith('_') and key != 'short' and key != 'album'))
@@ -498,7 +502,7 @@ class TestMusicUtils(object):
         exc.match('duplicate artist\\+title')
     
     def callCheckRequiredFieldsSet(self, dir, short, fieldsmissing, parsedstyle=''):
-        class MockTagObject(object):
+        class MockTagObject:
             def __init__(self, short, fieldsmissing=None):
                 self.short = short
                 self.fields = dict(album='sampledata', style='sampledata', discnumber='1',

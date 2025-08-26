@@ -12,7 +12,7 @@
                 "isDefault": true
             },
             "options": {
-                "cwd": "${workspaceFolder}/labs_coordinate_music"
+                "cwd": "${workspaceFolder}"
             },
         },
         {
@@ -25,7 +25,7 @@
                 "isDefault": true
             },
             "options": {
-                "cwd": "${workspaceFolder}/labs_coordinate_music"
+                "cwd": "${workspaceFolder}"
             },
         },
     ]

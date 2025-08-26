@@ -26,7 +26,7 @@ def getSpotifyGeographicMarketName():
     return 'US'
 
 def getMediaPlayer():
-    return 'full/path/to/mediaplayer'
+    return '/usr/bin/vlc'
     
 def getPopularityCutoff():
     # when turning .mp3s into .urls to save disk space, skip rare/'unpopular' songs that might be hard to find in the future.
@@ -34,7 +34,7 @@ def getPopularityCutoff():
     return 18
 
 def enableAutoTagFromFilenameForRecentFiles():
-    return r'C:\b\pydev\devhiatus\pytools_music\logautotag.txt'
+    return '~/coordmusic_log_autotag.txt'
     
 def enableAutoTagForFilesYoungerThanThisManyWeeks():
     return 1

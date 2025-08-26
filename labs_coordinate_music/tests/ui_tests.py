@@ -2,10 +2,20 @@
 # Ben Fisher, 2016
 # Released under the GNU General Public License version 3
 
-import sys
 import os
 import tempfile
 from os.path import join
+from shinerainsevenlib.standard import *
+
+import sys
+sys.path.append('..')
+
+import coordmusictools
+from coordmusicutil import *
+from recurring_linkspotify import \
+    linkspotify, launchSpotifyUri
+from recurring_music_to_url import \
+    getStringTrackAndPopularity, SaveDiskSpaceMusicToUrl
 
 def testLinkSpotifyInteractive(tmpdir, mediadir):
     if not getInputBool('Run interactive LinkSpotify test (requires Spotify connection)?'):
@@ -222,28 +232,12 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
 
 # let this file be started as a script.
 if __name__ == '__main__':
-    if __package__ is None and not hasattr(sys, 'frozen'):
-        path = os.path.realpath(os.path.abspath(__file__))
-        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(path))))
-    
-    try:
-        from labs_coordinate_music import coordmusictools
-    except ImportError:
-        sys.path.append('..')
-
-    from labs_coordinate_music import coordmusictools
-    from labs_coordinate_music.coordmusicutil import *
-    from labs_coordinate_music.recurring_linkspotify import \
-        linkspotify, launchSpotifyUri
-    from labs_coordinate_music.recurring_music_to_url import \
-        getStringTrackAndPopularity, SaveDiskSpaceMusicToUrl
-    
     if not files.isFile(u'./tests/media/flac.flac'):
         print('could not find test media. please ensure the current directory is labs_coordinate_music')
         assert False
     
-    tmpdir = ustr(join(tempfile.gettempdir(), 'test_music_coordination'))
-    mediadir = u'./tests/media'
-    testMusicToUrlInteractive(tmpdir, mediadir)
-    testFromOutsideMp3Interactive(tmpdir, mediadir)
-    testLinkSpotifyInteractive(tmpdir, mediadir)
+    toptmpdir = ustr(join(tempfile.gettempdir(), 'test_music_coordination'))
+    topmediadir = u'./tests/media'
+    testMusicToUrlInteractive(toptmpdir, topmediadir)
+    testFromOutsideMp3Interactive(toptmpdir, topmediadir)
+    testLinkSpotifyInteractive(toptmpdir, topmediadir)

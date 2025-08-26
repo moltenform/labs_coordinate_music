@@ -2,7 +2,7 @@
 # Ben Fisher, 2016
 # Released under the GNU General Public License version 3
 
-from labs_coordinate_music.coordmusicutil import *
+from coordmusicutil import *
 import re
 
 def getMetadataForSongIfFound(spotlink):
@@ -25,7 +25,7 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
 
     choices = ['search online']
     if trackSeen:
-        choices.extend(['Spotify: ' + track['album']['name'], 'Spotify: ' + track['album']['name'].split(' (')[0].split(' [')[0]])
+        choices.extend(['Spotify: ' + trackSeen['album']['name'], 'Spotify: ' + trackSeen['album']['name'].split(' (')[0].split(' [')[0]])
        
     def callback(s, arrChoices, otherCommandsContext):
         if not s:
@@ -80,7 +80,8 @@ def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknum
         choice = getInputFromChoices('', choices)
     
     if choice[0] == 0:
-        [linkspotifypertrack(market, fullpathdir, tag, parsed) for tag, parsed in zip(tags, parsedNames)]
+        for tag, parsed in zip(tags, parsedNames):
+            linkspotifypertrack(market, fullpathdir, tag, parsed)
     elif choice[0] == 1:
         linkspotifyperalbum(market, fullpathdir, tags, parsedNames)
         
@@ -233,7 +234,6 @@ def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
                 stampM4a(fullpath, 'spotify:notfound', onlyIfNotAlreadySet=True)
         
         raise StopBecauseWeRenamedFile  # because tags are now invalidated
-        done = True
     elif inp == 'explorer':
         askExplorer(fullpathdir)
     elif inp == 'type':
@@ -272,6 +272,8 @@ def callbackForChoiceAlbumTrack(inp, arrChoices, otherCommandsContext):
             return True
         except:
             trace('malformed track number, expected syntax 01_01 ', str(sys.exc_info()[1]))
+    
+    return None
     
 def getChoiceString(track, localduration, artistExpected='', inclAlbum=False):
     ret = getStrRemoteAudio(track, False, False) + ' '
@@ -414,7 +416,7 @@ def linkspotifyperalbumtrack(fullpathdir, tag, parsed, mapNumToTrack, estimateda
         # otherwise we updated key.key, re-enter loop
     return True
 
-class RemoveRemasteredString(object):
+class RemoveRemasteredString:
     def __init__(self):
         self.regexp = re.compile(r' - [0-9][0-9][0-9][0-9] (- )?(Digital )?Remaster(ed)?')
         self.knownBad = [' - mono version', ' - Remastered Album Version', ' - REMASTERED', ' - Remastered',

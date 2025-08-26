@@ -8,9 +8,9 @@ import codecs
 import time
 import enum
 
-from labs_coordinate_music.coordmusicutil import *
-from labs_coordinate_music.recurring_music_to_url import SaveDiskSpaceMusicToUrl
-from labs_coordinate_music.recurring_linkspotify import \
+from coordmusicutil import *
+from recurring_music_to_url import SaveDiskSpaceMusicToUrl
+from recurring_linkspotify import \
     lookupAlbumForFile, linkspotify, RemoveRemasteredString, \
     enableAutoTagFromFilenameForRecentFiles
 
@@ -92,6 +92,7 @@ def parseAFilename(short):
 
 def renderAFilename(res, short):
     rest = bnsplitext(short)[1]
+    name = ''
     if res.style == NameStyle.Title:
         name = res.title
     elif res.style == NameStyle.ArtistTitle:
@@ -131,7 +132,7 @@ def bnsplitext(s):
     
     return name, ext
                         
-class CheckFileExtensions(object):
+class CheckFileExtensions:
     def __init__(self):
         self.goodExts = dict(url=1, mp3=1, m4a=1, flac=1, m4v=1, txt=1)
         
@@ -241,6 +242,7 @@ def checkForLowBitratesFile(fullpathdir, bitrate, tag, allowMakeUrl=True):
             return 'delete'
         if choice[0] == 1:
             return 'makeurl'
+    return None
 
 def checkForLowBitrates(fullpathdir, tags, allowMakeUrl):
     changedAtLeastOne = False
@@ -406,7 +408,7 @@ def shouldAutoAcceptTagFromFilename(dir, short, tag, message):
             oneweek = 7 * 86400
             useIfYoungerThan = oneweek * enableAutoTagForFilesYoungerThanThisManyWeeks()
             if time.time() - files.getLastModTime(files.join(dir, short)) < useIfYoungerThan:
-                if time.time() - files.createdTime(files.join(dir, short)) < useIfYoungerThan:
+                if time.time() - files.getCreatedTime(files.join(dir, short)) < useIfYoungerThan:
                     if isinstance(enableAutoTagFromFilenameForRecentFiles(), anystringtype):
                         f = codecs.open(enableAutoTagFromFilenameForRecentFiles(), 'a', 'utf8')
                         f.write('\n' + message.replace('\n', ' '))
@@ -462,8 +464,11 @@ def checkFilenamesMain(fullpathdir, dirsplit, tags, helpers):
     
     userAllowsBulkSet = dict()
     parsedNames = [parseAFilename(short) for short in shorts]
-    [fillFieldsFromContext(parsed, fullpathdir, dirsplit, helpers) for parsed in parsedNames]
-    [checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBulkSet) for tag, parsed in zip(tags, parsedNames)]
+    for parsed in parsedNames:
+        fillFieldsFromContext(parsed, fullpathdir, dirsplit, helpers)
+    for tag, parsed in zip(tags, parsedNames):
+        checkTagAndNameConsistency(fullpathdir, dirsplit, tag, parsed, userAllowsBulkSet)
+    
     checkStyleConsistency(fullpathdir, parsedNames)
     checkDuplicatedTrackNumbers(fullpathdir, parsedNames)
     seenTracknumber, seenWithoutSpotify = checkRequiredFieldsSet(fullpathdir, dirsplit, tags, parsedNames)
@@ -513,15 +518,14 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
     for fullpathdir, pathshort in getScopedRecurseDirs(dir, isTopDown=isTopDown, filterOutLib=True):
         # we'll need a few passes through the directory in some cases
         while True:
-            err = None
             try:
                 dirsplit = list(map(stripMarkersFromFilename, fullpathdir.split(files.sep)))
                 goPerDirectory(fullpathdir, dirsplit, helpers)
             except StopBecauseWeRenamedFile:
                 trace('we renamed a file; re-entering directory.')
                 continue
-            except (KeyboardInterrupt, IOError, OSError, AssertionError) as err:
-                trace(err)
+            except (KeyboardInterrupt, IOError, OSError, AssertionError) as e:
+                trace(e)
                 choice = getInputFromChoices('encountered exception.', ['retry', 'next dir', 'explorer'])
                 if choice[0] == -1:
                     return  # exit
