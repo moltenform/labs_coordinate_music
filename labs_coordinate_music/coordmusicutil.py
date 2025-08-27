@@ -14,11 +14,11 @@ from coordmusicuserconfig import *
 from easypythonmutagen import \
     EasyPythonMutagen, mutagen_get_audio_duration, get_empirical_bitrate
 
-stricter_matching = True
+stricter_matching = False
 
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
-    with open(filename, 'r', encoding='utf-8') as f:
+    with open(filename, encoding='utf-8') as f:
         for line in f:
             if line.startswith('URL='):
                 line = line.strip()
@@ -42,7 +42,7 @@ def getFieldForFile(s, throw=True):
     elif slower.endswith('.flac'):
         field = 'desc'
     elif throw:
-        assert False, 'unexpected extension'
+        raise AssertionError('unexpected extension')
     return field
         
 class CoordMusicAudioMetadata(EasyPythonMutagen):
@@ -86,7 +86,7 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         else:
             try:
                 ret = EasyPythonMutagen.get(self, fieldname)
-            except (KeyError, mutagen.easymp4.EasyMP4KeyError) as exc:
+            except (KeyError, mutagen.easymp4.EasyMP4KeyError):
                 return default
             
         if fieldname == 'tracknumber' and '/' in ret:
@@ -282,7 +282,7 @@ def typeIntoSpotifySearch(s):
         time.sleep(0.8)
         window.TypeKeys(sEscaped, with_spaces=True)
         time.sleep(0.1)
-    except (pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected) as exc:
+    except (pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected):
         trace('exception thrown, ', sys.exc_info()[1])
     
     return None
@@ -373,7 +373,7 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
             yield fullpath, short
         
 def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown=True):
-    for fullpathdir, shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
+    for fullpathdir, _shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
         for fullpath, short in files.listFiles(fullpathdir):
             yield fullpath, short
 

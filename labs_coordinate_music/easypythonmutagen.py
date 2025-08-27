@@ -43,7 +43,7 @@ class EasyPythonMutagen:
     def get_or_default(self, fieldname, default):
         try:
             return self.get(fieldname)
-        except (KeyError, mutagen.easymp4.EasyMP4KeyError) as exc:
+        except (KeyError, mutagen.easymp4.EasyMP4KeyError):
             return default
         
     def set(self, fieldname, val):

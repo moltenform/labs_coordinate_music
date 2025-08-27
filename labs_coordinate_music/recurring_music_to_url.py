@@ -80,7 +80,7 @@ def m4aToUrlWithBitrate(directory, short, obj):
     writeUrlFile(newname, obj.getLink())
     try:
         softDeleteFile(directory + '/' + short)
-    except WindowsError:
+    except OSError:
         alert('you need to close the file first!')
         softDeleteFile(directory + '/' + short)
     return newname

@@ -5,7 +5,7 @@
 import pytest
 from os.path import join
 
-from common import fixture_getmedia
+from common import fixture_getmedia_defn
 import sys
 sys.path.append('..')
 
@@ -164,13 +164,13 @@ class TestSettingTags:
         exc.match('unsupported')
     
     def test_gettingUnsetTagShouldFail(self, fixture_getmedia):
-        for full, short in self.iterMediaWithTags(fixture_getmedia):
+        for full, _short in self.iterMediaWithTags(fixture_getmedia):
             obj = EasyPythonMutagen(full)
             with pytest.raises(KeyError):
                 obj.get('composer')
     
     def test_gettingInvalidTagShouldFail(self, fixture_getmedia):
-        for full, short in self.iterMediaWithTags(fixture_getmedia):
+        for full, _short in self.iterMediaWithTags(fixture_getmedia):
             obj = EasyPythonMutagen(full)
             # workaround for mutagen bug in easymp4.py, line 183 EasyMP4KeyError("%r is not a valid key" % key)
             extype = Exception if full.endswith('.m4a') else KeyError
@@ -178,14 +178,14 @@ class TestSettingTags:
                 obj.get('aartist')
     
     def test_settingInvalidTagShouldFail(self, fixture_getmedia):
-        for full, short in self.iterMediaWithTags(fixture_getmedia):
+        for full, _short in self.iterMediaWithTags(fixture_getmedia):
             obj = EasyPythonMutagen(full)
             extype = Exception if full.endswith('.m4a') else KeyError
             with pytest.raises(extype):
                 obj.set('aartist', 'test')
     
     def test_allTagsShouldBeEmptyWhenNotSet(self, fixture_getmedia):
-        for full, short in self.iterMediaWithTags(fixture_getmedia):
+        for full, _short in self.iterMediaWithTags(fixture_getmedia):
             obj = EasyPythonMutagen(full)
             for field in self.getFieldsToSet():
                 assert obj.get_or_default(field, None) is None

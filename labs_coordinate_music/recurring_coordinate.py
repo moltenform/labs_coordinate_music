@@ -261,7 +261,7 @@ def checkForLowBitrates(fullpathdir, tags, allowMakeUrl):
                 m4aToUrl(fullpathdir, tag.short, tag)
                 changedAtLeastOne = True
         elif action is not None:
-            assert False, 'unknown action ' + action
+            raise AssertionError('unknown action ' + action)
             
     stopIfFileRenamed(changedAtLeastOne)
         
@@ -515,7 +515,7 @@ def mainCoordinate(isTopDown=True, enableSaveSpace=False, dir=None):
         dir = root
     
     helpers = getHelpers(root, enableSaveSpace)
-    for fullpathdir, pathshort in getScopedRecurseDirs(dir, isTopDown=isTopDown, filterOutLib=True):
+    for fullpathdir, _pathshort in getScopedRecurseDirs(dir, isTopDown=isTopDown, filterOutLib=True):
         # we'll need a few passes through the directory in some cases
         while True:
             try:

@@ -101,6 +101,14 @@ ignore = [
  "ERA001", # commented out code
  "RUF015", # single element slice
  "UP036", # it's ok to check for python2
+ "UP025",
+ "PIE810",
+ "UP034",
+ "UP008",
+ "RUF001",
+ "SIM300",
+ "SIM115",
+ "C405",
 ]
 
 # these might also be useful to disable

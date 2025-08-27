@@ -118,7 +118,7 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None, styleGiven=Non
     respondToSmallFiles = 'makeLink' # makeLink|skip|delete 
     if localfiles is None:
         localfiles = list(files.listFiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
-    for fullpath, short in localfiles:
+    for _fullpath, short in localfiles:
         if short.endswith('.wav'):
             warn('why is there still a wav here? ' + short)
         if '__MARKAS' in short:
@@ -133,7 +133,7 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None, styleGiven=Non
         renameAlbumStyle = getInputBool('Rename albums style?')
         renameLooseStyle = getInputBool('Rename loose songs style?')
         if renameAlbumStyle:
-            renameAlbumHasManyArtists = getInputBool('Album has mulitple artists?')
+            renameAlbumHasManyArtists = getInputBool('Album has multiple artists?')
             
     for fullpath, short in localfiles:
         if fullpath.endswith('.m4a') or fullpath.endswith('.flac'):
@@ -208,7 +208,7 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
             len(tags) > 0 and not alreadyAll, fullpathdir, tags, parsed, True, getSpotifyGeographicMarketName())
     
     # check that all files have a spotify link
-    for fullpath, short in files.recurseFiles(dir):
+    for fullpath, _short in files.recurseFiles(dir):
         if getFieldForFile(fullpath, False):
             assertTrue('spotify:' in CoordMusicAudioMetadata(fullpath).getLink())
     
@@ -332,7 +332,7 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
 def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
     results = []
-    for fullpath, short in getScopedRecurseFiles(dir, filterOutLib=True):
+    for fullpath, _short in getScopedRecurseFiles(dir, filterOutLib=True):
         if fullpath.endswith('.mp3') and not fullpath.endswith('.3.mp3') and not fullpath.endswith('.sv.mp3'):
             obj = CoordMusicAudioMetadata(fullpath)
             if 'spotify:track:' in obj.getLink() and get_empirical_bitrate(fullpath, obj) >= bitrateThreshold:
@@ -462,7 +462,7 @@ def tools_assignTagIfUntagged():
     import recurring_coordinate
     fileIterator = getScopedRecurseFiles(getMusicRoot(), filterOutLib=True)
     logOnly = True
-    for filename, short in fileIterator:
+    for filename, _short in fileIterator:
         if getFieldForFile(filename, throw=False):
             obj = CoordMusicAudioMetadata(filename)
             if not obj.get_or_default('album', None) and not obj.get_or_default('track', None) and not obj.get_or_default('comment', None) and not obj.get_or_default('title', None):

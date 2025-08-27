@@ -203,7 +203,7 @@ class TestMusicUtils:
     
     # test parseArtistFromFilename
     def parseArtistFromFilename(self, fullpath):
-        helpers = Bucket(splroot='c:/music'.split('/'))
+        helpers = Bucket(splroot=['c:', 'music'])
         parsed = Bucket(album='a', artist=None, discnumber=None)
         fillFieldsFromContext(parsed, fullpath, fullpath.split('/'), helpers)
         return parsed.artist
@@ -247,7 +247,7 @@ class TestMusicUtils:
 
     # test parseAlbumFromFilename
     def parseAlbumFromFilename(self, fullpath):
-        helpers = Bucket(splroot='c:/music'.split('/'))
+        helpers = Bucket(splroot=['c:', 'music'])
         parsed = Bucket(album=None, artist='a', discnumber=None)
         fillFieldsFromContext(parsed, fullpath, fullpath.split('/'), helpers)
         return parsed.album

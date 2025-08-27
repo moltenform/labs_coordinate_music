@@ -7,9 +7,6 @@ import tempfile
 from os.path import join
 from shinerainsevenlib.standard import *
 
-import sys
-sys.path.append('..')
-
 import coordmusictools
 from coordmusicutil import *
 from recurring_linkspotify import \
@@ -196,7 +193,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
         '$The Fifth Dimension$12$Workin\' on a Groovy Thing$%s.wav' % link2, False)
     
     print(u'.wav files in %s, please convert them to m4a' % (tmpdirsl + 'incoming'))
-    coordmusictools.tools_newFilesBackToReplaceOutsideMp3s(tmpdirsl + 'outside', tmpdirsl + 'incoming')
+    tools_newFilesBackToReplaceOutsideMp3s_oldVersion(tmpdirsl + 'outside', tmpdirsl + 'incoming')
     
     # see if the result is right
     all = sorted([filepath.replace(tmpdirsl + 'outside', '').replace(files.sep, '/')
@@ -234,7 +231,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
 if __name__ == '__main__':
     if not files.isFile(u'./tests/media/flac.flac'):
         print('could not find test media. please ensure the current directory is labs_coordinate_music')
-        assert False
+        raise AssertionError()
     
     toptmpdir = ustr(join(tempfile.gettempdir(), 'test_music_coordination'))
     topmediadir = u'./tests/media'
