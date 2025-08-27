@@ -4,6 +4,10 @@
 coordmusicuserconfig.py
 *.pyc
 
+wavcut.sln
+wavcut.vcxproj
+wavcut.vcxproj.filters
+wavcut.vcxproj.user
 OUTSIDE
 
 # Byte-compiled / optimized / DLL files
