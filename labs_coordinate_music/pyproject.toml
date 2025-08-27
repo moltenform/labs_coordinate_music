@@ -198,7 +198,9 @@ W0707
 # The warning E1101 we want enabled because it's useful to catch missing functions.
 
 [tool.yapf]
-based_on_style = pep8
+
+# styles: google, pep8, yapf, facebook
+based_on_style = "facebook"
 spaces_before_comment = 1
 split_before_logical_operator = false
 column_limit = 120

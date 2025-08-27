@@ -6,6 +6,7 @@ from coordmusicutil import *
 
 showAllAlbumsRegardlessOfPopularity = False
 
+
 def getPopularitiesList(fullpathdir, tags):
     # create mapUriToListIndex
     result = [0] * len(tags)
@@ -15,7 +16,7 @@ def getPopularitiesList(fullpathdir, tags):
         if 'spotify:track:' in item.getLink():
             trackIds.append(item.getLink())
             mapUriToListIndex[ustr(item.getLink())] = i
-        
+
     # save network traffic by using batches of 20
     for trackIdBatch in takeBatch(trackIds, 20):
         results = spotipyconn().tracks(trackIdBatch)
@@ -27,13 +28,14 @@ def getPopularitiesList(fullpathdir, tags):
                 popularity = track['popularity'] if isInSpotifyMarket(track) else 0
                 result[mappedIndex] = popularity
     return result
-    
+
+
 def getStringTrackAndPopularity(directory, obj, popularity):
     localLen = int(get_audio_duration(files.join(directory, obj.short), obj))
     localBitrate = int(get_empirical_bitrate(files.join(directory, obj.short), obj))
-    size = '%.1fMb'%(files.getSize(files.join(directory, obj.short)) / (1024.0 * 1024))
-    return 'p%02dp %s %s %dk %02d:%02d'%(popularity, obj.short, size, localBitrate, localLen // 60, localLen%60)
-    
+    size = '%.1fMb' % (files.getSize(files.join(directory, obj.short)) / (1024.0 * 1024))
+    return 'p%02dp %s %s %dk %02d:%02d' % (popularity, obj.short, size, localBitrate, localLen // 60, localLen % 60)
+
 
 def m4aToUrlWithBitrate(directory, short, obj):
     # For m4a files, we use the bitrate to "rate" the song.
@@ -62,7 +64,9 @@ def m4aToUrlWithBitrate(directory, short, obj):
         urlRatingNumber = 30
 
     while True:
-        inp = getInputString('quality marker of "%d" look good, or enter another or "none" for none.'%urlRatingNumber, False)
+        inp = getInputString(
+            'quality marker of "%d" look good, or enter another or "none" for none.' % urlRatingNumber, False
+        )
         if inp == 'y':
             break
         elif inp.isdigit():
@@ -75,7 +79,7 @@ def m4aToUrlWithBitrate(directory, short, obj):
             return None
 
     newname = directory + '/' + files.splitExt(short)[0]
-    newname += (' (%d).url'%urlRatingNumber) if urlRatingNumber != 'none' else '.url'
+    newname += (' (%d).url' % urlRatingNumber) if urlRatingNumber != 'none' else '.url'
     assert 'spotify:track:' in obj.getLink()
     writeUrlFile(newname, obj.getLink())
     try:
@@ -84,36 +88,43 @@ def m4aToUrlWithBitrate(directory, short, obj):
         alert('you need to close the file first!')
         softDeleteFile(directory + '/' + short)
     return newname
-    
+
+
 class SaveDiskSpaceMusicToUrl:
     def __init__(self, enabled=True):
         self.enabled = enabled
-        
+
     def go(self, fullpathdir, tags, parsedNames):
         if not self.enabled:
             return
-        
-        tags = [tag for tag in tags if not tag.short.endswith('.url') and not tag.short.endswith('.3.mp3') and
-            '.sv.' not in tag.short and 'spotify:track:' in tag.getLink()]
+
+        tags = [
+            tag for tag in tags if not tag.short.endswith('.url') and not tag.short.endswith('.3.mp3') and
+            '.sv.' not in tag.short and 'spotify:track:' in tag.getLink()
+        ]
         if not tags:
             return
-        
+
         popularitiesList = getPopularitiesList(fullpathdir, tags)
-        nothingMeetsCutoff = all((not popularity or isinstance(popularity, str) or
-            popularity < getPopularityCutoff()) for popularity in popularitiesList)
+        nothingMeetsCutoff = all(
+            (not popularity or isinstance(popularity, str) or popularity < getPopularityCutoff())
+            for popularity in popularitiesList
+        )
         if not showAllAlbumsRegardlessOfPopularity and nothingMeetsCutoff:
             return
-        
+
         # if it's an album, show the entire album, for context
-        trace('looking to save disk space in %s (%.1fMb)\n'%(
-            fullpathdir, sum(files.getSize(files.join(fullpathdir, tag.short)) for tag in tags) / (1024.0 * 1024)))
+        trace(
+            'looking to save disk space in %s (%.1fMb)\n' %
+            (fullpathdir, sum(files.getSize(files.join(fullpathdir, tag.short)) for tag in tags) / (1024.0 * 1024))
+        )
         for tag, popularity in zip(tags, popularitiesList):
             trace(getStringTrackAndPopularity(fullpathdir, tag, popularity))
-        
+
         # pause to let the user look at the album
         if showAllAlbumsRegardlessOfPopularity and nothingMeetsCutoff:
             alert('')
-        
+
         # now go one by one and ask if replacements are ok
         replacedAny = False
         for tag, popularity in zip(tags, popularitiesList):
@@ -135,5 +146,5 @@ class SaveDiskSpaceMusicToUrl:
                         launchSpotifyUri(getSpotifyOrVideoUrlFromFile(tag))
                     elif inp == 'explorer':
                         askExplorer(fullpathdir)
-                    
+
         stopIfFileRenamed(replacedAny)

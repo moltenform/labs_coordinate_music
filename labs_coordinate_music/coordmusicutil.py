@@ -16,6 +16,7 @@ from easypythonmutagen import \
 
 stricter_matching = False
 
+
 def getFromUrlFile(filename):
     assert filename.endswith('.url') or filename.endswith('.URL')
     with open(filename, encoding='utf-8') as f:
@@ -25,14 +26,16 @@ def getFromUrlFile(filename):
                 return line.split('URL=')[1]
 
     return None
-                
+
+
 def writeUrlFile(urlfilepath, link, extrainfo='', okOverwrite=False):
     assertTrue(okOverwrite or not files.exists(urlfilepath), 'already exists at ' + urlfilepath)
     with open(urlfilepath, 'w', encoding='utf-8') as fout:
         fout.write('[InternetShortcut]\n')
         fout.write('URL=' + link + '\n')
         fout.write(extrainfo)
-        
+
+
 def getFieldForFile(s, throw=True):
     slower = s.lower()
     field = None
@@ -45,7 +48,8 @@ def getFieldForFile(s, throw=True):
     elif throw:
         raise AssertionError('unexpected extension')
     return field
-        
+
+
 class CoordMusicAudioMetadata(EasyPythonMutagen):
     def __init__(self, filename):
         super(CoordMusicAudioMetadata, self).__init__(filename)
@@ -54,7 +58,7 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         self.ext = files.getExt(filename)
         self.fullFilename = filename
         self.preserveLastModTime = True
-    
+
     def normalizeFieldname(self, fieldname):
         if fieldname == '%spotifylink%':
             fieldname = self.linkfield
@@ -63,25 +67,25 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
         elif fieldname == 'disc_number':
             fieldname = 'discnumber'
         return fieldname
-    
+
     def getLink(self):
         return self.get_or_default('%spotifylink%', '')
-        
+
     def setLink(self, val):
         return self.set('%spotifylink%', val)
-    
+
     def get(self, fieldname):
         if fieldname == 'discnumber' or fieldname == 'disc_number':
             return self.get_or_default('discnumber', 1, True)
         else:
             return self.get_or_default(fieldname, None, False)
-        
+
     def get_or_default(self, fieldname, default, allowThrow=True):
         import mutagen
         fieldname = self.normalizeFieldname(fieldname)
         if fieldname == 'discnumber' and default is None:
             default = 1
-        
+
         if not allowThrow:
             ret = EasyPythonMutagen.get(self, fieldname)
         else:
@@ -89,24 +93,25 @@ class CoordMusicAudioMetadata(EasyPythonMutagen):
                 ret = EasyPythonMutagen.get(self, fieldname)
             except (KeyError, mutagen.easymp4.EasyMP4KeyError):
                 return default
-            
+
         if fieldname == 'tracknumber' and '/' in ret:
             ret = ret.split('/')[0]
-            
+
         return ret
-        
+
     def set(self, fieldname, val):
         fieldname = self.normalizeFieldname(fieldname)
         if isinstance(val, int):
             val = str(val)
         EasyPythonMutagen.set(self, fieldname, val)
-    
+
     def save(self):
         assertTrue(files.exists(self.fullFilename))
         prevModTime = files.getLastModTime(self.fullFilename, files.TimeUnits.Nanoseconds)
         super(CoordMusicAudioMetadata, self).save()
         if self.preserveLastModTime:
             files.setLastModTime(self.fullFilename, prevModTime, files.TimeUnits.Nanoseconds)
+
 
 def get_audio_duration(filename, obj=None):
     if filename.lower().endswith('.wav'):
@@ -117,7 +122,7 @@ def get_audio_duration(filename, obj=None):
             assertTrue(bytewidth in [1, 2, 3], 'unsupported bytewidth', filename)
             freq = parsedWave.getframerate()
             assertTrue(freq in [44100, 48000, 44100 * 2, 48000 * 2], 'unsupported freq', filename)
-            
+
             # just an estimate, doesn't take metadata into account
             bits = bytewidth * 8
             sz = files.getSize(filename)
@@ -127,14 +132,16 @@ def get_audio_duration(filename, obj=None):
     else:
         return mutagen_get_audio_duration(filename, obj)
 
+
 def stripMarkersFromFilename(s):
     # markers like (^) aren't truly part of the name
     s = s.replace(' (^)', '').replace(' (^^)', '')
     s = s.replace(' (v)', '').replace(' (vv)', '')
     if ' {} ' in s:
         return s.split(' {} ')[-1]
-    
+
     return s
+
 
 def reconstructMarkersFromFilename(new, old):
     if ' (^)' in old:
@@ -149,8 +156,9 @@ def reconstructMarkersFromFilename(new, old):
     if ' {} ' in old:
         mark = old.split(' {} ')[0]
         new = mark + ' {} ' + new
-    
+
     return new
+
 
 def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
     obj = CoordMusicAudioMetadata(filename)
@@ -158,12 +166,14 @@ def stampM4a(filename, spotifyurl, onlyIfNotAlreadySet=False):
         obj.setLink(spotifyurl)
     obj.save()
 
+
 def getSpotifyOrVideoUrlFromFile(obj):
     link = obj.getLink()
     if link and 'spotify:' in link and 'notfound' not in link:
         return link
     else:
         return videoUrlFromFile(obj.get_or_default('comment', ''))
+
 
 def videoUrlFromFile(comment):
     if comment and len(comment) == 11 and not any(c in string.whitespace for c in comment):
@@ -175,6 +185,7 @@ def videoUrlFromFile(comment):
                 return 'https://www.youtube.com/watch?v=' + match.group(1)
     return None
 
+
 def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
     prevTime = files.getLastModTime(directory + '/' + short, files.TimeUnits.Nanoseconds)
     newname = files.splitExt(short)[0]
@@ -185,9 +196,11 @@ def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
     if link:
         writeUrlFile(newname, link)
     else:
-        assertTrue(False, 'we are making\n%s' % (directory + '\\' + short) +
-            '\n into a url, but no link to spotify or video found.')
-    
+        assertTrue(
+            False,
+            'we are making\n%s' % (directory + '\\' + short) + '\n into a url, but no link to spotify or video found.'
+        )
+
     if softDelete:
         softDeleteFile(directory + '/' + short)
     else:
@@ -196,20 +209,29 @@ def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
     files.setLastModTime(newname, prevTime, files.TimeUnits.Nanoseconds)
     return newname
 
+
 def removeCharsFlavor1(s):
     s = s.replace(u'?', u'').replace(u'\\', u'-').replace(u'/', u'-').replace(u':', u'').replace(u'*', u'')
     return s.replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
 
+
 def removeCharsFlavor2(s):
-    s = s.replace(u'!', u'').replace(u'\\', u'-').replace(u'/', u'-').replace(u'\u2019', u'\'').replace(u'?', u'').replace(u'/', u'')
-    return s.replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
+    s = s.replace(u'!', u'').replace(u'\\', u'-').replace(u'/', u'-').replace(u'\u2019',
+                                                                              u'\'').replace(u'?',
+                                                                                             u'').replace(u'/', u'')
+    return s.replace(u':', u'').replace(u'*', u'').replace(u'"', u"").replace(u'<',
+                                                                              u'').replace(u'>',
+                                                                                           u'').replace(u'|', u'')
+
 
 def _spotipyconnect():
     import spotipy
     import spotipy.util as sputil
-    
+
     scope = 'playlist-modify-public'
-    args = dict(client_id=getSpotifyClientID(), client_secret=getSpotifyClientSecret(), redirect_uri=getSpotifyCallbackUrl())
+    args = dict(
+        client_id=getSpotifyClientID(), client_secret=getSpotifyClientSecret(), redirect_uri=getSpotifyCallbackUrl()
+    )
     if scope:
         args['scope'] = scope
     token = sputil.prompt_for_user_token(getSpotifyUsername(), **args)
@@ -217,11 +239,14 @@ def _spotipyconnect():
 
 
 g_spotipyObject = None
+
+
 def spotipyconn():
     global g_spotipyObject
     if not g_spotipyObject:
         g_spotipyObject = _spotipyconnect()
     return g_spotipyObject
+
 
 class StopBecauseWeRenamedFile(Exception):
     def __init__(self, value=None):
@@ -229,10 +254,12 @@ class StopBecauseWeRenamedFile(Exception):
 
     def __str__(self):
         return repr(self.value)
-        
+
+
 def stopIfFileRenamed(bNeedToStop):
     if bNeedToStop:
         raise StopBecauseWeRenamedFile
+
 
 def getTracksFromPlaylist(sp, plid):
     tracksRet = []
@@ -243,22 +270,25 @@ def getTracksFromPlaylist(sp, plid):
     while tracks['next']:
         tracks = sp.next(tracks)
         tracksRet.extend(tracks['items'])
-        
+
     return [track['track'] for track in tracksRet]
-        
+
+
 def askRename(parentName, short1, short2, prompt=''):
     if short1 == short2:
         return True
     trace(prompt, ' in directory', parentName)
-    if getInputBool('rename %s to %s?'%(short1, short2)):
+    if getInputBool('rename %s to %s?' % (short1, short2)):
         files.move(parentName + '/' + short1, parentName + '/' + short2, False)
         return True
     return False
-    
+
+
 def askExplorer(dir):
     if getInputBool('open explorer window?'):
         files.openDirectoryInExplorer(dir)
-               
+
+
 def typeIntoSpotifySearch(s):
     try:
         import pywinauto
@@ -266,7 +296,7 @@ def typeIntoSpotifySearch(s):
     except ImportError:
         trace('pywinauto is not installed; to enable this feature first install the Python package pywinauto')
         return None
-        
+
     app = pywinauto.Application()
     try:
         app.connect(title_re="Spotify")
@@ -275,7 +305,7 @@ def typeIntoSpotifySearch(s):
         subprocess.Popen(['start', 'spotify:'], shell=True)
         if getInputFromChoices('please wait for spotify to open', ['Spotify is open'])[0] == 0:
             return typeIntoSpotifySearch(s)
-            
+
     try:
         sEscaped = s.replace('%', '{%}').replace('^', '{^}').replace('+', '{+}')
         window = app.top_window_()
@@ -286,9 +316,10 @@ def typeIntoSpotifySearch(s):
         time.sleep(0.1)
     except (pywinauto.WindowNotFoundError, pywinauto.application.AppNotConnected):
         trace('exception thrown, ', sys.exc_info()[1])
-    
+
     return None
-    
+
+
 def launchSpotifyUri(uri):
     if not uri or uri == 'spotify:notfound':
         trace('cannot start uri', str(uri))
@@ -308,6 +339,7 @@ def launchSpotifyUri(uri):
         files.openUrl(url)
         return True
 
+
 def isInSpotifyMarket(track, market=None):
     if not market:
         market = getSpotifyGeographicMarketName()
@@ -318,48 +350,53 @@ def isInSpotifyMarket(track, market=None):
         is_local = track.get('is_local', False)
         return is_playable and not is_local
 
+
 def launchMediaPlayer(path):
     mplayer = getMediaPlayer()
     files.runWithoutWait([mplayer, path])
-    
+
+
 def launchGoogleQuery(query):
     assert '/' not in query and '\\' not in query and '^' not in query and '%' not in query and ':' not in query
     files.openUrl('http://google.com/search?q=' + query)
+
 
 def getFormattedDuration(seconds, showMilliseconds=False):
     if not seconds and seconds != 0:
         return ''
     if showMilliseconds:
         milli = int(seconds * 1000)
-        return '%02d:%02d:%03d'%(int(seconds) // 60, int(seconds) % 60, milli % 1000)
+        return '%02d:%02d:%03d' % (int(seconds) // 60, int(seconds) % 60, milli % 1000)
     else:
-        return '%02d:%02d'%(int(seconds) // 60, int(seconds) % 60)
+        return '%02d:%02d' % (int(seconds) // 60, int(seconds) % 60)
+
 
 def getDirChoice(dir, prompt):
     if not files.exists(dir):
         dir = input('Please enter the path of the folder: ')
-    
+
     assertTrue(files.exists(dir), 'Path not found.')
     choices = [item[1] for item in files.listChildren(dir) if files.isDir(item[0])]
     choices.insert(0, 'All')
     if len(choices) == 1 and choices[0] != 'All':
         return choices[0]
-    
+
     ret = getInputFromChoices(prompt, choices)
     if ret[0] == -1:
         return None
     else:
         return dir if ret[1] == 'All' else files.join(dir, ret[1])
 
+
 def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
     dir = getDirChoice(dir, 'filter to files under which directory?')
     if not dir:
         return
-    
+
     startingPlace = getDirChoice(dir, 'begin at which directory?')
     if not startingPlace:
         return
-        
+
     startingPlace = startingPlace.lower()
     reachedStartingPlace = startingPlace == dir.lower()
     lib = files.sep + 'lib' + files.sep
@@ -371,12 +408,12 @@ def getScopedRecurseDirs(dir, filterOutLib=False, isTopDown=True):
                 reachedStartingPlace = True
             if startingPlace:
                 continue
-        
+
         if not filterOutLib or lib not in fullpathLower + files.sep:
             yield fullpath, short
-        
+
+
 def getScopedRecurseFiles(dir, filterOutLib=False, isTopDown=True):
     for fullpathdir, _shortdir in getScopedRecurseDirs(dir, filterOutLib=filterOutLib, isTopDown=isTopDown):
         for fullpath, short in files.listFiles(fullpathdir):
             yield fullpath, short
-

@@ -29,7 +29,7 @@
             },
         },
         {
-            "label": "yapf format",
+            "label": "autoformat",
             "type": "shell",
             "command": "py -m yapf --in-place --recursive --parallel .",
             "problemMatcher": [],

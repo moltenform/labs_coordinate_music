@@ -1,6 +1,6 @@
-
 import sys
 from shinerainsevenlib.standard import *
+
 
 def main():
     pyExe = sys.executable
@@ -25,5 +25,6 @@ def main():
 
         print(line)
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()

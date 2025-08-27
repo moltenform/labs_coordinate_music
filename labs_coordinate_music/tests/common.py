@@ -11,12 +11,13 @@ from os.path import join
 from shinerainsevenlib.standard import *
 from shinerainsevenlib.core import *
 
+
 @pytest.fixture(scope='module', name='fixture_getmedia')
 def fixture_getmedia_defn():
     # to avoid lint errors, give the function here a separate name
     basedir = ustr(join(tempfile.gettempdir(), 'test_music_coordination_media'))
     files.ensureEmptyDirectory(basedir)
-    
+
     if not os.path.isfile(u'./tests/media/flac.flac'):
         print('could not find test media. please ensure the current directory is labs_coordinate_music')
         raise AssertionError()
@@ -27,6 +28,7 @@ def fixture_getmedia_defn():
 
     yield basedir
     files.ensureEmptyDirectory(basedir)
+
 
 @pytest.fixture(name='fixture_dir')
 def fixture_dir_defn():

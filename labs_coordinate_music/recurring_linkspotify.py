@@ -5,6 +5,7 @@
 from coordmusicutil import *
 import re
 
+
 def getMetadataForSongIfFound(spotlink):
     assertTrue(spotlink.startswith('spotify:track:'))
     results = spotipyconn().tracks([spotlink])
@@ -14,19 +15,25 @@ def getMetadataForSongIfFound(spotlink):
 
     return None
 
+
 def lookupAlbumForFile(path, tag, parsed, spotlink):
     if get_empirical_bitrate(path, tag) < 30:
-        trace('skipping lookupAlbumForFile for %s since bitrate is low'%path)
+        trace('skipping lookupAlbumForFile for %s since bitrate is low' % path)
         return False
-    
+
     trackSeen = None
     if spotlink and 'spotify:track:' in spotlink:
         trackSeen = getMetadataForSongIfFound(spotlink)
 
     choices = ['search online']
     if trackSeen:
-        choices.extend(['Spotify: ' + trackSeen['album']['name'], 'Spotify: ' + trackSeen['album']['name'].split(' (')[0].split(' [')[0]])
-       
+        choices.extend(
+            [
+                'Spotify: ' + trackSeen['album']['name'],
+                'Spotify: ' + trackSeen['album']['name'].split(' (')[0].split(' [')[0]
+            ]
+        )
+
     def callback(s, arrChoices, otherCommandsContext):
         if not s:
             return False
@@ -40,8 +47,10 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
             return 'enteredmanally' + parsed.title
         else:
             return 'enteredmanally' + s
-        
-    choice = getInputFromChoices('\n\nthe album for %s is (or "SS" or type name)'%path, choices, callback, Bucket(path=path))
+
+    choice = getInputFromChoices(
+        '\n\nthe album for %s is (or "SS" or type name)' % path, choices, callback, Bucket(path=path)
+    )
     if choice[0] == -1 and choice[1].startswith('enteredmanally'):
         # instead of typing 0, 1, or 2, the user directly typed in text.
         choice = (choice[0], choice[1].replace('enteredmanally', ''))
@@ -57,17 +66,22 @@ def lookupAlbumForFile(path, tag, parsed, spotlink):
     tag.save()
     return True
 
+
 def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknumber, market):
     if not seenWithoutSpotify:
         return
-        
+
     if not getSpotifyClientID():
         trace('Connecting to Spotify has been disabled, provide a clientID in coordmusicuserconfig.py to enable.')
         return
-    
+
     # for each non-url file, show whether has a link or not.
-    tracksAndLinks = (tag.short + (' (haslink %s)' % tag.getLink().replace('spotify:', '')
-        if (not tag.short.endswith('.url') and tag.getLink() and 'spotify:' in tag.getLink()) else '') for tag in tags)
+    tracksAndLinks = (
+        tag.short + (
+            ' (haslink %s)' % tag.getLink().replace('spotify:', '') if
+            (not tag.short.endswith('.url') and tag.getLink() and 'spotify:' in tag.getLink()) else ''
+        ) for tag in tags
+    )
     trace('\n\n\n\nAssociate with Spotify, for directory\n' + fullpathdir + '\n\n')
     trace('containing\n', '\n\t'.join(tracksAndLinks), '\n\n')
     choices = ['associate with Spotify, each track individually']
@@ -78,13 +92,14 @@ def linkspotify(seenWithoutSpotify, fullpathdir, tags, parsedNames, seenTracknum
         choice = (0, choices[0])
     else:
         choice = getInputFromChoices('', choices)
-    
+
     if choice[0] == 0:
         for tag, parsed in zip(tags, parsedNames):
             linkspotifypertrack(market, fullpathdir, tag, parsed)
     elif choice[0] == 1:
         linkspotifyperalbum(market, fullpathdir, tags, parsedNames)
-        
+
+
 def runspotifysearch(market, search_str, search_title, type, limit, filterCovers):
     assertTrue(type == 'album' or type == 'track', 'unsupported search type ' + type)
     result = spotipyconn()._get('search', q=search_str, limit=limit, offset=0, type=type, market=market)
@@ -92,23 +107,27 @@ def runspotifysearch(market, search_str, search_title, type, limit, filterCovers
     resultFiltered = []
     for res in result:
         if type == 'track':
-            textlower = res[u'name'].lower() + ' ' + ' '.join((getPrintable(art['name']) for art in res['artists'])).lower()
+            textlower = res[u'name'].lower() + ' ' + ' '.join((getPrintable(art['name'])
+                                                               for art in res['artists'])).lower()
         else:
             textlower = res[u'name'].lower()
-        
+
         if stricter_matching and not does_title_match_a_bit(search_title.lower(), res[u'name'].lower()):
             continue
 
         if not isInSpotifyMarket(res, market):
             continue
-        
+
         if not res[u'uri'].startswith('spotify:' + type + ':'):
             continue
-        
-        if not filterCovers or not re.findall(r'\b(karaoke|style of|tribute|tributes|cover|parody|originally performed)\b', textlower):
+
+        if not filterCovers or not re.findall(
+            r'\b(karaoke|style of|tribute|tributes|cover|parody|originally performed)\b', textlower
+        ):
             resultFiltered.append(res)
-            
+
     return resultFiltered
+
 
 def remove_quotes_punctuation(s):
     # normalize quote marks by deleting them
@@ -116,6 +135,7 @@ def remove_quotes_punctuation(s):
     s = s.replace('“', '').replace('”', '').replace('‘', '').replace('’', '')
     s = s.replace(':', '').replace(';', '').replace('-', '').replace('–', '')
     return s
+
 
 def remove_diacritics(s):
     from unicodedata import combining, normalize
@@ -125,19 +145,21 @@ def remove_diacritics(s):
     outliers = str.maketrans(dict(zip(LATIN.split(), ASCII.split())))
     return "".join(c for c in normalize("NFD", s.lower().translate(outliers)) if not combining(c))
 
+
 def longest_common_substring(s1, s2):
-   m = [[0] * (1 + len(s2)) for i in range (1 + len(s1))]
-   longest, x_longest = 0, 0
-   for x in range(1, 1 + len(s1)):
-       for y in range(1, 1 + len(s2)):
-           if s1[x - 1] == s2[y - 1]:
-               m[x][y] = m[x - 1][y - 1] + 1
-               if m[x][y] > longest:
-                   longest = m[x][y]
-                   x_longest = x
-           else:
-               m[x][y] = 0
-   return s1[x_longest - longest: x_longest]
+    m = [[0] * (1 + len(s2)) for i in range(1 + len(s1))]
+    longest, x_longest = 0, 0
+    for x in range(1, 1 + len(s1)):
+        for y in range(1, 1 + len(s2)):
+            if s1[x - 1] == s2[y - 1]:
+                m[x][y] = m[x - 1][y - 1] + 1
+                if m[x][y] > longest:
+                    longest = m[x][y]
+                    x_longest = x
+            else:
+                m[x][y] = 0
+    return s1[x_longest - longest:x_longest]
+
 
 def does_title_match_a_bit(expected, got):
     # not diflib.ratio because it returns a low score for 'hello, world' vs 'hello' which we'd want to give a high score
@@ -147,20 +169,24 @@ def does_title_match_a_bit(expected, got):
     longestmatch = longest_common_substring(expected, got)
     return len(longestmatch) >= score_wanted
 
+
 def getStrLocalAudioFile(path, parsed, tag, duration=None):
     if duration is None:
         duration = int(get_audio_duration(path, tag))
-    return getPrintable('(%02d:%02d) (%s) %s'%(duration // 60, duration%60, parsed.artist, parsed.title))
+    return getPrintable('(%02d:%02d) (%s) %s' % (duration // 60, duration % 60, parsed.artist, parsed.title))
+
 
 def getStrRemoteAudio(track, includeDiscNum, includeTracknum, artistsAlreadyShown=None):
     duration = int(track['duration_ms'] / 1000.0)
     artists = ';; '.join((art['name'] for art in track['artists']))
     artists = '' if artists == artistsAlreadyShown else '(' + artists + ')'
-    tracknumber = '%02d'%track[u'track_number'] if includeTracknum else ''
-    discnumber = '%02d '%track[u'disc_number'] if includeDiscNum else ''
-    return getPrintable('(%02d:%02d) %s%s %s %s'%(duration // 60, duration%60,
-        discnumber, tracknumber, artists, track['name']))
-    
+    tracknumber = '%02d' % track[u'track_number'] if includeTracknum else ''
+    discnumber = '%02d ' % track[u'disc_number'] if includeDiscNum else ''
+    return getPrintable(
+        '(%02d:%02d) %s%s %s %s' % (duration // 60, duration % 60, discnumber, tracknumber, artists, track['name'])
+    )
+
+
 def getTracksRemoteAlbum(albumid, market):
     results = spotipyconn().album_tracks(albumid)
     tracks = results['items']
@@ -169,13 +195,15 @@ def getTracksRemoteAlbum(albumid, market):
         tracks.extend(results['items'])
     return [track for track in tracks if isInSpotifyMarket(track, market)]
 
+
 def getStrRemoteAlbum(tracks, albumartists):
     ret = []
     includeDiscNum = any(track['disc_number'] not in (0, 1) for track in tracks)
     for track in tracks:
         ret.append(getStrRemoteAudio(track, includeDiscNum, True, albumartists))
     return '\n'.join(ret)
-    
+
+
 def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
     fullpathdir, search_str, search_title, tag, results, market = otherCommandsContext
     done = False
@@ -188,9 +216,9 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
             if getFieldForFile(fullpath, False):
                 trace('setting to spotify:notfound,', short)
                 stampM4a(fullpath, 'spotify:notfound', onlyIfNotAlreadySet=True)
-        
+
         done = True
-        raise StopBecauseWeRenamedFile  # because tags are now invalidated
+        raise StopBecauseWeRenamedFile # because tags are now invalidated
     elif inp == 'explorer':
         askExplorer(fullpathdir)
     elif inp == 'hear0':
@@ -207,7 +235,9 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
     elif inp == 'type':
         typeIntoSpotifySearch(search_str)
     elif inp.startswith('more'):
-        results[:] = runspotifysearch(market, search_str, search_title=search_title, type='track', limit=20, filterCovers=False)
+        results[:] = runspotifysearch(
+            market, search_str, search_title=search_title, type='track', limit=20, filterCovers=False
+        )
         done = 'more'
     elif inp.startswith('spotify:track:'):
         inp = inp[len('spotify:track:'):]
@@ -216,13 +246,16 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
     elif inp.startswith('https://open.spotify.com/track/'):
         inp = inp[len('https://open.spotify.com/track/'):]
         inp = inp.split('?')[0]
-        if len(inp) == len('5XeSAezNDk9tuw3viiCbZ3'):            
+        if len(inp) == len('5XeSAezNDk9tuw3viiCbZ3'):
             results.insert(0, spotipyconn().track(inp))
             done = 'more'
         else:
-            trace("Could not parse. Expected something like https://open.spotify.com/track/5XeSAezNDk9tuw3viiCbZ3?si=abc")
-    
+            trace(
+                "Could not parse. Expected something like https://open.spotify.com/track/5XeSAezNDk9tuw3viiCbZ3?si=abc"
+            )
+
     return done
+
 
 def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
     fullpathdir, search_str, search_title, tags, results, market = otherCommandsContext
@@ -232,14 +265,16 @@ def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
             if getFieldForFile(fullpath, False):
                 trace('setting to spotify:notfound,', short)
                 stampM4a(fullpath, 'spotify:notfound', onlyIfNotAlreadySet=True)
-        
-        raise StopBecauseWeRenamedFile  # because tags are now invalidated
+
+        raise StopBecauseWeRenamedFile # because tags are now invalidated
     elif inp == 'explorer':
         askExplorer(fullpathdir)
     elif inp == 'type':
         typeIntoSpotifySearch(search_str)
     elif inp.startswith('more'):
-        results[:] = runspotifysearch(market, search_str, search_title=search_title, type='album', limit=20, filterCovers=False)
+        results[:] = runspotifysearch(
+            market, search_str, search_title=search_title, type='album', limit=20, filterCovers=False
+        )
         done = 'more'
     elif inp.startswith('spotify:album:'):
         inp = inp[len('spotify:album:'):]
@@ -248,14 +283,17 @@ def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
     elif inp.startswith('https://open.spotify.com/album/'):
         inp = inp[len('https://open.spotify.com/album/'):]
         inp = inp.split('?')[0]
-        if len(inp) == len('3Eiwyp3EB66AuXjBI2MYZI'):            
+        if len(inp) == len('3Eiwyp3EB66AuXjBI2MYZI'):
             results.insert(0, spotipyconn().track(inp))
             done = 'more'
         else:
-            trace("Could not parse. Expected something like https://open.spotify.com/album/3Eiwyp3EB66AuXjBI2MYZI?si=SnT")
-    
+            trace(
+                "Could not parse. Expected something like https://open.spotify.com/album/3Eiwyp3EB66AuXjBI2MYZI?si=SnT"
+            )
+
     return done
-    
+
+
 def callbackForChoiceAlbumTrack(inp, arrChoices, otherCommandsContext):
     fullpathdir, tag, key, remotetrack = otherCommandsContext
     path = fullpathdir + '/' + tag.short
@@ -272,46 +310,51 @@ def callbackForChoiceAlbumTrack(inp, arrChoices, otherCommandsContext):
             return True
         except:
             trace('malformed track number, expected syntax 01_01 ', str(sys.exc_info()[1]))
-    
+
     return None
-    
+
+
 def getChoiceString(track, localduration, artistExpected='', inclAlbum=False):
     ret = getStrRemoteAudio(track, False, False) + ' '
     remoteduration = track['duration_ms'] / 1000.0
     if abs(localduration - remoteduration) < 6:
         ret += 'same lngth'
     elif remoteduration > localduration:
-        ret += 'lnger(%ds)'%int(remoteduration - localduration)
+        ret += 'lnger(%ds)' % int(remoteduration - localduration)
     else:
-        ret += 'shrter(%ds)'%int(localduration - remoteduration)
+        ret += 'shrter(%ds)' % int(localduration - remoteduration)
     if inclAlbum:
-        ret += '\n\tfrom %s'%track['album']['name']
+        ret += '\n\tfrom %s' % track['album']['name']
     return ret
+
 
 def filter_by_duration(results, localduration):
     max_allowed_difference = 35
+
     def is_duration_ok(track):
         remoteduration = track['duration_ms'] / 1000.0
         diff = abs(remoteduration - localduration)
         return diff < max_allowed_difference
+
     return [track for track in results if is_duration_ok(track)]
+
 
 def linkspotifypertrack(market, fullpathdir, tag, parsed):
     if tag.short.endswith('.url') or 'spotify:' in tag.getLink():
         return
-    
+
     path = fullpathdir + '/' + tag.short
     localduration = get_audio_duration(path, tag)
     artist = (parsed.artist if parsed.artist else tag.get('artist')) or ''
     title = (parsed.title if parsed.title else tag.get('title')) or ''
-    
+
     trace('\n\n\nin folder\n', files.getName(fullpathdir), '\n', tag.short)
-    trace('\n00 %s\n\n'%getStrLocalAudioFile(path, parsed, tag, localduration))
+    trace('\n00 %s\n\n' % getStrLocalAudioFile(path, parsed, tag, localduration))
     search_str = ustr(artist) + ' ' + title
     limit = 5 if stricter_matching else 8
     results = runspotifysearch(market, search_str, search_title=title, type='track', limit=limit, filterCovers=True)
     results = filter_by_duration(results, localduration) if stricter_matching else results
-    
+
     while True:
         choices = [getChoiceString(track, localduration, artist, inclAlbum=True) for track in results]
         prompt = 'choose, or "hear#", "type", "more", "spotify:track:...", link to track, "ns" (notseenonspotify)'
@@ -327,6 +370,7 @@ def linkspotifypertrack(market, fullpathdir, tag, parsed):
             tag.save()
             break
 
+
 def getArtistFromAlbumid(albumid):
     idcompact = spotipyconn()._get_id('album', albumid)
     results = spotipyconn()._get('albums/' + idcompact + '/tracks/?offset=0&limit=1')
@@ -334,7 +378,8 @@ def getArtistFromAlbumid(albumid):
         return ';; '.join((artist['name'] for artist in results['items'][0]['artists']))
     else:
         return '(could not get artist)'
-    
+
+
 def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
     tags = []
     parsedNames = []
@@ -346,12 +391,12 @@ def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
             if 'spotify:track:' in tag.getLink():
                 if not getInputBool('this will overwrite existing spotify link for ' + tag.short + ', continue?'):
                     return
-    
+
     album = parsedNames[0].album
     artist = parsedNames[0].artist
     search_str = ustr(artist + ' ' + album)
     results = runspotifysearch(market, search_str, search_title=album, type='album', limit=10, filterCovers=True)
-    
+
     while True:
         estimatedalbumartists = [getArtistFromAlbumid(albumobj['id']) for albumobj in results]
         choices = [albumobj['name'] + ' by "' + estimatedalbumartists[i] + '"' for i, albumobj in enumerate(results)]
@@ -364,41 +409,53 @@ def linkspotifyperalbum(market, fullpathdir, tagsAll, parsedNamesAll):
         elif choice[0] == -1:
             break
         else:
-            if linkspotifyperalbumtracks(market, fullpathdir, tags, parsedNames,
-                    results[choice[0]]['uri'], estimatedalbumartists[choice[0]]):
+            if linkspotifyperalbumtracks(
+                market, fullpathdir, tags, parsedNames, results[choice[0]]['uri'], estimatedalbumartists[choice[0]]
+            ):
                 break
-    
+
+
 def linkspotifyperalbumtracks(market, fullpathdir, tags, parsedNames, albumid, estimatedalbumartist):
     tracks = getTracksRemoteAlbum(albumid.replace('spotify:album:', ''), market)
-    mapNumToTrack = {'%02d_%02d'%(int(track['disc_number']), int(track['track_number'])): track for track in tracks}
-    
+    mapNumToTrack = {'%02d_%02d' % (int(track['disc_number']), int(track['track_number'])): track for track in tracks}
+
     # first, just print the tracks
-    trace('local:\n' + '\n'.join('%s %s'%(getStrLocalAudioFile(fullpathdir + '/' + tag.short, Bucket(title='',
-        artist=parsed.artist), tag), tag.short) for parsed, tag in zip(parsedNames, tags)))
+    trace(
+        'local:\n' + '\n'.join(
+            '%s %s' % (
+                getStrLocalAudioFile(fullpathdir + '/' + tag.short, Bucket(title='', artist=parsed.artist), tag),
+                tag.short
+            ) for parsed, tag in zip(parsedNames, tags)
+        )
+    )
     trace('\n\nremote:\n' + getStrRemoteAlbum(tracks, estimatedalbumartist))
-    
+
     # now, go one-by one for each file on disk
     for tag, parsed in zip(tags, parsedNames):
         ret = linkspotifyperalbumtrack(fullpathdir, tag, parsed, mapNumToTrack, estimatedalbumartist)
         if not ret:
             return False
-    
+
     # tell linkspotifyperalbum that we completed all tracks
     return True
-    
+
+
 def linkspotifyperalbumtrack(fullpathdir, tag, parsed, mapNumToTrack, estimatedalbumartist):
     path = fullpathdir + '/' + tag.short
     localduration = get_audio_duration(path, tag)
-    key = Bucket(key='%02d_%02d'%(int(parsed.discnumber), int(parsed.tracknumber)))
-    
+    key = Bucket(key='%02d_%02d' % (int(parsed.discnumber), int(parsed.tracknumber)))
+
     while True:
         trace('\n\nDo the local and remote songs match?')
-        trace('local:\n %s %s'%(getStrLocalAudioFile(path, Bucket(title='', artist=parsed.artist), tag, localduration), tag.short))
+        trace(
+            'local:\n %s %s' %
+            (getStrLocalAudioFile(path, Bucket(title='', artist=parsed.artist), tag, localduration), tag.short)
+        )
         remoteTrack = mapNumToTrack.get(key.key, None)
         if remoteTrack:
-            trace('remote:\n %s'%getChoiceString(remoteTrack, localduration, estimatedalbumartist, False))
+            trace('remote:\n %s' % getChoiceString(remoteTrack, localduration, estimatedalbumartist, False))
         else:
-            trace('remote:\n no track matches %s, consider entering another disc_track'%key.key)
+            trace('remote:\n no track matches %s, consider entering another disc_track' % key.key)
         choices = ['try another album', 'looks correct']
         prompt = 'choose, or "cancel" to skip, "hear0", "hear1", disc#_track# like "01_01"'
         otherCommandsContext = (fullpathdir, tag, key, remoteTrack)
@@ -416,23 +473,26 @@ def linkspotifyperalbumtrack(fullpathdir, tag, parsed, mapNumToTrack, estimateda
         # otherwise we updated key.key, re-enter loop
     return True
 
+
 class RemoveRemasteredString:
     def __init__(self):
         self.regexp = re.compile(r' - [0-9][0-9][0-9][0-9] (- )?(Digital )?Remaster(ed)?')
-        self.knownBad = [' - mono version', ' - Remastered Album Version', ' - REMASTERED', ' - Remastered',
-            ' - Single Version (Mono)', ' - Single Version (Stereo)', ' - Single Version - Stereo', ' - Mono Single Version',
-            ' - Album Version (Mono)', ' - Album Version (Stereo)', ' - Album Version-Stereo',
-            ' - Album Version', ' - Single Version',
-            ' (Mono Version)', ' [Mono Version]', ' (Remastered)', ' [Remastered]', ' Version']
-            
+        self.knownBad = [
+            ' - mono version', ' - Remastered Album Version', ' - REMASTERED', ' - Remastered',
+            ' - Single Version (Mono)', ' - Single Version (Stereo)', ' - Single Version - Stereo',
+            ' - Mono Single Version', ' - Album Version (Mono)', ' - Album Version (Stereo)', ' - Album Version-Stereo',
+            ' - Album Version', ' - Single Version', ' (Mono Version)', ' [Mono Version]', ' (Remastered)',
+            ' [Remastered]', ' Version'
+        ]
+
     def getProposedName(self, short):
         newshort = short
         newshort = self.regexp.sub('', newshort)
         for bad in self.knownBad:
             newshort = newshort.replace(bad, '')
-        
+
         return newshort
-        
+
     def check(self, parentName, allShorts):
         for short in allShorts:
             lower = short.lower()
@@ -440,15 +500,16 @@ class RemoveRemasteredString:
                 trace(parentName)
                 trace('disallowed word in ' + short)
                 newshort = self.getProposedName(short)
-                
+
                 if newshort == short or not getInputBool(u'use proposed name ' + newshort + '?'):
                     trace('could not automatically fix.')
                     askExplorer(parentName)
                     newshort = getInputString('type a new name?')
-                    
+
                 if newshort != short:
                     files.move(parentName + '/' + short, parentName + '/' + newshort, False)
                     stopIfFileRenamed(True)
+
 
 def isTagAcceptibleToBeMadeIntoShortcuts(fullpathdir, tag):
     return not tag.short.endswith('.url') and not tag.short.endswith('.flac') and \
@@ -456,12 +517,14 @@ def isTagAcceptibleToBeMadeIntoShortcuts(fullpathdir, tag):
         '.sv.' not in tag.short and '.movetosv.' not in tag.short and '.3.mp3' not in tag.short and \
         'spotify:track:' in tag.getLink()
 
+
 def startSpotifyFromM4a(s):
     assert getFieldForFile(s, False) is not None, 'unknown file type'
     assert files.exists(s), 'file not found'
-    
+
     obj = CoordMusicAudioMetadata(s)
     assert launchSpotifyUri(getSpotifyOrVideoUrlFromFile(obj))
+
 
 def startSpotifyFromM4aArgs(args):
     # catch all exceptions; script output shown in a cmd window
@@ -473,6 +536,7 @@ def startSpotifyFromM4aArgs(args):
         alertGui(ustr(e))
         sys.exit(1)
 
+
 def viewTagsFromM4aOrDirectory(path):
     def viewTagsFromFile(fullpath):
         if fullpath.lower().endswith('.url'):
@@ -481,7 +545,7 @@ def viewTagsFromM4aOrDirectory(path):
             return CoordMusicAudioMetadata(fullpath).getLink()
         else:
             return ''
-            
+
     if files.isDir(path):
         trace('Spotify links in', path)
         for full, short in files.listFiles(path):
@@ -494,4 +558,3 @@ def viewTagsFromM4aOrDirectory(path):
 assertEq('abc', remove_diacritics('abc'))
 assertEq('antonio e e', remove_diacritics('Antônio é è'))
 assertEq('ae oe', remove_diacritics('æ ö'))
-

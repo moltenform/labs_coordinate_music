@@ -10,24 +10,22 @@ import coordmusicuserconfig
 import recurring_coordinate
 import recurring_linkspotify
 
+
 def showCmdOptions():
-    coordmusictools.trace('\nmain.py' +
-    '\n\tInteractive mode: organization and more.' +
-    '\n\nmain.py startspotify /path/to/song.mp3' +
-    '\n\tStarts playing the Spotify track that this mp3\'s metadata points to.' +
-    '\n\nmain.py viewspotify /path/to/song.mp3' +
-    '\n\tShow the Spotify track that this mp3\'s metadata points to.')
+    coordmusictools.trace(
+        '\nmain.py' + '\n\tInteractive mode: organization and more.' + '\n\nmain.py startspotify /path/to/song.mp3' +
+        '\n\tStarts playing the Spotify track that this mp3\'s metadata points to.' +
+        '\n\nmain.py viewspotify /path/to/song.mp3' + '\n\tShow the Spotify track that this mp3\'s metadata points to.'
+    )
+
 
 def main():
-    choices = ['organize music',
-        'organize + save disk space (replace with Spotify shortcuts)',
-        'Spotify playlist to text',
-        'Spotify playlist to song lengths',
-        'Spotify playlist to filenames',
-        'filenames to id3 tags, remove low bitrate',
-        'save all filenames+metadata to text file',
-        'show cmd-line options']
-        
+    choices = [
+        'organize music', 'organize + save disk space (replace with Spotify shortcuts)', 'Spotify playlist to text',
+        'Spotify playlist to song lengths', 'Spotify playlist to filenames',
+        'filenames to id3 tags, remove low bitrate', 'save all filenames+metadata to text file', 'show cmd-line options'
+    ]
+
     choice, s = coordmusictools.getInputFromChoices('', choices)
     if choice == 0:
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=False)
@@ -47,7 +45,8 @@ def main():
         coordmusictools.tools_saveFilenamesMetadataToText()
     elif choice == 7:
         showCmdOptions()
-    
+
+
 def checkForMetadataTags(dir):
     import coordmusicutil
     from shinerainsevenlib.standard import files
@@ -62,8 +61,8 @@ def checkForMetadataTags(dir):
                 countWithTags += 1
             else:
                 countWithoutTags += 1
-                
-    sys.stderr.write('saw %d audio files with tags and %d audio files without tags'%(countWithTags, countWithoutTags))
+
+    sys.stderr.write('saw %d audio files with tags and %d audio files without tags' % (countWithTags, countWithoutTags))
 
 
 if __name__ == '__main__':
