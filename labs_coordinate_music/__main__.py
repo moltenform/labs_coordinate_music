@@ -13,17 +13,24 @@ import recurring_linkspotify
 
 def showCmdOptions():
     coordmusictools.trace(
-        '\nmain.py' + '\n\tInteractive mode: organization and more.' + '\n\nmain.py startspotify /path/to/song.mp3' +
+        '\nmain.py' + 
+        '\n\tInteractive mode: organization and more.' + 
+        '\n\nmain.py startspotify /path/to/song.mp3' +
         '\n\tStarts playing the Spotify track that this mp3\'s metadata points to.' +
-        '\n\nmain.py viewspotify /path/to/song.mp3' + '\n\tShow the Spotify track that this mp3\'s metadata points to.'
+        '\n\nmain.py viewspotify /path/to/song.mp3' +
+        '\n\tShow the Spotify track that this mp3\'s metadata points to.'
     )
 
 
 def main():
     choices = [
-        'organize music', 'organize + save disk space (replace with Spotify shortcuts)', 'Spotify playlist to text',
-        'Spotify playlist to song lengths', 'Spotify playlist to filenames',
-        'filenames to id3 tags, remove low bitrate', 'save all filenames+metadata to text file', 'show cmd-line options'
+        'organize music', 'organize + save disk space (replace with Spotify shortcuts)',
+        'Spotify playlist to text',
+        'Spotify playlist to song lengths',
+        'Spotify playlist to filenames',
+        'filenames to id3 tags, remove low bitrate',
+        'save all filenames+metadata to text file',
+        'show cmd-line options'
     ]
 
     choice, s = coordmusictools.getInputFromChoices('', choices)
