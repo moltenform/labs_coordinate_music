@@ -7,7 +7,13 @@ import tempfile
 from os.path import join
 from shinerainsevenlib.standard import *
 
-import coordmusictools
+# move this file to the parent directory to run it 
+
+try:
+    import coordmusictools
+except ImportError:
+    raise ImportError('Please move this file into parent directory before running it.')
+
 from coordmusicutil import *
 from recurring_linkspotify import \
     linkspotify, launchSpotifyUri
@@ -32,7 +38,7 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     
     # add a url, which should be ignored
     writeUrlFile(tmpdir + '/classic rock/collection/artist - ignored.url', 'spotify:track:7o4i6eiHjZqbASnSy3pKAq')
-    assertTrue(files.exists(tmpdir + '/classic rock/collection/artist - ignored.url'))
+    assertWarn(files.exists(tmpdir + '/classic rock/collection/artist - ignored.url'))
     linkspotify(True, tmpdir + '/classic rock/collection', tags, parsedNames, False, 'US')
     if getInputBool('spotifylink was set to ' + str(tags[0].getLink()) + ' open?'):
         launchSpotifyUri(tags[0].getLink())
@@ -67,6 +73,8 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     trace('testing files inside of an album with several discs')
     trace('"I Want to Break Free" is intentionally 04_09 instead of 02_05, to test misnumbering')
     trace('"Barcelona" is intentionally too short, to test checking mismatched duration')
+    alert('')
+    alert('Expect to see a question asking if Barcelona is correct, because length is wrong. Select is correct.')
     files.ensureEmptyDirectory(tmpdir)
     files.makeDirs(tmpdir + '/classic rock/Queen/2002, The Platinum Collection')
     parsedNames = []
@@ -97,6 +105,8 @@ def testLinkSpotifyInteractive(tmpdir, mediadir):
     linkspotify(True, tmpdir + '/classic rock/Queen/2002, The Platinum Collection', tags, parsedNames, True, 'US')
     if getInputBool('second spotifylink was set to ' + str(tags[1].getLink()) + ' open?'):
         launchSpotifyUri(tags[1].getLink())
+    
+    alert('Test complete.')
 
 def testMusicToUrlInteractive(tmpdir, mediadir):
     if not getInputBool('Run interactive MusicToUrl test?'):
@@ -108,11 +118,11 @@ def testMusicToUrlInteractive(tmpdir, mediadir):
     files.copy(mediadir + '/mp3_avgb128.mp3', tmpdirsl + 'Qua - Ritmo Giallo.mp3', False)
     files.copy(mediadir + '/mp3_avgb128.mp3', tmpdirsl + 'Masato Nakamura - Green Hill Zone.mp3', False)
     
-    assertEq('p01p Carly Rae Jepsen - Run Away With Me.m4a 0.0Mb 134k 00:01',
+    assertWarnEq('p01p Carly Rae Jepsen - Run Away With Me.m4a 0.0Mb 134k 00:01',
         getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl + 'Carly Rae Jepsen - Run Away With Me.m4a'), 1))
-    assertEq('p12p Qua - Ritmo Giallo.mp3 0.0Mb 136k 00:02',
+    assertWarnEq('p12p Qua - Ritmo Giallo.mp3 0.0Mb 136k 00:02',
         getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl + 'Qua - Ritmo Giallo.mp3'), 12))
-    assertEq('p00p Masato Nakamura - Green Hill Zone.mp3 0.0Mb 136k 00:02',
+    assertWarnEq('p00p Masato Nakamura - Green Hill Zone.mp3 0.0Mb 136k 00:02',
         getStringTrackAndPopularity(tmpdir, CoordMusicAudioMetadata(tmpdirsl + 'Masato Nakamura - Green Hill Zone.mp3'), 0))
     
     stampM4a(tmpdirsl + 'Carly Rae Jepsen - Run Away With Me.m4a', 'spotify:track:5e0vgBWfwToyphURwynSXa')
@@ -121,14 +131,14 @@ def testMusicToUrlInteractive(tmpdir, mediadir):
     
     obj = SaveDiskSpaceMusicToUrl()
     try:
-        obj.go(tmpdir, [CoordMusicAudioMetadata(fullfile) for fullfile, short in files.listFiles(tmpdir)], None)
+        obj.go(tmpdir, [CoordMusicAudioMetadata(fullfile) for fullfile, _short in files.listFiles(tmpdir)], None)
     except StopBecauseWeRenamedFile:
         pass
         
-    trace('Resulting filenames:\n' + '\n'.join(short for fullfile, short in files.listFiles(tmpdir)))
+    trace('Resulting filenames:\n' + '\n'.join(short for _fullfile, short in files.listFiles(tmpdir)))
 
 def testFromOutsideMp3Interactive(tmpdir, mediadir):
-    if not getInputBool('Run interactive OutsideMp3 test?  (refer to test/walkthrough_interactive_test_from_outside.png)'):
+    if not getInputBool('Run interactive OutsideMp3 test?  (refer to test/ui_end_to_end_tests.png)'):
         return
         
     # create "outside" files, mocking input files
@@ -172,7 +182,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
 
         obj.save()
         
-    coordmusictools.tools_outsideMp3sToSpotifyPlaylist(tmpdirsl + 'outside', mustSort=True)
+    coordmusictools.tools_outsideMp3sToSpotifyPlaylist(tmpdirsl + 'outside', mustSort=True, confirmAll=False)
     
     # get resulting spotify links
     link1 = CoordMusicAudioMetadata(tmpdirsl +
@@ -193,12 +203,13 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
         '$The Fifth Dimension$12$Workin\' on a Groovy Thing$%s.wav' % link2, False)
     
     print(u'.wav files in %s, please convert them to m4a' % (tmpdirsl + 'incoming'))
-    tools_newFilesBackToReplaceOutsideMp3s_oldVersion(tmpdirsl + 'outside', tmpdirsl + 'incoming')
+    alert("Pretty soon, you'll be asked to convert wavs to m4a. You'll have to do this manually.")
+    coordmusictools.tools_newFilesBackToReplaceOutsideMp3s(tmpdirsl + 'outside', tmpdirsl + 'incoming',)
     
     # see if the result is right
     all = sorted([filepath.replace(tmpdirsl + 'outside', '').replace(files.sep, '/')
         for filepath, short in files.recurseFiles(tmpdirsl + 'outside')])
-    assertEq(['/Space Oddity/03 Letter To Hermione.m4a',
+    assertWarnEq(['/Space Oddity/03 Letter To Hermione.m4a',
         '/Space Oddity/05 Janine.url',
         '/Space Oddity/97 Nonexistent song 2.mp3',
         '/Space Oddity/98 Nonexistent song 3 (12).mp3',
@@ -208,15 +219,15 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
     
     # see if id3 info looks right
     obj = CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione.m4a')
-    assertEq('Space Oddity', obj.get('album'))
-    assertEq('David Bowie', obj.get('artist'))
-    assertEq('Letter To Hermione', obj.get('title'))
-    assertEq('1', str(obj.get('discnumber')))
-    assertEq('3', obj.get('tracknumber'))
-    assertEq('97', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/97 Nonexistent song 2.mp3').get('tracknumber'))
-    assertEq('98', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/98 Nonexistent song 3 (12).mp3').get('tracknumber'))
-    assertEq('99', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').get('tracknumber'))
-    assertEq('spotify:notfound', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').getLink())
+    assertWarnEq('Space Oddity', obj.get('album'))
+    assertWarnEq('David Bowie', obj.get('artist'))
+    assertWarnEq('Letter To Hermione', obj.get('title'))
+    assertWarnEq('1', str(obj.get('discnumber')))
+    assertWarnEq('3', obj.get('tracknumber'))
+    assertWarnEq('97', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/97 Nonexistent song 2.mp3').get('tracknumber'))
+    assertWarnEq('98', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/98 Nonexistent song 3 (12).mp3').get('tracknumber'))
+    assertWarnEq('99', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').get('tracknumber'))
+    assertWarnEq('spotify:notfound', CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').getLink())
     
     # use a set to check that all spotify links are different
     setOfLinks = set([CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/03 Letter To Hermione.m4a').getLink(),
@@ -224,7 +235,8 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
         CoordMusicAudioMetadata(tmpdirsl + 'outside/Space Oddity/99 Nonexistent song 4.mp3').getLink(),
         CoordMusicAudioMetadata(tmpdirsl + 'outside/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing.m4a').getLink(),
         getFromUrlFile(tmpdirsl + 'outside/The Essential Fifth Dimension/02 19 No Love In The Room.url')])
-    assertEq(5, len(setOfLinks))
+    assertWarnEq(5, len(setOfLinks))
+    alert('Test complete.')
 
 
 # let this file be started as a script.

@@ -23,6 +23,7 @@ def getFromUrlFile(filename):
             if line.startswith('URL='):
                 line = line.strip()
                 return line.split('URL=')[1]
+
     return None
                 
 def writeUrlFile(urlfilepath, link, extrainfo='', okOverwrite=False):
@@ -191,6 +192,7 @@ def m4aToUrl(directory, short, obj, replaceMarkersInName=True, softDelete=True):
         softDeleteFile(directory + '/' + short)
     else:
         files.delete(directory + '/' + short)
+
     files.setLastModTime(newname, prevTime, files.TimeUnits.Nanoseconds)
     return newname
 
@@ -342,6 +344,7 @@ def getDirChoice(dir, prompt):
     choices.insert(0, 'All')
     if len(choices) == 1 and choices[0] != 'All':
         return choices[0]
+    
     ret = getInputFromChoices(prompt, choices)
     if ret[0] == -1:
         return None

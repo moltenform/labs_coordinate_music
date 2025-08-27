@@ -29,7 +29,7 @@ Here's what it looks like to create links, an album at a time:
 
 ### Installation
 
-1. Install Python, either Python 2.7+ or 3.5+
+1. Install Python, 3.5+
 1. Install Mutagen (pip install mutagen)
 1. Install Spotipy (pip install spotipy)
 1. Install Pyperclip (pip install pyperclip)
@@ -46,5 +46,5 @@ Also: on Windows, you can install pywinauto to enable the "type into Spotify win
 
 Also: when the Python script is asking you a question, you can type "BRK" to pause, investigate the question, and then resume processing the directory from the start.
 
-Tests pass on latest Linux Mint and Windows 7+.
+Supported on Linux Mint and Windows 7+.
 

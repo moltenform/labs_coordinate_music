@@ -13,7 +13,7 @@
             "name": "Run ui tests",
             "type": "debugpy",
             "request": "launch",
-            "program": "tests/ui_tests.py",
+            "program": "ui_end_to_end_tests.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}"
         },

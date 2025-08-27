@@ -169,7 +169,7 @@ def tools_filenamesToMetadataAndRemoveLowBitrate(localfiles=None, styleGiven=Non
                 files.move(path, files.getParent(path) + '/' + newshort, False)
     
 
-def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
+def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False, confirmAll=True):
     if not dir:
         clipboardText = getClipboardText()
         defaultDir = clipboardText if (files.exists(clipboardText)) else getDefaultDirectorySpotifyToFilenames()
@@ -208,11 +208,13 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
             len(tags) > 0 and not alreadyAll, fullpathdir, tags, parsed, True, getSpotifyGeographicMarketName())
     
     # check that all files have a spotify link
-    for fullpath, _short in files.recurseFiles(dir):
-        if getFieldForFile(fullpath, False):
-            assertTrue('spotify:' in CoordMusicAudioMetadata(fullpath).getLink())
-    
-    # add uris to list
+    if confirmAll:
+        for fullpath, _short in files.recurseFiles(dir):
+            if getFieldForFile(fullpath, False):
+                if not 'spotify:' in CoordMusicAudioMetadata(fullpath).getLink():
+                    warn('file has no spotify link: ' + fullpath)
+        
+    # add URIs to list
     addToPlaylist = []
     for fullpath, short in files.recurseFiles(dir):
         if getFieldForFile(fullpath, False) and '__MARKAS__24.' not in short:
@@ -220,7 +222,7 @@ def tools_outsideMp3sToSpotifyPlaylist(dir=None, mustSort=False):
             if 'spotify:track:' in link:
                 addToPlaylist.append(link)
     
-    # add uris to Spotify playlist
+    # add URIs to Spotify playlist
     if len(addToPlaylist):
         playlistId = tools_getPlaylistId()
         trace('adding %d tracks' % len(addToPlaylist))
@@ -294,7 +296,7 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
     # add id3 metadata
     alert('adding metadata.')
     filepaths = (mapSpotifyIdToNewFile[key] for key in mapSpotifyIdToNewFile)
-    tools_filenamesToMetadataAndRemoveLowBitrate([(s, files.getName(s)) for s in filepaths])
+    filenamesToMetadataAndRemoveLowBitratePrevVersion([(s, files.getName(s)) for s in filepaths])
         
     # move newfile back and replace existing.
     alert('about to move newfiles back and replace existing files.')
@@ -328,6 +330,24 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
             choice, s = getInputFromChoices(fullpath + ' this file isn\'t on Spotify, new name is?', [newshortWithQual, newshortNoQual])
             if choice >= 0:
                 files.move(fullpath, files.join(files.getParent(fullpath), s), False)
+
+def filenamesToMetadataAndRemoveLowBitratePrevVersion(localfiles=None):
+    if localfiles is None:
+        localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
+    for fullpath, short in localfiles:
+        if short.endswith('.wav'):
+            warn('why is there still a wav here? ' + short)
+        if '__MARKAS' in short:
+            warn('why is there a file with MARKAS here? ' + short)
+    
+    for fullpath, short in localfiles:
+        if fullpath.endswith('.m4a'):
+            setMetadataFromFilename(fullpath)
+            if get_empirical_bitrate(fullpath) < 20:
+                trace('auto-deleting low bitrate', short)
+                softDeleteFile(fullpath)
+            else:
+                trace('saved tags for', short)
 
 def tools_lookForMp3AndAddToPlaylist(dir, bitrateThreshold, playlistId=None):
     playlistId = tools_getPlaylistId(playlistId)
@@ -407,7 +427,7 @@ class ExtendedSongInfo:
 def saveFilenamesMetadataToTextImplementation(useSpotify, warnIfNotInMarket, file, listOfSongInfoObjects):
     time.sleep(0.2)
     
-    # find all uris expected
+    # find all URIs expected
     uriToSongInfo = dict()
     for item in listOfSongInfoObjects:
         uriToSongInfo[ustr(item.info['uri'])] = item
