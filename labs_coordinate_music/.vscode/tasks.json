@@ -28,6 +28,19 @@
                 "cwd": "${workspaceFolder}"
             },
         },
+        {
+            "label": "yapf format",
+            "type": "shell",
+            "command": "py -m yapf --in-place --recursive --parallel .",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+        },
     ]
 }
 

@@ -191,9 +191,18 @@ R1725,
 R1724,
 R0915,
 R1714,
-R1702
+R1702,
+W0707
 """
 
 # The warning E1101 we want enabled because it's useful to catch missing functions.
+
+[tool.yapf]
+based_on_style = pep8
+spaces_before_comment = 1
+split_before_logical_operator = false
+column_limit = 120
+indent_width = 4
+
 
 

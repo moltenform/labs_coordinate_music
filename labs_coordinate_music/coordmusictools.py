@@ -333,8 +333,8 @@ def tools_newFilesBackToReplaceOutsideMp3s(dir=None, dirNewFiles=None):
 
 def filenamesToMetadataAndRemoveLowBitratePrevVersion(localfiles=None):
     if localfiles is None:
-        localfiles = list(files.listfiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
-    for fullpath, short in localfiles:
+        localfiles = list(files.listFiles(getDirChoice(getDefaultDirectorySpotifyToFilenames(), '')))
+    for _fullpath, short in localfiles:
         if short.endswith('.wav'):
             warn('why is there still a wav here? ' + short)
         if '__MARKAS' in short:
