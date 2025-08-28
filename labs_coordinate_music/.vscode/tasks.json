@@ -5,7 +5,7 @@
         {
             "label": "python lint",
             "type": "shell",
-            "command": "py .vscode/pylint_filtered.py",
+            "command": "py .vscode/lint_filtered.py",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -18,7 +18,20 @@
         {
             "label": "ruff lint",
             "type": "shell",
-            "command": "py -m ruff check .",
+            "command": "py .vscode/lint_filtered.py --ruff",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+        },
+        {
+            "label": "ruff lint autofix",
+            "type": "shell",
+            "command": "py .vscode/lint_filtered.py --ruff --fix",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -31,7 +44,7 @@
         {
             "label": "autoformat",
             "type": "shell",
-            "command": "py -m yapf --in-place --recursive --parallel .",
+            "command": "py -m yapf --exclude=OUTSIDE/**/*.py --in-place --recursive --parallel .",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
