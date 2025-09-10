@@ -5,7 +5,7 @@
         {
             "label": "python lint",
             "type": "shell",
-            "command": "py .vscode/lint_filtered.py",
+            "command": "py -m shinerainsevenlib --lintWrapper --pylint",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -18,7 +18,7 @@
         {
             "label": "ruff lint",
             "type": "shell",
-            "command": "py .vscode/lint_filtered.py --ruff",
+            "command": "py -m shinerainsevenlib --lintWrapper --rufflint",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -31,7 +31,7 @@
         {
             "label": "ruff lint autofix",
             "type": "shell",
-            "command": "py .vscode/lint_filtered.py --ruff --fix",
+            "command": "py -m shinerainsevenlib --lintWrapper --rufflint --fix",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
@@ -44,7 +44,7 @@
         {
             "label": "autoformat",
             "type": "shell",
-            "command": "py -m yapf --exclude=OUTSIDE/**/*.py --in-place --recursive --parallel .",
+            "command": "py -m shinerainsevenlib --lintWrapper --format",
             "problemMatcher": [],
             "group": {
                 "kind": "build",
