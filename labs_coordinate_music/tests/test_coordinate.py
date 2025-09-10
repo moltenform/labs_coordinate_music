@@ -7,6 +7,7 @@ from os.path import join
 from common import *
 
 import sys
+
 sys.path.append('..')
 
 from coordmusicutil import *

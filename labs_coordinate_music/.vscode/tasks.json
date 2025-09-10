@@ -42,7 +42,7 @@
             },
         },
         {
-            "label": "python autoformat",
+            "label": "python run autoformat",
             "type": "shell",
             "command": "py -m shinerainsevenlib --lint-wrapper --format",
             "problemMatcher": [],

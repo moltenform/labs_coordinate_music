@@ -39,12 +39,13 @@ line-length = 120
 indent-width = 4
 target-version = "py38"
 
-
 [tool.ruff.format]
 quote-style = "single"
 indent-style = "space"
 
 [tool.ruff.lint]
+
+[tool.pylint.'MESSAGES CONTROL']
 
 [tool.shinerainsevenlib]
 config_collection_legacy = 1
@@ -77,10 +78,13 @@ format_skip_if_path_contains = [
 
 [tool.yapf]
 
+# after this, manually clean up menu in __main__.py
+
 # styles: google, pep8, yapf, facebook
 based_on_style = "facebook"
 spaces_before_comment = 1
 split_before_logical_operator = false
 column_limit = 120
 indent_width = 4
+
 

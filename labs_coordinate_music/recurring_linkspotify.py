@@ -258,7 +258,7 @@ def callbackForChoiceTrack(inp, arrChoices, otherCommandsContext):
 
 
 def callbackForChoiceAlbum(inp, arrChoices, otherCommandsContext):
-    fullpathdir, search_str, search_title, tags, results, market = otherCommandsContext
+    fullpathdir, search_str, search_title, _tags, results, market = otherCommandsContext
     done = False
     if inp == 'ns' and getInputBool('sure entire directory is not on spotify?'):
         for fullpath, short in files.listFiles(fullpathdir):

@@ -13,8 +13,8 @@ import recurring_linkspotify
 
 def showCmdOptions():
     coordmusictools.trace(
-        '\nmain.py' + 
-        '\n\tInteractive mode: organization and more.' + 
+        '\nmain.py' +
+        '\n\tInteractive mode: organization and more.' +
         '\n\nmain.py startspotify /path/to/song.mp3' +
         '\n\tStarts playing the Spotify track that this mp3\'s metadata points to.' +
         '\n\nmain.py viewspotify /path/to/song.mp3' +
@@ -24,7 +24,8 @@ def showCmdOptions():
 
 def main():
     choices = [
-        'organize music', 'organize + save disk space (replace with Spotify shortcuts)',
+        'organize music',
+        'organize + save disk space (replace with Spotify shortcuts)',
         'Spotify playlist to text',
         'Spotify playlist to song lengths',
         'Spotify playlist to filenames',
@@ -33,7 +34,7 @@ def main():
         'show cmd-line options'
     ]
 
-    choice, s = coordmusictools.getInputFromChoices('', choices)
+    choice, _s = coordmusictools.getInputFromChoices('', choices)
     if choice == 0:
         recurring_coordinate.mainCoordinate(isTopDown=True, enableSaveSpace=False)
         coordmusicuserconfig.runAfterCoordinate()
@@ -59,8 +60,8 @@ def checkForMetadataTags(dir):
     from shinerainsevenlib.standard import files
 
     if not files.exists(dir):
-        coordmusicutil.assertTrue(False, 'Directory not found: ' +dir)
-    
+        coordmusicutil.assertTrue(False, 'Directory not found: ' + dir)
+
     countWithTags = 0
     countWithoutTags = 0
     for file, _short in files.listFiles(dir):

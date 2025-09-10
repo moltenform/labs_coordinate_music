@@ -221,6 +221,7 @@ def removeCharsFlavor2(s):
     s = s.replace(u':', u'').replace(u'*', u'').replace(u'"', u"")
     return s.replace(u'<', u'').replace(u'>', u'').replace(u'|', u'')
 
+
 def _spotipyconnect():
     import spotipy
     import spotipy.util as sputil

@@ -118,7 +118,7 @@ def setMetadataFromFilename(fullpath):
         trace('for file %s incorrect # of $' % (fullpath))
         return
     alb, artist, tracknum, title, spotifyUri = parts
-    position, alb = alb.split(' ', 1)
+    _position, alb = alb.split(' ', 1)
     spotifyUri = spotifyUri.split('.')[0]
     obj = CoordMusicAudioMetadata(fullpath)
     obj.setLink('spotify:track:' + spotifyUri)
