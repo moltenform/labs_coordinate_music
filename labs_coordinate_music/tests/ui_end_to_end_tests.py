@@ -279,7 +279,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
     )
 
     # see if the result is right
-    all = sorted(
+    allResults = sorted(
         [
             filepath.replace(tmpdirsl + 'outside', '').replace(files.sep, '/')
             for filepath, short in files.recurseFiles(tmpdirsl + 'outside')
@@ -292,7 +292,7 @@ def testFromOutsideMp3Interactive(tmpdir, mediadir):
             '/Space Oddity/99 Nonexistent song 4.mp3',
             '/The Essential Fifth Dimension/01 17 Workin\' on a Groovy Thing.m4a',
             '/The Essential Fifth Dimension/02 19 No Love In The Room.url'
-        ], all
+        ], allResults
     )
 
     # see if id3 info looks right

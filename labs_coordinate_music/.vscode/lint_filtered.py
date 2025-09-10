@@ -1,9 +1,10 @@
+import os
 import sys
 import json
 from shinerainsevenlib.standard import *
+import toml
 
-
-def mainPylint():
+def mainPylint(thisCfg):
     args = [
         '-m', 'pylint', '--rcfile', 'pyproject.toml', '--ignore-paths=.*OUTSIDE.*',
         '--output-format=json2', '.'
@@ -12,28 +13,24 @@ def mainPylint():
     args.insert(0, pyExe)
     print(args)
     retcode, stdout, stderr = files.run(args, throwOnFailure=False)
+    if stderr:
+        print('pylint failed', stdout.decode('utf-8'), stderr.decode('utf-8'))
+        return
+
     stdout = stdout.decode('utf-8')
     events = json.loads(stdout)
     events = events['messages']
+    specificIgnores = thisCfg.get('pylint_specific_ignore', [])
     for event in events:
         line = formatOneLinePylint(event)
-        if "E1101: Instance of 'Bucket' has no" in line:
-            # skip this - we don't care about it for Bucket
-            continue
-        if "W0621: Redefining name 'fixture_" in line:
-            # skip this - we don't care about it for fixtures
-            continue
-        if "Access to a protected member _get of" in line:
-            # skip this - we don't care about it for fixtures
-            continue
-        if "Access to a protected member _get_id of" in line:
-            # skip this - we don't care about it for fixtures
-            continue
+        for ignore in specificIgnores:
+            if ignore in line:
+                continue
 
         print(line)
 
 
-def mainRuff():
+def mainRuff(thisCfg):
     args = [
         '-m', 'ruff', 'check', '--config=pyproject.toml', '--output-format=json',
         '--exclude=.*OUTSIDE.*'
@@ -46,13 +43,25 @@ def mainRuff():
     args.insert(0, pyExe)
     print(args)
     retcode, stdout, stderr = files.run(args, throwOnFailure=False)
+    if stderr:
+        print('ruff failed', stdout.decode('utf-8'), stderr.decode('utf-8'))
+        return
+
     stdout = stdout.decode('utf-8')
     events = json.loads(stdout)
+    specificIgnores = thisCfg.get('rufflint_specific_ignore', [])
     for event in events:
-        line = formatOneLineRuff(event)
-        if "Access to a protected member _get_id of" in line:
-            # skip this - we don't care about it for fixtures
+        if 'test' in files.getName(event['filename']) and event.get('code') == 'S101':
+            # ok for test files to have asserts
             continue
+
+        line = formatOneLineRuff(event)
+        if "Variable `dir` is shadowing":
+            continue
+
+        for ignore in specificIgnores:
+            if ignore in line:
+                continue
 
         print(line)
 
@@ -67,13 +76,28 @@ def formatOneLinePylint(msg):
     return f"{msg['path']}:{msg['line']}:{msg['column']}: {msg['messageId']}: {msg['message']} ({msg['symbol']})"
 
 
+
+def mainAutoformat(thisCfg):
+    # note that yapf also supports  '--recursive', '--parallel' params
+    # but we can't use them now that we target file-by-file
+    args = [
+        '-m', 'yapf', '--in-place'
+    ]
+
+    args.append('.')
+    pyExe = sys.executable
+    args.insert(0, pyExe)
+    print(args)
+    ignored = thisCfg.get('autoformat_ignore', [])
+    #~ for f, short in files.recurseFiles('.'):
+        #~ if short.endswith('.py'):
+            #~ shouldIgnore = jslike.find(ignored, lambda item: )
+    retcode, stdout, stderr = files.run(args, throwOnFailure=False)
+
+def main():
+    
+        
+
 if __name__ == '__main__':
-    try:
-        files.delete('__init__.py')
-        if '--ruff' in sys.argv:
-            mainRuff()
-        else:
-            mainPylint()
-    finally:
-        files.writeAll('__init__.py', '')
+    main()
 
