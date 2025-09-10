@@ -30,7 +30,6 @@ dev = [
     "pytest-mock",
 ]
 
-
 [project.urls]
 Homepage = "https://github.com/moltenform/labs_coordinate_music"
 Issues = "https://github.com/moltenform/labs_coordinate_music/issues"
@@ -45,6 +44,7 @@ target-version = "py38"
 quote-style = "single"
 indent-style = "space"
 
+[tool.ruff.lint]
 
 [tool.shinerainsevenlib]
 config_collection_legacy = 1
@@ -52,6 +52,11 @@ pylint_import_suggested_other_settings = 1
 rufflint_import_suggested_other_settings = 1
 hide_init_py_while_linting = 1
 
+rufflint_ignore = [
+    'S101', # we have asserts instead of assertTrue
+    'PLW0603', # update global
+    'S607', # start process without full path
+]
 
 pylint_specific_ignore_containing = [
     # skip this - we don't care about it for Bucket
@@ -63,7 +68,7 @@ pylint_specific_ignore_containing = [
 ]
 
 rufflint_specific_ignore_containing = [
-    
+    'F821 Undefined name `basestring`',
 ]
 
 format_skip_if_path_contains = [

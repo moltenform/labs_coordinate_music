@@ -18,7 +18,7 @@ stricter_matching = False
 
 
 def getFromUrlFile(filename):
-    assert filename.endswith('.url') or filename.endswith('.URL')
+    assertTrue(filename.endswith('.url') or filename.endswith('.URL'))
     with open(filename, encoding='utf-8') as f:
         for line in f:
             if line.startswith('URL='):

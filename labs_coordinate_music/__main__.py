@@ -58,7 +58,9 @@ def checkForMetadataTags(dir):
     import coordmusicutil
     from shinerainsevenlib.standard import files
 
-    assert files.exists(dir)
+    if not files.exists(dir):
+        coordmusicutil.assertTrue(False, 'Directory not found: ' +dir)
+    
     countWithTags = 0
     countWithoutTags = 0
     for file, _short in files.listFiles(dir):
